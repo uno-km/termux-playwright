@@ -1,0 +1,6 @@
+# Python / PyPI Build Artifacts
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
