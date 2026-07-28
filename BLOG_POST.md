@@ -14,12 +14,23 @@
 
 ---
 
-## 🚀 Git Source (전체 소스코드 및 인프라 스크립트)
+## 🚀 전 세계 어디서든 1초 만에 설치하기 (PyPI 공식 배포)
 
-제가 세팅한 모든 셋업 파일과 크롤링 샘플 코드는 아래 깃허브에 퍼블릭(Public)으로 배포해두었습니다!
-필요하신 분들은 그냥 가져다가 `node_manager.sh setup` 한번만 치시면 됩니다!
+이 삽질의 결정체를 저만 쓰기 아까워서, 아예 파이썬 공식 패키지 저장소(PyPI)에 등록해버렸습니다!! 
+이제 폰을 초기화하거나 새 폰을 가져오셔도 복잡한 스크립트 칠 필요 없이 아래 명령어 **한 줄**이면 설치가 끝납니다.
 
+```bash
+pip install termux-playwright
+```
+
+> **🔥 이 한 줄이 백그라운드에서 해주는 일:**
+> 1. Termux용 `chromium`, `nodejs` 자동 설치
+> 2. OS 플랫폼 우회용 휠(Wheel) 다운로드 및 강제 패키징
+> 3. Playwright 코어 엔진(`coreBundle.js`)에 리눅스 강제 인식 패치 주입
+
+모든 소스코드와 데모 코드는 깃허브에도 공개해두었습니다!
 - **GitHub Repository**: [uno-km/termux-playwright-demo](https://github.com/uno-km/termux-playwright-demo)
+- **PyPI Package**: [termux-playwright](https://pypi.org/project/termux-playwright/)
 
 ---
 

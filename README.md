@@ -9,9 +9,23 @@
 * **Language**: Python 3.11+, Node.js (v20+)
 * **Framework**: Playwright (Async API)
 * **Browser**: Chromium (Termux native package)
-* **Infrastructure**: Bash Shell Scripting (`node_manager.sh`)
 
-## 3. 로직 (Architecture & Logic)
+## 3. 설치 및 사용법 (Quick Start)
+공식 PyPI에 등록되어 있으므로, 복잡한 설정 없이 단 한 줄의 명령어로 설치와 우회 패치가 100% 자동 진행됩니다.
+
+```bash
+pip install termux-playwright
+```
+
+> **Note**: 위 명령어를 실행하면 기본 시스템 패키지(`chromium`, `nodejs`) 설치부터 Playwright 코어 엔진 패치(`coreBundle.js`)까지 백그라운드에서 모두 자동으로 수행됩니다.
+
+설치가 완료된 후, 크롤러를 구동할 파이썬 스크립트 최상단에 반드시 환경변수를 선언해 주십시오. (데모 코드 참조)
+```python
+import os
+os.environ["PLAYWRIGHT_CHROMIUM_PATH"] = "/data/data/com.termux/files/usr/bin/chromium-browser"
+```
+
+## 4. 로직 (Architecture & Logic)
 본 시스템은 안드로이드 아키텍처의 한계를 우회하기 위해 다음과 같은 3단계 핵심 로직으로 구성됩니다.
 
 1. **의존성(Dependency) 속임수 기법 (Wheel Renaming)**
