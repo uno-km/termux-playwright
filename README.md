@@ -59,3 +59,21 @@ os.environ["PLAYWRIGHT_CHROMIUM_PATH"] = "/data/data/com.termux/files/usr/bin/ch
   - **해결**: Launch Args에 `--no-sandbox` 및 `--disable-setuid-sandbox` 플래그를 추가하여 권한 충돌 해소.
 
 이러한 수많은 시행착오 끝에, 단일 스크립트(`node_manager.sh`) 실행만으로 안드로이드 디바이스를 완전한 무인 크롤링 서버로 변환할 수 있는 파이프라인이 완성되었습니다.
+
+## 5. 실물 기기 통합 테스트 (E2E Device Testing)
+타겟 디바이스(Android Termux) 환경에서의 패키지 정상 설치 및 런타임 구동을 검증하기 위한 E2E 테스트 시나리오입니다.
+Termux 터미널에서 아래의 명령어 시퀀스를 순차적으로 실행하여 검증을 수행합니다.
+
+```bash
+# 1. 격리된 테스트 디렉토리 생성 및 이동
+mkdir test-playwright && cd test-playwright
+
+# 2. PyPI 패키지 릴리즈 빌드 설치 (자동 의존성 주입 및 패치 수행)
+pip install termux-playwright
+
+# 3. 검증용 런타임 데모 스크립트 페치 (Fetch)
+wget https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/termux_crawler_demo.py
+
+# 4. 브라우저 인스턴스 할당 및 크롤링 렌더링 검증
+python termux_crawler_demo.py
+```

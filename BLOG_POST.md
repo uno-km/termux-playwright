@@ -132,12 +132,32 @@ if __name__ == "__main__":
 
 ---
 
-## 🧪 테스트 및 실구동 화면
+## 🧪 실물 기기(S7) 라이브 테스트 화면
 
-자, 이제 떨리는 마음으로 갤럭시 S7 Termux 콘솔에서 명령어를 쳐봅니다.
+자, 이제 환경도 완벽하고 1초 컷 자동 설치 패키지도 만들었으니 떨리는 마음으로 갤럭시 S7 Termux 콘솔에서 직접 돌려보겠습니다. 
+블로그를 보시는 분들도 남는 폰이 있다면 터뮤즈를 켜시고 저랑 똑같이 타이핑해 보세요!
 
+**1. 테스트용 폴더 만들고 들어가기**
 ```bash
-$ python termux_crawler_demo.py
+mkdir test-playwright
+cd test-playwright
+```
+
+**2. 대망의 파이썬 패키지 갈기기! (설치)**
+```bash
+pip install termux-playwright
+```
+> 제가 만든 이 패키지를 설치하시면 백그라운드에서 `Chromium`과 `Node.js`를 깔고 리눅스 꼼수 패치까지 전부 싹 다 자동으로 진행해 줍니다!! 
+
+**3. 테스트 코드(데모 스크립트) 가져오기**
+```bash
+wget https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/termux_crawler_demo.py
+```
+> 일일이 코드 치실 필요 없이 깃허브에서 wget으로 단숨에 땡겨왔습니다!
+
+**4. 결과 보기 (크롤링 구동!)**
+```bash
+python termux_crawler_demo.py
 ```
 
 **(실행 결과 로그)**
