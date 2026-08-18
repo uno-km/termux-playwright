@@ -1,7 +1,7 @@
 """Automated installation and dependency resolution engine for Termux Playwright.
 
 Executes verifiable, fail-safe installation of native system packages,
-aarch64/x86_64 bypass wheels, and JS platform patches with strict error validation.
+aarch64/x86_64 bypass wheels, and JS platform patches with exponential backoff and timeout enforcement.
 """
 
 import json
@@ -9,9 +9,10 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import tempfile
 import urllib.request
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from .exceptions import InstallationError, UnsupportedPlatformError, PatchingError
 from .platform import (
@@ -20,40 +21,64 @@ from .platform import (
     get_wheel_tag_for_arch,
     find_chromium_binary,
     find_node_binary,
+    check_preflight_storage,
 )
 from .patcher import apply_core_bundle_patch, is_core_bundle_patched, locate_playwright_package_dir
 
 DEFAULT_PLAYWRIGHT_VERSION = "1.61.0"
 SUBPROCESS_TIMEOUT_SECONDS = 300
+MAX_NETWORK_RETRIES = 3
 
-def fetch_pypi_wheel_info(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> Tuple[str, str]:
+def resolve_latest_compatible_version() -> str:
+    """Query PyPI API to discover the latest compatible Playwright release."""
+    api_url = "https://pypi.org/pypi/playwright/json"
+    try:
+        req = urllib.request.Request(api_url, headers={"User-Agent": "termux-playwright-installer"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                info = data.get("info", {})
+                latest = info.get("version")
+                if latest:
+                    return latest
+    except Exception:
+        pass
+    return DEFAULT_PLAYWRIGHT_VERSION
+
+def fetch_pypi_wheel_info(version: Optional[str] = None) -> Tuple[str, str, str]:
     """Query PyPI JSON API for the exact matching architecture wheel URL and filename."""
     arch = get_cpu_architecture()
     tag = get_wheel_tag_for_arch(arch)
-    api_url = f"https://pypi.org/pypi/playwright/{version}/json"
+    target_version = version or resolve_latest_compatible_version()
+    api_url = f"https://pypi.org/pypi/playwright/{target_version}/json"
 
-    try:
-        req = urllib.request.Request(api_url, headers={"User-Agent": "termux-playwright-installer"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            if resp.status != 200:
-                raise InstallationError(f"PyPI API returned HTTP {resp.status}")
-            data = json.loads(resp.read().decode("utf-8"))
-            
-            urls = data.get("urls", [])
-            for item in urls:
-                filename = item.get("filename", "")
-                if tag in filename and filename.endswith(".whl"):
-                    download_url = item.get("url")
-                    if download_url:
-                        return download_url, filename
+    for attempt in range(1, MAX_NETWORK_RETRIES + 1):
+        try:
+            req = urllib.request.Request(api_url, headers={"User-Agent": "termux-playwright-installer"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                if resp.status != 200:
+                    raise InstallationError(f"PyPI API returned HTTP {resp.status}")
+                data = json.loads(resp.read().decode("utf-8"))
+                
+                urls = data.get("urls", [])
+                for item in urls:
+                    filename = item.get("filename", "")
+                    if tag in filename and filename.endswith(".whl"):
+                        download_url = item.get("url")
+                        if download_url:
+                            return download_url, filename, target_version
 
-        raise InstallationError(f"No suitable wheel with tag '{tag}' found on PyPI for version {version}")
+            raise InstallationError(f"No suitable wheel with tag '{tag}' found on PyPI for version {target_version}")
 
-    except Exception as e:
-        raise InstallationError(f"Failed to resolve wheel from PyPI: {e}") from e
+        except Exception as e:
+            if attempt == MAX_NETWORK_RETRIES:
+                raise InstallationError(f"Failed to resolve wheel from PyPI after {MAX_NETWORK_RETRIES} attempts: {e}") from e
+            time.sleep(2 ** attempt)
+
+    raise InstallationError("Exhausted retries resolving Playwright wheel.")
 
 def install_system_dependencies() -> None:
-    """Install native Termux Chromium and Node.js packages via pkg."""
+    """Install native Termux Chromium and Node.js packages via pkg with retry."""
     pkg_bin = shutil.which("pkg")
     if not pkg_bin:
         raise InstallationError("Termux 'pkg' package manager was not found in PATH.")
@@ -61,28 +86,38 @@ def install_system_dependencies() -> None:
     cmd = [pkg_bin, "install", "-y", "chromium", "nodejs"]
     print(f"[*] Executing system package installation: {' '.join(cmd)}")
     
-    try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
-        if res.returncode != 0:
-            raise InstallationError(
-                f"Failed to install system packages via pkg (code {res.returncode}):\n{res.stderr or res.stdout}"
-            )
-    except subprocess.TimeoutExpired as e:
-        raise InstallationError(f"System package installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
+    for attempt in range(1, MAX_NETWORK_RETRIES + 1):
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+            if res.returncode == 0:
+                return
+            if attempt == MAX_NETWORK_RETRIES:
+                raise InstallationError(
+                    f"Failed to install system packages via pkg (code {res.returncode}):\n{res.stderr or res.stdout}"
+                )
+            print(f"[!] pkg install failed (attempt {attempt}/{MAX_NETWORK_RETRIES}). Retrying in {2 ** attempt}s...")
+            time.sleep(2 ** attempt)
+        except subprocess.TimeoutExpired as e:
+            if attempt == MAX_NETWORK_RETRIES:
+                raise InstallationError(f"System package installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
 
-def install_playwright_wheel(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> None:
-    """Download architecture wheel, rename to bypass platform checks, and install with force-reinstall."""
-    download_url, filename = fetch_pypi_wheel_info(version)
+def install_playwright_wheel(version: Optional[str] = None) -> None:
+    """Download architecture wheel with retry, rename to bypass platform checks, and install."""
+    download_url, filename, resolved_version = fetch_pypi_wheel_info(version)
     
     with tempfile.TemporaryDirectory() as temp_dir:
         download_target = os.path.join(temp_dir, filename)
-        renamed_target = os.path.join(temp_dir, f"playwright-{version}-py3-none-any.whl")
+        renamed_target = os.path.join(temp_dir, f"playwright-{resolved_version}-py3-none-any.whl")
 
-        print(f"[*] Downloading Playwright wheel from: {download_url}")
-        try:
-            urllib.request.urlretrieve(download_url, download_target)
-        except Exception as e:
-            raise InstallationError(f"Failed to download wheel from {download_url}: {e}") from e
+        print(f"[*] Downloading Playwright {resolved_version} wheel from: {download_url}")
+        for attempt in range(1, MAX_NETWORK_RETRIES + 1):
+            try:
+                urllib.request.urlretrieve(download_url, download_target)
+                break
+            except Exception as e:
+                if attempt == MAX_NETWORK_RETRIES:
+                    raise InstallationError(f"Failed to download wheel after {MAX_NETWORK_RETRIES} attempts: {e}") from e
+                time.sleep(2 ** attempt)
 
         # Atomic rename to any platform
         os.replace(download_target, renamed_target)
@@ -117,15 +152,19 @@ def install_python_dependencies() -> None:
     except subprocess.TimeoutExpired as e:
         raise InstallationError(f"Python dependency installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
 
-def run_installation_pipeline(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> None:
+def run_installation_pipeline(version: Optional[str] = None) -> None:
     """Execute complete end-to-end installation and verification pipeline."""
     print("=" * 60)
     print("🚀 [Termux-Playwright] Deterministic Installation Pipeline")
     print("=" * 60)
 
+    if is_termux():
+        check_preflight_storage()
+
     if not is_termux():
-        print("[!] Non-Termux environment detected. Installing standard upstream Playwright...")
-        res = subprocess.run([sys.executable, "-m", "pip", "install", f"playwright=={version}"], check=False, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+        target_v = version or DEFAULT_PLAYWRIGHT_VERSION
+        print(f"[!] Non-Termux environment detected. Installing standard upstream Playwright ({target_v})...")
+        res = subprocess.run([sys.executable, "-m", "pip", "install", f"playwright=={target_v}"], check=False, timeout=SUBPROCESS_TIMEOUT_SECONDS)
         if res.returncode != 0:
             raise InstallationError(f"Standard playwright install failed with code {res.returncode}")
         print("[+] Standard Playwright installation complete.")
@@ -162,9 +201,16 @@ def doctor() -> bool:
 
     all_healthy = True
     
-    # 1. Environment
+    # 1. Environment & Storage
     tmx = is_termux()
     print(f"[*] 1. Termux Environment : {'[OK] Detected' if tmx else '[!] Standard OS'}")
+    if tmx:
+        try:
+            free_mb = check_preflight_storage()
+            print(f"[*]    Available Storage  : [OK] {free_mb} MB available")
+        except Exception as e:
+            print(f"[*]    Available Storage  : [FAIL] {e}")
+            all_healthy = False
 
     # 2. CPU Arch
     try:

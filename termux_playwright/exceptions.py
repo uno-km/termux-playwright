@@ -1,7 +1,6 @@
 """Typed Exception hierarchy for termux-playwright.
 
-All exceptions derive from TermuxPlaywrightError, ensuring deterministic
-error handling without suppressing underlying system faults.
+Provides distinct, actionable exceptions without masking underlying faults.
 """
 
 class TermuxPlaywrightError(Exception):
@@ -17,7 +16,7 @@ class BinaryNotFoundError(TermuxPlaywrightError):
     pass
 
 class PatchingError(TermuxPlaywrightError):
-    """Raised when modifying or verifying coreBundle.js fails."""
+    """Raised when modifying, verifying, or rolling back coreBundle.js fails."""
     pass
 
 class InstallationError(TermuxPlaywrightError):
@@ -26,4 +25,8 @@ class InstallationError(TermuxPlaywrightError):
 
 class ProcessLifecycleError(TermuxPlaywrightError):
     """Raised when process spawning, management, or teardown fails."""
+    pass
+
+class StorageExhaustionError(TermuxPlaywrightError):
+    """Raised when available disk space in Termux /tmp or storage is insufficient."""
     pass

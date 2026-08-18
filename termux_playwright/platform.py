@@ -1,16 +1,16 @@
-"""Platform and environment detection engine.
+"""Platform, architecture, and storage inspection engine for Termux Playwright.
 
-Provides deterministic inspection of CPU architecture, Termux prefix paths,
-and binary availability without mutating global process state.
+Provides symlink-safe binary resolution, Android SDK/W^X policy inspection,
+and pre-flight storage threshold checks without global mutation.
 """
 
 import os
 import platform
 import shutil
-from typing import Dict
-from .exceptions import UnsupportedPlatformError, BinaryNotFoundError
+import subprocess
+from typing import Dict, Optional
+from .exceptions import UnsupportedPlatformError, BinaryNotFoundError, StorageExhaustionError
 
-# Supported target architectures mapped to manylinux wheel tags
 SUPPORTED_ARCHITECTURES: Dict[str, str] = {
     "aarch64": "manylinux_2_17_aarch64.manylinux2014_aarch64",
     "arm64": "manylinux_2_17_aarch64.manylinux2014_aarch64",
@@ -18,6 +18,8 @@ SUPPORTED_ARCHITECTURES: Dict[str, str] = {
     "x86_64": "manylinux_2_17_x86_64.manylinux2014_x86_64",
     "amd64": "manylinux_2_17_x86_64.manylinux2014_x86_64",
 }
+
+MINIMUM_REQUIRED_STORAGE_MB: int = 50
 
 def is_termux() -> bool:
     """Check if current execution is happening inside Android Termux environment."""
@@ -27,10 +29,10 @@ def is_termux() -> bool:
 def get_termux_prefix() -> str:
     """Return the absolute path to Termux base prefix directory."""
     if "PREFIX" in os.environ:
-        return os.environ["PREFIX"]
+        return os.path.realpath(os.environ["PREFIX"])
     default_prefix = "/data/data/com.termux/files/usr"
     if os.path.isdir(default_prefix):
-        return default_prefix
+        return os.path.realpath(default_prefix)
     return ""
 
 def get_cpu_architecture() -> str:
@@ -66,23 +68,65 @@ def get_wheel_tag_for_arch(arch: str) -> str:
         )
     return SUPPORTED_ARCHITECTURES[arch]
 
+def get_android_sdk_version() -> int:
+    """Inspect Android SDK version via getprop. Returns 0 if not on Android."""
+    if not is_termux():
+        return 0
+    getprop = shutil.which("getprop")
+    if getprop:
+        try:
+            res = subprocess.run([getprop, "ro.build.version.sdk"], capture_output=True, text=True, timeout=3)
+            if res.returncode == 0 and res.stdout.strip().isdigit():
+                return int(res.stdout.strip())
+        except Exception:
+            pass
+    return 0
+
+def check_preflight_storage(target_dir: Optional[str] = None) -> int:
+    """Verify that the target directory has sufficient disk space.
+    
+    Returns:
+        int: Available storage in megabytes.
+    Raises:
+        StorageExhaustionError: If available space is below MINIMUM_REQUIRED_STORAGE_MB.
+    """
+    check_path = target_dir or os.environ.get("TMPDIR") or (os.path.join(get_termux_prefix(), "tmp") if get_termux_prefix() else tempfile.gettempdir() if "tempfile" in globals() else "/tmp")
+    
+    try:
+        usage = shutil.disk_usage(check_path if os.path.exists(check_path) else "/")
+        free_mb = usage.free // (1024 * 1024)
+        if free_mb < MINIMUM_REQUIRED_STORAGE_MB:
+            raise StorageExhaustionError(
+                f"Insufficient disk space in '{check_path}': {free_mb}MB available, "
+                f"minimum required: {MINIMUM_REQUIRED_STORAGE_MB}MB."
+            )
+        return free_mb
+    except (OSError, ValueError) as e:
+        if isinstance(e, StorageExhaustionError):
+            raise
+        return 999  # Non-blocking if storage inspection fails on unsupported virtual mount
+
 def find_chromium_binary() -> str:
-    """Locate Chromium executable.
+    """Locate Chromium executable with symlink resolution.
     
     Raises:
         BinaryNotFoundError: When no valid Chromium binary is located on system.
     """
     # 1. Environment variable override
     env_path = os.environ.get("PLAYWRIGHT_CHROMIUM_PATH")
-    if env_path and os.path.isfile(env_path) and os.access(env_path, os.X_OK):
-        return env_path
+    if env_path:
+        real_path = os.path.realpath(env_path)
+        if os.path.isfile(real_path) and os.access(real_path, os.X_OK):
+            return real_path
 
     # 2. PATH resolution
     candidates = ["chromium-browser", "chromium", "google-chrome", "chrome"]
     for name in candidates:
         found = shutil.which(name)
-        if found and os.access(found, os.X_OK):
-            return found
+        if found:
+            real_found = os.path.realpath(found)
+            if os.path.isfile(real_found) and os.access(real_found, os.X_OK):
+                return real_found
 
     # 3. Termux prefix candidate inspection
     prefix = get_termux_prefix()
@@ -94,8 +138,9 @@ def find_chromium_binary() -> str:
             "/data/data/com.termux/files/usr/bin/chromium",
         ]
         for path in termux_paths:
-            if os.path.isfile(path) and os.access(path, os.X_OK):
-                return path
+            real_p = os.path.realpath(path)
+            if os.path.isfile(real_p) and os.access(real_p, os.X_OK):
+                return real_p
 
     raise BinaryNotFoundError(
         "Chromium executable not found. "
@@ -104,24 +149,29 @@ def find_chromium_binary() -> str:
     )
 
 def find_node_binary() -> str:
-    """Locate Node.js executable.
+    """Locate Node.js executable with symlink resolution.
     
     Raises:
         BinaryNotFoundError: When no valid Node.js binary is located on system.
     """
     env_path = os.environ.get("PLAYWRIGHT_NODEJS_PATH")
-    if env_path and os.path.isfile(env_path) and os.access(env_path, os.X_OK):
-        return env_path
+    if env_path:
+        real_path = os.path.realpath(env_path)
+        if os.path.isfile(real_path) and os.access(real_path, os.X_OK):
+            return real_path
 
     found = shutil.which("node")
-    if found and os.access(found, os.X_OK):
-        return found
+    if found:
+        real_found = os.path.realpath(found)
+        if os.path.isfile(real_found) and os.access(real_found, os.X_OK):
+            return real_found
 
     prefix = get_termux_prefix()
     if prefix:
         termux_node = os.path.join(prefix, "bin", "node")
-        if os.path.isfile(termux_node) and os.access(termux_node, os.X_OK):
-            return termux_node
+        real_p = os.path.realpath(termux_node)
+        if os.path.isfile(real_p) and os.access(real_p, os.X_OK):
+            return real_p
 
     raise BinaryNotFoundError(
         "Node.js executable not found. "

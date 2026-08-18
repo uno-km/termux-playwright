@@ -1,3 +1,5 @@
+import os
+import signal
 import pytest
 from termux_playwright.reaper import ProcessReaper, TermuxWakeLock
 from termux_playwright.exceptions import ProcessLifecycleError
@@ -14,6 +16,11 @@ def test_process_reaper_session_and_pid_lifecycle():
     assert pid in ProcessReaper._tracked_pids
     ProcessReaper.unregister_pid(pid)
     assert pid not in ProcessReaper._tracked_pids
+
+def test_process_reaper_discover_session_pids_empty():
+    pids = ProcessReaper.discover_session_pids("non_existent_token_xyz")
+    assert isinstance(pids, set)
+    assert len(pids) == 0
 
 def test_termux_wake_lock_strict_raises(monkeypatch):
     monkeypatch.setattr("shutil.which", lambda _: None)

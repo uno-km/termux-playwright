@@ -1,13 +1,14 @@
 """Atomic and verifiable patcher for Playwright coreBundle.js.
 
-Provides transactional byte-level patch injection, verification,
-backup, and rollback capabilities without silent corruption.
+Provides transactional byte-level patch injection, dynamic bundle path discovery,
+permission validation, backup, and rollback capabilities without silent corruption.
 """
 
 import os
+import stat
 import shutil
 import importlib.util
-from typing import Optional
+from typing import Optional, List
 from .exceptions import PatchingError
 
 PATCH_SIGNATURE = 'Object.defineProperty(process, "platform", {value: "linux"});'
@@ -41,12 +42,39 @@ def locate_playwright_package_dir() -> str:
     )
 
 def locate_core_bundle_path() -> str:
-    """Return the absolute path to driver coreBundle.js."""
+    """Dynamically discover the absolute path to driver coreBundle.js across driver layouts."""
     pw_dir = locate_playwright_package_dir()
-    core_bundle = os.path.join(pw_dir, "driver", "package", "lib", "coreBundle.js")
-    if not os.path.isfile(core_bundle):
-        raise PatchingError(f"Playwright coreBundle.js not found at expected path: {core_bundle}")
-    return core_bundle
+    
+    candidate_relative_paths: List[str] = [
+        os.path.join("driver", "package", "lib", "coreBundle.js"),
+        os.path.join("driver", "package", "lib", "server", "coreBundle.js"),
+        os.path.join("driver", "package", "lib", "inprocess.js"),
+        os.path.join("driver", "package", "index.js"),
+    ]
+    
+    for rel_path in candidate_relative_paths:
+        full_path = os.path.join(pw_dir, rel_path)
+        if os.path.isfile(full_path):
+            return full_path
+
+    raise PatchingError(
+        f"Playwright driver bundle not found in '{pw_dir}'. "
+        f"Checked layout paths: {candidate_relative_paths}"
+    )
+
+def ensure_file_writable(path: str) -> None:
+    """Validate write permissions and attempt chmod 644 if file is read-only."""
+    if not os.path.exists(path):
+        return
+    if not os.access(path, os.W_OK):
+        try:
+            current_mode = os.stat(path).st_mode
+            os.chmod(path, current_mode | stat.S_IWUSR)
+        except PermissionError as e:
+            raise PatchingError(
+                f"Permission denied: '{path}' is read-only. "
+                f"Grant write permission via: 'chmod u+w {path}' or run as the file owner."
+            ) from e
 
 def is_core_bundle_patched(target_path: Optional[str] = None) -> bool:
     """Verify if target coreBundle.js already has the platform bypass injected."""
@@ -70,6 +98,8 @@ def apply_core_bundle_patch(target_path: Optional[str] = None) -> bool:
     
     if is_core_bundle_patched(path):
         return False
+
+    ensure_file_writable(path)
 
     backup_path = path + ".bak"
     tmp_path = path + ".tmp"
@@ -111,6 +141,8 @@ def rollback_core_bundle_patch(target_path: Optional[str] = None) -> bool:
 
     if not os.path.isfile(backup_path):
         raise PatchingError(f"Cannot rollback: Backup file does not exist at {backup_path}")
+
+    ensure_file_writable(path)
 
     try:
         os.replace(backup_path, path)
