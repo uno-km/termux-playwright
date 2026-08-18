@@ -8,6 +8,7 @@ import os
 import platform
 import shutil
 import subprocess
+import tempfile
 from typing import Dict, Optional
 from .exceptions import UnsupportedPlatformError, BinaryNotFoundError, StorageExhaustionError
 
@@ -90,7 +91,7 @@ def check_preflight_storage(target_dir: Optional[str] = None) -> int:
     Raises:
         StorageExhaustionError: If available space is below MINIMUM_REQUIRED_STORAGE_MB.
     """
-    check_path = target_dir or os.environ.get("TMPDIR") or (os.path.join(get_termux_prefix(), "tmp") if get_termux_prefix() else tempfile.gettempdir() if "tempfile" in globals() else "/tmp")
+    check_path = target_dir or os.environ.get("TMPDIR") or (os.path.join(get_termux_prefix(), "tmp") if get_termux_prefix() else tempfile.gettempdir())
     
     try:
         usage = shutil.disk_usage(check_path if os.path.exists(check_path) else "/")

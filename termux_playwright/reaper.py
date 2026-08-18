@@ -133,11 +133,10 @@ class ProcessReaper:
                         for line in res.stdout.splitlines():
                             if session_flag in line:
                                 parts = line.strip().split()
-                                # Typically PID is column 0 or 1
-                                for part in parts[:3]:
-                                    if part.isdigit():
-                                        found_pids.add(int(part))
-                                        break
+                                if len(parts) >= 2 and parts[1].isdigit() and (len(parts) > 6 or not parts[0].isdigit()):
+                                    found_pids.add(int(parts[1]))
+                                elif parts and parts[0].isdigit():
+                                    found_pids.add(int(parts[0]))
                     if found_pids:
                         break
                 except Exception:
