@@ -27,12 +27,18 @@ def test_get_cpu_architecture_mapping(monkeypatch):
     monkeypatch.setattr("platform.machine", lambda: "arm64")
     assert get_cpu_architecture() == "aarch64"
 
+    monkeypatch.setattr("platform.machine", lambda: "armv8l")
+    assert get_cpu_architecture() == "aarch64"
+    assert get_wheel_tag_for_arch("armv8l") == SUPPORTED_ARCHITECTURES["armv8l"]
+
     monkeypatch.setattr("platform.machine", lambda: "x86_64")
     assert get_cpu_architecture() == "x86_64"
 
-def test_unsupported_cpu_architecture_raises():
-    with pytest.raises(UnsupportedPlatformError):
-        get_wheel_tag_for_arch("mips64")
+def test_unsupported_32bit_architecture_raises(monkeypatch):
+    monkeypatch.setattr("platform.machine", lambda: "armv7l")
+    with pytest.raises(UnsupportedPlatformError) as exc_info:
+        get_cpu_architecture()
+    assert "32-bit architecture detected" in str(exc_info.value)
 
 def test_find_chromium_binary_env_override(monkeypatch, tmp_path):
     mock_chrome = tmp_path / "mock-chromium"

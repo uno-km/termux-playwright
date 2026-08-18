@@ -24,6 +24,7 @@ from .platform import (
 from .patcher import apply_core_bundle_patch, is_core_bundle_patched, locate_playwright_package_dir
 
 DEFAULT_PLAYWRIGHT_VERSION = "1.61.0"
+SUBPROCESS_TIMEOUT_SECONDS = 300
 
 def fetch_pypi_wheel_info(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> Tuple[str, str]:
     """Query PyPI JSON API for the exact matching architecture wheel URL and filename."""
@@ -33,7 +34,7 @@ def fetch_pypi_wheel_info(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> Tuple[st
 
     try:
         req = urllib.request.Request(api_url, headers={"User-Agent": "termux-playwright-installer"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:
             if resp.status != 200:
                 raise InstallationError(f"PyPI API returned HTTP {resp.status}")
             data = json.loads(resp.read().decode("utf-8"))
@@ -60,11 +61,14 @@ def install_system_dependencies() -> None:
     cmd = [pkg_bin, "install", "-y", "chromium", "nodejs"]
     print(f"[*] Executing system package installation: {' '.join(cmd)}")
     
-    res = subprocess.run(cmd, capture_output=True, text=True)
-    if res.returncode != 0:
-        raise InstallationError(
-            f"Failed to install system packages via pkg (code {res.returncode}):\n{res.stderr or res.stdout}"
-        )
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+        if res.returncode != 0:
+            raise InstallationError(
+                f"Failed to install system packages via pkg (code {res.returncode}):\n{res.stderr or res.stdout}"
+            )
+    except subprocess.TimeoutExpired as e:
+        raise InstallationError(f"System package installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
 
 def install_playwright_wheel(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> None:
     """Download architecture wheel, rename to bypass platform checks, and install with force-reinstall."""
@@ -92,20 +96,26 @@ def install_playwright_wheel(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> None:
             "-q"
         ]
         print(f"[*] Installing modified wheel into Python environment...")
-        res = subprocess.run(pip_cmd, capture_output=True, text=True)
-        if res.returncode != 0:
-            raise InstallationError(
-                f"pip installation of renamed wheel failed (code {res.returncode}):\n{res.stderr}"
-            )
+        try:
+            res = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+            if res.returncode != 0:
+                raise InstallationError(
+                    f"pip installation of renamed wheel failed (code {res.returncode}):\n{res.stderr}"
+                )
+        except subprocess.TimeoutExpired as e:
+            raise InstallationError(f"pip install timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
 
 def install_python_dependencies() -> None:
     """Install core Python dependencies required by Playwright."""
     deps = ["greenlet>=3.1.1", "pyee>=13.0.0", "typing-extensions>=4.12.0"]
     pip_cmd = [sys.executable, "-m", "pip", "install"] + deps
     print(f"[*] Installing Python dependencies: {deps}")
-    res = subprocess.run(pip_cmd, capture_output=True, text=True)
-    if res.returncode != 0:
-        raise InstallationError(f"Failed to install Python dependencies:\n{res.stderr}")
+    try:
+        res = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+        if res.returncode != 0:
+            raise InstallationError(f"Failed to install Python dependencies:\n{res.stderr}")
+    except subprocess.TimeoutExpired as e:
+        raise InstallationError(f"Python dependency installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
 
 def run_installation_pipeline(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> None:
     """Execute complete end-to-end installation and verification pipeline."""
@@ -115,7 +125,7 @@ def run_installation_pipeline(version: str = DEFAULT_PLAYWRIGHT_VERSION) -> None
 
     if not is_termux():
         print("[!] Non-Termux environment detected. Installing standard upstream Playwright...")
-        res = subprocess.run([sys.executable, "-m", "pip", "install", f"playwright=={version}"], check=False)
+        res = subprocess.run([sys.executable, "-m", "pip", "install", f"playwright=={version}"], check=False, timeout=SUBPROCESS_TIMEOUT_SECONDS)
         if res.returncode != 0:
             raise InstallationError(f"Standard playwright install failed with code {res.returncode}")
         print("[+] Standard Playwright installation complete.")

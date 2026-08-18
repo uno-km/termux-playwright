@@ -7,11 +7,13 @@ and binary availability without mutating global process state.
 import os
 import platform
 import shutil
-from typing import Optional, List, Dict
+from typing import Dict
 from .exceptions import UnsupportedPlatformError, BinaryNotFoundError
 
+# Supported target architectures mapped to manylinux wheel tags
 SUPPORTED_ARCHITECTURES: Dict[str, str] = {
     "aarch64": "manylinux_2_17_aarch64.manylinux2014_aarch64",
+    "arm64": "manylinux_2_17_aarch64.manylinux2014_aarch64",
     "armv8l": "manylinux_2_17_aarch64.manylinux2014_aarch64",
     "x86_64": "manylinux_2_17_x86_64.manylinux2014_x86_64",
     "amd64": "manylinux_2_17_x86_64.manylinux2014_x86_64",
@@ -32,15 +34,28 @@ def get_termux_prefix() -> str:
     return ""
 
 def get_cpu_architecture() -> str:
-    """Normalize and validate machine CPU architecture."""
-    arch = platform.machine().lower()
-    if arch in ["arm64", "aarch64"]:
+    """Normalize and validate machine CPU architecture.
+    
+    Raises:
+        UnsupportedPlatformError: If running on a 32-bit ARM (armv7l) or unsupported arch.
+    """
+    raw_arch = platform.machine().lower()
+    
+    if raw_arch in ["aarch64", "arm64", "armv8l"]:
         return "aarch64"
-    elif arch in ["x86_64", "amd64"]:
+    elif raw_arch in ["x86_64", "amd64"]:
         return "x86_64"
-    elif arch in ["armv7l", "armv8l", "arm"]:
-        return "armv7l"
-    return arch
+    elif raw_arch in ["armv7l", "arm", "armv7", "i686", "i386"]:
+        raise UnsupportedPlatformError(
+            f"32-bit architecture detected: '{raw_arch}'. "
+            f"Playwright upstream only provides 64-bit binaries (aarch64, x86_64). "
+            f"Termux on 32-bit Android devices is not supported."
+        )
+    else:
+        raise UnsupportedPlatformError(
+            f"Unsupported CPU architecture: '{raw_arch}'. "
+            f"Supported architectures: {list(SUPPORTED_ARCHITECTURES.keys())}"
+        )
 
 def get_wheel_tag_for_arch(arch: str) -> str:
     """Return the manylinux wheel tag for the detected architecture."""
