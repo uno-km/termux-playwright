@@ -25,7 +25,7 @@ from .platform import (
 )
 from .patcher import apply_core_bundle_patch, is_core_bundle_patched, locate_playwright_package_dir
 
-DEFAULT_PLAYWRIGHT_VERSION = "1.61.0"
+DEFAULT_PLAYWRIGHT_VERSION = "1.61.1"
 SUBPROCESS_TIMEOUT_SECONDS = 300
 MAX_NETWORK_RETRIES = 3
 
@@ -41,8 +41,15 @@ def resolve_latest_compatible_version() -> str:
                 latest = info.get("version")
                 if latest:
                     return latest
-    except Exception:
-        pass
+    except Exception as e:
+        import warnings
+        warnings.warn(
+            f"Could not query PyPI for latest Playwright version ({e}). "
+            f"Using known-compatible version {DEFAULT_PLAYWRIGHT_VERSION}. "
+            f"To override, pass an explicit version parameter.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     return DEFAULT_PLAYWRIGHT_VERSION
 
 def fetch_pypi_wheel_info(version: Optional[str] = None) -> Tuple[str, str, str]:
@@ -112,7 +119,9 @@ def install_playwright_wheel(version: Optional[str] = None) -> None:
         print(f"[*] Downloading Playwright {resolved_version} wheel from: {download_url}")
         for attempt in range(1, MAX_NETWORK_RETRIES + 1):
             try:
-                urllib.request.urlretrieve(download_url, download_target)
+                req = urllib.request.Request(download_url, headers={"User-Agent": "termux-playwright-installer"})
+                with urllib.request.urlopen(req, timeout=30) as resp, open(download_target, "wb") as out_f:
+                    shutil.copyfileobj(resp, out_f, length=64 * 1024)
                 break
             except Exception as e:
                 if attempt == MAX_NETWORK_RETRIES:

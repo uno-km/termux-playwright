@@ -42,3 +42,27 @@ def test_atomic_patch_and_rollback(tmp_path):
 def test_patch_nonexistent_file():
     with pytest.raises(PatchingError):
         apply_core_bundle_patch("/non/existent/path/coreBundle.js")
+
+def test_cleanup_backup(tmp_path):
+    from termux_playwright.patcher import cleanup_backup
+    mock_bundle = tmp_path / "coreBundle.js"
+    mock_bundle.write_text("dummy", encoding="utf-8")
+    mock_bak = tmp_path / "coreBundle.js.bak"
+    mock_bak.write_text("backup_content", encoding="utf-8")
+
+    assert cleanup_backup(str(mock_bundle)) is True
+    assert not mock_bak.exists()
+    assert cleanup_backup(str(mock_bundle)) is False
+
+def test_locate_core_bundle_path_recursive_fallback(tmp_path, monkeypatch):
+    from termux_playwright.patcher import locate_core_bundle_path
+    
+    deep_nested = tmp_path / "playwright_custom" / "sub" / "lib"
+    deep_nested.mkdir(parents=True)
+    custom_bundle = deep_nested / "coreBundle.js"
+    custom_bundle.write_text("console.log('custom')", encoding="utf-8")
+
+    monkeypatch.setattr("termux_playwright.patcher.locate_playwright_package_dir", lambda: str(tmp_path / "playwright_custom"))
+    found = locate_core_bundle_path()
+    assert found == str(custom_bundle)
+

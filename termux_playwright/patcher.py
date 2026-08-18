@@ -4,12 +4,15 @@ Provides transactional byte-level patch injection, dynamic bundle path discovery
 permission validation, backup, and rollback capabilities without silent corruption.
 """
 
+import logging
 import os
 import stat
 import shutil
 import importlib.util
 from typing import Optional, List
 from .exceptions import PatchingError
+
+logger = logging.getLogger(__name__)
 
 PATCH_SIGNATURE = 'Object.defineProperty(process, "platform", {value: "linux"});'
 PATCH_PAYLOAD = (
@@ -25,8 +28,8 @@ def locate_playwright_package_dir() -> str:
             path = list(spec.submodule_search_locations)[0]
             if os.path.isdir(path):
                 return path
-    except Exception:
-        pass
+    except (ImportError, ModuleNotFoundError, ValueError) as e:
+        logger.debug("importlib.util.find_spec('playwright') failed: %s", e)
 
     try:
         import playwright
@@ -34,8 +37,8 @@ def locate_playwright_package_dir() -> str:
             path = os.path.dirname(playwright.__file__)
             if os.path.isdir(path):
                 return path
-    except Exception:
-        pass
+    except (ImportError, ModuleNotFoundError) as e:
+        logger.debug("Direct playwright import failed: %s", e)
 
     raise PatchingError(
         "Playwright Python package is not installed or cannot be imported in the current environment."
@@ -56,6 +59,15 @@ def locate_core_bundle_path() -> str:
         full_path = os.path.join(pw_dir, rel_path)
         if os.path.isfile(full_path):
             return full_path
+
+    # Dynamic recursive scan fallback for future Playwright directory layout changes
+    target_filenames = {"coreBundle.js", "inprocess.js"}
+    for root, _, files in os.walk(pw_dir):
+        for f in files:
+            if f in target_filenames:
+                found = os.path.join(root, f)
+                if os.path.isfile(found):
+                    return found
 
     raise PatchingError(
         f"Playwright driver bundle not found in '{pw_dir}'. "
@@ -130,8 +142,8 @@ def apply_core_bundle_patch(target_path: Optional[str] = None) -> bool:
         if os.path.exists(tmp_path):
             try:
                 os.remove(tmp_path)
-            except OSError:
-                pass
+            except OSError as cleanup_err:
+                logger.warning("Failed to clean up temporary file '%s': %s", tmp_path, cleanup_err)
         raise PatchingError(f"Atomic patch application failed on {path}: {e}") from e
 
 def rollback_core_bundle_patch(target_path: Optional[str] = None) -> bool:
@@ -149,3 +161,26 @@ def rollback_core_bundle_patch(target_path: Optional[str] = None) -> bool:
         return True
     except Exception as e:
         raise PatchingError(f"Rollback failed: {e}") from e
+
+def cleanup_backup(target_path: Optional[str] = None) -> bool:
+    """Remove the .bak backup file created during patching.
+    
+    Call this after verifying that the patch is working correctly
+    and a rollback is no longer needed.
+    
+    Returns:
+        bool: True if backup was removed, False if no backup existed.
+    Raises:
+        PatchingError: If the backup file exists but cannot be deleted.
+    """
+    path = target_path or locate_core_bundle_path()
+    backup_path = path + ".bak"
+    
+    if not os.path.isfile(backup_path):
+        return False
+    
+    try:
+        os.remove(backup_path)
+        return True
+    except OSError as e:
+        raise PatchingError(f"Failed to remove backup file '{backup_path}': {e}") from e

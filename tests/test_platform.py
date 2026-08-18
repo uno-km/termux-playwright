@@ -10,6 +10,7 @@ from termux_playwright.platform import (
     check_preflight_storage,
     get_android_sdk_version,
     SUPPORTED_ARCHITECTURES,
+    ANDROID_10_SDK_VERSION,
 )
 from termux_playwright.exceptions import UnsupportedPlatformError, BinaryNotFoundError, StorageExhaustionError
 
@@ -17,10 +18,22 @@ def test_is_termux_with_prefix(monkeypatch):
     monkeypatch.setenv("PREFIX", "/data/data/com.termux/files/usr")
     assert is_termux() is True
 
+def test_is_termux_with_custom_termux_variants(monkeypatch):
+    monkeypatch.setenv("PREFIX", "/data/data/io.neoterm/files/usr")
+    assert is_termux() is True
+
+    monkeypatch.setenv("PREFIX", "/data/data/com.termux.float/files/usr")
+    assert is_termux() is True
+
+    monkeypatch.delenv("PREFIX", raising=False)
+    monkeypatch.setenv("TERMUX_VERSION", "0.118.0")
+    assert is_termux() is True
+
 def test_is_termux_without_prefix(monkeypatch):
     monkeypatch.delenv("PREFIX", raising=False)
-    if not os.path.exists("/data/data/com.termux"):
-        assert is_termux() is False
+    monkeypatch.delenv("TERMUX_VERSION", raising=False)
+    monkeypatch.setattr("os.path.exists", lambda _: False)
+    assert is_termux() is False
 
 def test_get_cpu_architecture_mapping(monkeypatch):
     monkeypatch.setattr("platform.machine", lambda: "aarch64")
@@ -84,3 +97,23 @@ def test_check_preflight_storage_healthy(monkeypatch, tmp_path):
 
     free_mb = check_preflight_storage(str(tmp_path))
     assert free_mb == 500
+
+def test_get_android_sdk_version_non_termux(monkeypatch):
+    monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: False)
+    assert get_android_sdk_version() == 0
+
+def test_get_android_sdk_version_termux_success(monkeypatch):
+    monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: True)
+    monkeypatch.setattr("shutil.which", lambda cmd: "/bin/getprop" if cmd == "getprop" else None)
+    
+    class FakeProc:
+        returncode = 0
+        stdout = "31\n"
+    monkeypatch.setattr("subprocess.run", lambda *a, **kw: FakeProc())
+    assert get_android_sdk_version() == 31
+
+def test_get_android_sdk_version_termux_fallback_on_failure(monkeypatch):
+    monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: True)
+    monkeypatch.setattr("shutil.which", lambda _: None)
+    # Must return safe default SDK 29 to protect against SELinux W^X violation
+    assert get_android_sdk_version() == ANDROID_10_SDK_VERSION

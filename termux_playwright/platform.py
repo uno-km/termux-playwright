@@ -4,13 +4,16 @@ Provides symlink-safe binary resolution, Android SDK/W^X policy inspection,
 and pre-flight storage threshold checks without global mutation.
 """
 
+import logging
 import os
 import platform
 import shutil
 import subprocess
 import tempfile
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple, List
 from .exceptions import UnsupportedPlatformError, BinaryNotFoundError, StorageExhaustionError
+
+logger = logging.getLogger(__name__)
 
 SUPPORTED_ARCHITECTURES: Dict[str, str] = {
     "aarch64": "manylinux_2_17_aarch64.manylinux2014_aarch64",
@@ -20,20 +23,36 @@ SUPPORTED_ARCHITECTURES: Dict[str, str] = {
     "amd64": "manylinux_2_17_x86_64.manylinux2014_x86_64",
 }
 
+KNOWN_TERMUX_PREFIXES: Tuple[str, ...] = (
+    "com.termux",
+    "com.termux.float",
+    "com.termux.nix",
+    "io.neoterm",
+)
+
 MINIMUM_REQUIRED_STORAGE_MB: int = 50
+ANDROID_10_SDK_VERSION: int = 29
 
 def is_termux() -> bool:
-    """Check if current execution is happening inside Android Termux environment."""
+    """Check if current execution is happening inside Android Termux or compatible environment."""
     prefix = os.environ.get("PREFIX", "")
-    return "com.termux" in prefix or os.path.exists("/data/data/com.termux")
+    if any(sig in prefix for sig in KNOWN_TERMUX_PREFIXES):
+        return True
+    if "TERMUX_VERSION" in os.environ:
+        return True
+    for pkg in KNOWN_TERMUX_PREFIXES:
+        if os.path.exists(f"/data/data/{pkg}"):
+            return True
+    return False
 
 def get_termux_prefix() -> str:
     """Return the absolute path to Termux base prefix directory."""
     if "PREFIX" in os.environ:
         return os.path.realpath(os.environ["PREFIX"])
-    default_prefix = "/data/data/com.termux/files/usr"
-    if os.path.isdir(default_prefix):
-        return os.path.realpath(default_prefix)
+    for pkg in KNOWN_TERMUX_PREFIXES:
+        default_prefix = f"/data/data/{pkg}/files/usr"
+        if os.path.isdir(default_prefix):
+            return os.path.realpath(default_prefix)
     return ""
 
 def get_cpu_architecture() -> str:
@@ -70,18 +89,39 @@ def get_wheel_tag_for_arch(arch: str) -> str:
     return SUPPORTED_ARCHITECTURES[arch]
 
 def get_android_sdk_version() -> int:
-    """Inspect Android SDK version via getprop. Returns 0 if not on Android."""
+    """Inspect Android SDK version via getprop.
+    
+    Returns:
+        int: Android API level (e.g., 29 for Android 10).
+             Returns 0 if not running on Android.
+             If inside Termux and getprop inspection fails, returns conservative
+             safe default (SDK 29) to enforce W^X memory protection and prevent crash.
+    """
     if not is_termux():
         return 0
+        
     getprop = shutil.which("getprop")
     if getprop:
         try:
-            res = subprocess.run([getprop, "ro.build.version.sdk"], capture_output=True, text=True, timeout=3)
+            res = subprocess.run(
+                [getprop, "ro.build.version.sdk"],
+                capture_output=True, text=True, timeout=3,
+            )
             if res.returncode == 0 and res.stdout.strip().isdigit():
                 return int(res.stdout.strip())
-        except Exception:
-            pass
-    return 0
+            logger.warning(
+                "getprop returned non-numeric SDK version: rc=%d, stdout=%r",
+                res.returncode, res.stdout.strip(),
+            )
+        except Exception as e:
+            logger.warning("Failed to query Android SDK version via getprop: %s", e)
+            
+    # Conservative safe default for Android Termux: Enforce W^X policy compliance
+    logger.info(
+        "Defaulting to Android SDK %d for Termux to guarantee W^X memory policy safety.",
+        ANDROID_10_SDK_VERSION,
+    )
+    return ANDROID_10_SDK_VERSION
 
 def check_preflight_storage(target_dir: Optional[str] = None) -> int:
     """Verify that the target directory has sufficient disk space.
@@ -102,13 +142,28 @@ def check_preflight_storage(target_dir: Optional[str] = None) -> int:
                 f"minimum required: {MINIMUM_REQUIRED_STORAGE_MB}MB."
             )
         return free_mb
+    except StorageExhaustionError:
+        raise
     except (OSError, ValueError) as e:
-        if isinstance(e, StorageExhaustionError):
-            raise
-        return 999  # Non-blocking if storage inspection fails on unsupported virtual mount
+        raise StorageExhaustionError(
+            f"Cannot verify available disk space at '{check_path}': {e}. "
+            f"Ensure the filesystem is accessible, or pass a valid target_dir."
+        ) from e
+
+def _get_candidate_prefix_paths() -> List[str]:
+    """Return all possible prefix root directories for binary discovery."""
+    prefixes: List[str] = []
+    active_prefix = get_termux_prefix()
+    if active_prefix and active_prefix not in prefixes:
+        prefixes.append(active_prefix)
+    for pkg in KNOWN_TERMUX_PREFIXES:
+        p = os.path.realpath(f"/data/data/{pkg}/files/usr")
+        if p not in prefixes:
+            prefixes.append(p)
+    return prefixes
 
 def find_chromium_binary() -> str:
-    """Locate Chromium executable with symlink resolution.
+    """Locate Chromium executable with symlink resolution across standard and Termux paths.
     
     Raises:
         BinaryNotFoundError: When no valid Chromium binary is located on system.
@@ -129,14 +184,11 @@ def find_chromium_binary() -> str:
             if os.path.isfile(real_found) and os.access(real_found, os.X_OK):
                 return real_found
 
-    # 3. Termux prefix candidate inspection
-    prefix = get_termux_prefix()
-    if prefix:
+    # 3. Termux prefix candidate inspection across all known terminal forks
+    for prefix in _get_candidate_prefix_paths():
         termux_paths = [
             os.path.join(prefix, "bin", "chromium-browser"),
             os.path.join(prefix, "bin", "chromium"),
-            "/data/data/com.termux/files/usr/bin/chromium-browser",
-            "/data/data/com.termux/files/usr/bin/chromium",
         ]
         for path in termux_paths:
             real_p = os.path.realpath(path)
@@ -150,7 +202,7 @@ def find_chromium_binary() -> str:
     )
 
 def find_node_binary() -> str:
-    """Locate Node.js executable with symlink resolution.
+    """Locate Node.js executable with symlink resolution across standard and Termux paths.
     
     Raises:
         BinaryNotFoundError: When no valid Node.js binary is located on system.
@@ -167,8 +219,7 @@ def find_node_binary() -> str:
         if os.path.isfile(real_found) and os.access(real_found, os.X_OK):
             return real_found
 
-    prefix = get_termux_prefix()
-    if prefix:
+    for prefix in _get_candidate_prefix_paths():
         termux_node = os.path.join(prefix, "bin", "node")
         real_p = os.path.realpath(termux_node)
         if os.path.isfile(real_p) and os.access(real_p, os.X_OK):

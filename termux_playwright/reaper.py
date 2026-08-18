@@ -14,8 +14,14 @@ import shutil
 import sys
 import glob
 import threading
+import logging
+import warnings
 from typing import Set, Optional, Callable, Dict, Any, List
 from .exceptions import ProcessLifecycleError
+
+logger = logging.getLogger(__name__)
+
+SIGKILL_SIGNAL = getattr(signal, "SIGKILL", getattr(signal, "SIGTERM", 9))
 
 class ProcessReaper:
     """Thread-safe manager that tracks and reaps Chromium processes scoped strictly to this session."""
@@ -55,21 +61,36 @@ class ProcessReaper:
 
     @classmethod
     def kill_all_tracked(cls) -> None:
-        """Forcefully terminate only registered child processes and session-tagged processes."""
+        """Forcefully terminate only registered child processes and session-tagged processes.
+        
+        Design: Snapshots tracked state under lock, then performs expensive I/O
+        (subprocess calls for session zombie reaping) OUTSIDE the lock to prevent
+        deadlock/freezing during atexit or signal handling.
+        """
+        # 1. Snapshot and clear under lock — O(1) swap, no I/O
         with cls._lock:
-            # 1. Kill directly tracked PIDs
-            for pid in list(cls._tracked_pids):
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except (ProcessLookupError, PermissionError):
-                    pass
-                finally:
-                    cls._tracked_pids.discard(pid)
+            pids_snapshot = set(cls._tracked_pids)
+            sessions_snapshot = set(cls._tracked_sessions)
+            cls._tracked_pids.clear()
+            cls._tracked_sessions.clear()
 
-            # 2. Reap session-scoped orphaned processes via multi-tier inspection (No blind pkill)
-            for token in list(cls._tracked_sessions):
+        # 2. Kill directly tracked PIDs — no lock held, no subprocess calls
+        for pid in pids_snapshot:
+            try:
+                os.kill(pid, SIGKILL_SIGNAL)
+            except (ProcessLookupError, PermissionError):
+                pass
+
+        # 3. Reap session-scoped orphaned processes — no lock held
+        #    Each session cleanup is isolated: one failure must not prevent others
+        for token in sessions_snapshot:
+            try:
                 cls.reap_session_zombies(token)
-                cls._tracked_sessions.discard(token)
+            except Exception as exc:
+                try:
+                    logger.debug("Session zombie cleanup failed for %s: %s", token, exc)
+                except Exception:
+                    pass
 
     @classmethod
     def discover_session_pids(cls, session_token: str) -> Set[int]:
@@ -93,7 +114,7 @@ class ProcessReaper:
                 with open(cmdline_file, "rb") as f:
                     cmd_bytes = f.read()
                     if session_flag_bytes in cmd_bytes:
-                        pid_str = cmdline_file.split("/")[2]
+                        pid_str = os.path.basename(os.path.dirname(cmdline_file))
                         if pid_str.isdigit():
                             found_pids.add(int(pid_str))
             except (OSError, ValueError, PermissionError):
@@ -113,36 +134,61 @@ class ProcessReaper:
                     for line in out.stdout.strip().split("\n"):
                         if line.strip().isdigit():
                             found_pids.add(int(line.strip()))
-            except Exception:
-                pass
+            except (subprocess.TimeoutExpired, OSError) as e:
+                logger.debug("pgrep fallback failed for session %s: %s", session_token, e)
 
         # Tier 3: ps / busybox ps / toolbox ps fallback for Android 11+ SELinux
         if not found_pids:
-            ps_commands: List[List[str]] = [
-                ["ps", "-ef"],
-                ["busybox", "ps", "-ef"],
-                ["ps", "-A", "-o", "pid,args"],
-                ["ps"],
-            ]
-            for ps_cmd in ps_commands:
-                if not shutil.which(ps_cmd[0]):
-                    continue
-                try:
-                    res = subprocess.run(ps_cmd, capture_output=True, text=True, timeout=5, check=False)
-                    if res.returncode == 0:
-                        for line in res.stdout.splitlines():
-                            if session_flag in line:
-                                parts = line.strip().split()
-                                if len(parts) >= 2 and parts[1].isdigit() and (len(parts) > 6 or not parts[0].isdigit()):
-                                    found_pids.add(int(parts[1]))
-                                elif parts and parts[0].isdigit():
-                                    found_pids.add(int(parts[0]))
-                    if found_pids:
-                        break
-                except Exception:
-                    continue
+            found_pids.update(cls._discover_via_ps(session_flag))
 
         return found_pids
+
+    @classmethod
+    def _discover_via_ps(cls, session_flag: str) -> Set[int]:
+        """Parse ps output to find processes matching session flag.
+        Uses header-based PID column detection for cross-platform reliability."""
+        found_pids: Set[int] = set()
+        ps_commands: List[List[str]] = [
+            ["ps", "-A", "-o", "pid,args"],
+            ["ps", "-ef"],
+            ["busybox", "ps", "-ef"],
+            ["ps"],
+        ]
+        for ps_cmd in ps_commands:
+            if not shutil.which(ps_cmd[0]):
+                continue
+            try:
+                res = subprocess.run(
+                    ps_cmd, capture_output=True, text=True, timeout=5, check=False
+                )
+                if res.returncode != 0:
+                    continue
+                lines = res.stdout.splitlines()
+                if len(lines) < 2:
+                    continue
+                pid_col = cls._detect_pid_column(lines[0])
+                for line in lines[1:]:
+                    if session_flag not in line:
+                        continue
+                    parts = line.strip().split()
+                    if pid_col < len(parts) and parts[pid_col].isdigit():
+                        found_pids.add(int(parts[pid_col]))
+                if found_pids:
+                    break
+            except (subprocess.TimeoutExpired, OSError) as e:
+                logger.debug("ps fallback '%s' failed: %s", ' '.join(ps_cmd), e)
+                continue
+        return found_pids
+
+    @staticmethod
+    def _detect_pid_column(header_line: str) -> int:
+        """Detect PID column index from ps header line.
+        Returns 0-based column index. Falls back to 0 if PID header not found."""
+        parts = header_line.strip().upper().split()
+        for i, part in enumerate(parts):
+            if part == "PID":
+                return i
+        return 0
 
     @classmethod
     def reap_session_zombies(cls, session_token: str) -> int:
@@ -158,7 +204,7 @@ class ProcessReaper:
             if pid == current_pid:
                 continue  # Never kill self
             try:
-                os.kill(pid, signal.SIGKILL)
+                os.kill(pid, SIGKILL_SIGNAL)
                 reaped_count += 1
             except (ProcessLookupError, PermissionError):
                 pass
@@ -199,10 +245,87 @@ class ProcessReaper:
                     cls._original_signal_handlers[sig] = signal.getsignal(sig)
                     signal.signal(sig, _chained_signal_handler)
                 except (ValueError, AttributeError):
-                    # Signal registration fails if called from a non-main thread; gracefully skip
-                    pass
+                    warnings.warn(
+                        f"Cannot install signal handler for {sig.name} "
+                        f"(likely called from a non-main thread). "
+                        f"Orphaned Chromium processes may not be cleaned up on {sig.name}. "
+                        f"atexit cleanup is still registered.",
+                        RuntimeWarning,
+                        stacklevel=3,
+                    )
 
             cls._installed_handlers = True
+
+
+def cli_reap_orphans() -> None:
+    """CLI entry point: Scan for and terminate orphaned Chromium processes
+    tagged with termux-playwright session markers.
+    
+    Scans /proc/*/cmdline for any process containing --termux-session-id= flag
+    and terminates them. Intended for manual cleanup of leaked browser processes.
+    """
+    session_flag = "--termux-session-id="
+    session_flag_bytes = session_flag.encode("utf-8")
+    found_pids: Set[int] = set()
+    current_pid = os.getpid()
+
+    # Primary: /proc scan
+    proc_entries = glob.glob("/proc/[0-9]*/cmdline")
+    for cmdline_file in proc_entries:
+        try:
+            with open(cmdline_file, "rb") as f:
+                cmd_bytes = f.read()
+                if session_flag_bytes in cmd_bytes:
+                    pid_str = os.path.basename(os.path.dirname(cmdline_file))
+                    if pid_str.isdigit():
+                        pid = int(pid_str)
+                        if pid != current_pid:
+                            found_pids.add(pid)
+        except (OSError, ValueError, PermissionError):
+            continue
+
+    # Secondary: pgrep
+    if not found_pids:
+        pgrep_bin = shutil.which("pgrep")
+        if pgrep_bin:
+            try:
+                out = subprocess.run(
+                    [pgrep_bin, "-f", session_flag],
+                    capture_output=True, text=True, timeout=5, check=False,
+                )
+                if out.returncode == 0:
+                    for line in out.stdout.strip().split("\n"):
+                        stripped = line.strip()
+                        if stripped.isdigit():
+                            pid = int(stripped)
+                            if pid != current_pid:
+                                found_pids.add(pid)
+            except (subprocess.TimeoutExpired, OSError):
+                pass
+
+    # Tertiary: ps / busybox ps for Android 11+ SELinux when pgrep is absent
+    if not found_pids:
+        ps_pids = ProcessReaper._discover_via_ps(session_flag)
+        for pid in ps_pids:
+            if pid != current_pid:
+                found_pids.add(pid)
+
+    if not found_pids:
+        print("[*] No orphaned termux-playwright Chromium processes found.")
+        return
+
+    reaped = 0
+    for pid in found_pids:
+        try:
+            os.kill(pid, SIGKILL_SIGNAL)
+            reaped += 1
+            print(f"[+] Killed orphaned process: PID {pid}")
+        except ProcessLookupError:
+            print(f"[*] Process {pid} already exited.")
+        except PermissionError:
+            print(f"[!] Permission denied for PID {pid}. Run as same user or root.")
+
+    print(f"\n[*] Reap complete: {reaped}/{len(found_pids)} processes terminated.")
 
 
 class TermuxWakeLock:

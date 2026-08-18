@@ -17,13 +17,14 @@
 ## 🚀 전 세계 어디서든 1초 만에 설치하기 (PyPI 공식 배포)
 
 이 삽질의 결정체를 저만 쓰기 아까워서, 아예 파이썬 공식 패키지 저장소(PyPI)에 등록해버렸습니다!! 
-이제 폰을 초기화하거나 새 폰을 가져오셔도 복잡한 스크립트 칠 필요 없이 아래 명령어 **한 줄**이면 설치가 끝납니다.
+이제 폰을 초기화하거나 새 폰을 가져오셔도 복잡한 스크립트 칠 필요 없이 아래 명령어 **두 줄**이면 설치가 끝납니다.
 
 ```bash
 pip install termux-playwright
+termux-playwright-install
 ```
 
-> **🔥 이 한 줄이 백그라운드에서 해주는 일:**
+> **🔥 이 설치 명령어가 백그라운드에서 해주는 일:**
 > 1. Termux용 `chromium`, `nodejs` 자동 설치
 > 2. OS 플랫폼 우회용 휠(Wheel) 다운로드 및 강제 패키징
 > 3. Playwright 코어 엔진(`coreBundle.js`)에 리눅스 강제 인식 패치 주입
@@ -51,91 +52,39 @@ Playwright의 심장부 소스코드는 안드로이드(Android)를 감지하면
 ### 3. 환경변수(.env) 설정
 Playwright가 아까 설치한 Termux 전용 Chromium과 Node.js 경로를 정확히 바라보도록 환경변수를 강제 지정해줬습니다.
 
-### 💡 이 모든 과정을 자동화한 쉘 스크립트 (node_manager.sh)
-이 복잡한 과정을 수동으로 입력하다 보면 꼭 오타가 나거나 꼬이기 마련입니다. 그래서 깃허브에 올려둔 소스코드에는 이를 한 번에 해결하는 **통합 설치 스크립트(`node_manager.sh`)**가 포함되어 있습니다.
-
-내부 핵심 로직을 살짝 들여다보면 이렇습니다:
-
-```bash
-# 1. 휠(Wheel) 우회 다운로드 및 설치
-WHL_ORIGINAL="playwright-1.61.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
-WHL_RENAMED="playwright-1.61.0-py3-none-any.whl"
-wget -q --show-progress "$DOWNLOAD_URL" -O "$WHL_ORIGINAL"
-mv "$WHL_ORIGINAL" "$WHL_RENAMED"  # OS 플랫폼 검사를 우회하기 위해 파일명 위장!
-pip install "$WHL_RENAMED" --force-reinstall --no-deps -q
-
-# 2. 파이썬을 이용한 coreBundle.js 자동 패치 (핵심!)
-python - <<'PYEOF'
-import sys, os, site
-SITE_PACKAGES = [p for p in site.getsitepackages() if os.path.isdir(p)][0]
-COREBUNDLE = f"{SITE_PACKAGES}/playwright/driver/package/lib/coreBundle.js"
-with open(COREBUNDLE, 'r', encoding='utf-8') as f:
-    content = f.read()
-# "난 안드로이드가 아니라 리눅스야" 라고 세뇌시키는 자바스크립트 코드 주입
-INJECTION = 'Object.defineProperty(process, "platform", {value: "linux"});\nObject.defineProperty(require("os"), "platform", {value: () => "linux"});\n'
-with open(COREBUNDLE, 'w', encoding='utf-8') as f:
-    f.write(INJECTION + content)
-PYEOF
-```
-
-플랫폼 종속성 검사를 속이기 위해 `.whl` 파일 이름을 강제로 변경(`none-any.whl`)해서 설치하고, Playwright 내부 엔진에 리눅스 환경 변수를 강제로 때려 박는(Injection) 야생의 로직입니다. 이 스크립트 덕분에 기기를 초기화하더라도 명령어 한 줄이면 완벽하게 세팅이 끝납니다!
-
 ---
 
-## 💻 코드 설명 및 로직 (termux_crawler_demo.py)
+## 💻 코드 설명 및 로직 (`examples/basic_crawler.py`)
 
 자, 그럼 이제 환경이 구축되었으니 실제로 크롤링을 수행하는 샘플 코드를 보겠습니다.
 
 ```python
 import asyncio
-import os
-import sys
-
-# [핵심 로직 1] 
-# 실행하기 전에 Termux 내부의 브라우저와 Node.js 경로를 강제로 쥐어줍니다.
-os.environ["PLAYWRIGHT_CHROMIUM_PATH"] = "/data/data/com.termux/files/usr/bin/chromium-browser"
-os.environ["PLAYWRIGHT_NODEJS_PATH"] = "/data/data/com.termux/files/usr/bin/node"
-
 from playwright.async_api import async_playwright
+import termux_playwright
 
 async def run_crawler():
     print("🚀 [Termux] Playwright 크롤러 초기화 중...")
     
     async with async_playwright() as p:
-        # [핵심 로직 2]
-        # 안드로이드에서는 브라우저 샌드박스가 충돌을 일으키므로 --no-sandbox 옵션이 필수입니다!
-        browser = await p.chromium.launch(
-            executable_path=os.environ["PLAYWRIGHT_CHROMIUM_PATH"],
-            headless=True,
-            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
-        )
+        # termux_playwright.launch()가 자동으로 환경변수, 샌드박스 완화, eMMC 마모 방지 인자를 주입합니다!
+        browser = await termux_playwright.launch(p, headless=True)
         
         print("🌐 브라우저 실행 완료! 네이버(Naver)로 접속합니다...")
         page = await browser.new_page()
-        
         await page.goto("https://www.naver.com", timeout=60000)
         
-        # 페이지 제목 추출! (Javascript 렌더링이 다 끝난 동적 데이터 수집 확인)
         title = await page.title()
         print(f"\n✅ [접속 성공] 추출된 페이지 제목: {title}")
-        
         await browser.close()
 
 if __name__ == "__main__":
     asyncio.run(run_crawler())
 ```
 
-### 코드 요약 (쌩초보를 위한 해설)
-1. 파이썬 코드 최상단에서 **"내가 설치한 크로미움 브라우저 위치"**를 알려줍니다.
-2. Playwright를 비동기(`async`)로 가동하고 브라우저를 엽니다. 이때 **`--no-sandbox`** 옵션을 안 주면 폰에서 뻗어버리니 주의하세요!
-3. 네이버에 접속해서 브라우저 타이틀을 정상적으로 긁어오면 끝! 동적 웹페이지(SPA) 크롤링이 스마트폰에서 되는 겁니다!
-
 ---
 
 ## 🧪 실물 기기(S7) 라이브 테스트 화면
-
-자, 이제 환경도 완벽하고 1초 컷 자동 설치 패키지도 만들었으니 떨리는 마음으로 갤럭시 S7 Termux 콘솔에서 직접 돌려보겠습니다. 
-블로그를 보시는 분들도 남는 폰이 있다면 터뮤즈를 켜시고 저랑 똑같이 타이핑해 보세요!
 
 **1. 테스트용 폴더 만들고 들어가기**
 ```bash
@@ -146,18 +95,17 @@ cd test-playwright
 **2. 대망의 파이썬 패키지 갈기기! (설치)**
 ```bash
 pip install termux-playwright
+termux-playwright-install
 ```
-> 제가 만든 이 패키지를 설치하시면 백그라운드에서 `Chromium`과 `Node.js`를 깔고 리눅스 꼼수 패치까지 전부 싹 다 자동으로 진행해 줍니다!! 
 
-**3. 테스트 코드(데모 스크립트) 가져오기**
+**3. 예제 코드 가져오기**
 ```bash
-wget https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/termux_crawler_demo.py
+wget https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/examples/basic_crawler.py
 ```
-> 일일이 코드 치실 필요 없이 깃허브에서 wget으로 단숨에 땡겨왔습니다!
 
 **4. 결과 보기 (크롤링 구동!)**
 ```bash
-python termux_crawler_demo.py
+python basic_crawler.py
 ```
 
 **(실행 결과 로그)**
@@ -176,9 +124,5 @@ python termux_crawler_demo.py
 서랍 속 낡은 스마트폰을 리눅스 서버로 바꾸고, 거기에 동적 크롤링의 끝판왕인 Playwright까지 구동시켰습니다.
 "이게 될까?" 싶었던 게 하나씩 풀릴 때마다 코딩의 참맛을 느끼네요. 
 
-데이터 수집이 자동화되었으니, 다음 포스팅부터는 이 폰이 밤새 모아준 엄청난 양의 텍스트 데이터를 가지고 저번 포스팅에서 실패했던 **LLM 튜닝과 정밀한 분석 작업**을 다시 시작해 보겠습니다.
-
 제가 비전공자에 쌩초보라 돌아가는 길도 많고 삽질도 많지만, 저처럼 천천히 배우시는 분들에게 이 글이 작은 희망과 팁이 되었으면 좋겠습니다.
-
-긴 글 읽어주셔서 감사합니다. 오늘도 열의를 가지고 성장하는 개발자가 되겠습니다! 
 화이팅!! 💪🔥

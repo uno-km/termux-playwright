@@ -30,12 +30,14 @@ from .browser import (
 from .reaper import (
     ProcessReaper,
     TermuxWakeLock,
+    cli_reap_orphans,
 )
 from .patcher import (
     apply_core_bundle_patch,
     rollback_core_bundle_patch,
     is_core_bundle_patched,
     locate_core_bundle_path,
+    cleanup_backup,
 )
 from .installer import (
     doctor,
@@ -73,11 +75,13 @@ __all__ = [
     # Process & WakeLock
     "ProcessReaper",
     "TermuxWakeLock",
+    "cli_reap_orphans",
     # Patcher
     "apply_core_bundle_patch",
     "rollback_core_bundle_patch",
     "is_core_bundle_patched",
     "locate_core_bundle_path",
+    "cleanup_backup",
     # Installer & Diagnostics
     "doctor",
     "run_installation_pipeline",
