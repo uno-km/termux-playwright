@@ -1,79 +1,130 @@
 # Termux-Playwright Automated Integration (S7 Edge Crawler)
 
 ## 1. 개요 (Overview)
-본 프로젝트는 자원이 제한적인 안드로이드 디바이스(Samsung Galaxy S7)의 가상 리눅스 환경(Termux)에서 최신 동적 웹 스크래핑 프레임워크인 **Playwright**를 구동하기 위한 인프라 구축 및 자동화 데모 프로젝트입니다. 
-일반적으로 aarch64 안드로이드 환경에서는 공식 Playwright 바이너리가 호환되지 않아 구동이 불가능하지만, 본 프로젝트는 의존성 우회 설치 및 코어 엔진 패치를 통해 이 한계를 극복하고 24/7 무인 자동화 데이터 수집(Crawling)을 가능하게 합니다.
+본 프로젝트는 자원이 제한적인 안드로이드 디바이스(Samsung Galaxy S7 등)의 가상 리눅스 환경(Termux)에서 최신 동적 웹 스크래핑 프레임워크인 **Playwright**를 안정적으로 구동하기 위한 인프라 구축 및 자동화 툴킷입니다. 
 
-## 2. 기술 (Technology Stack)
-* **OS & Environment**: Android 8.0 (Termux), Linux (aarch64)
-* **Language**: Python 3.11+, Node.js (v20+)
-* **Framework**: Playwright (Async API)
+일반적으로 aarch64 안드로이드 환경에서는 공식 Playwright 바이너리 비호환, Node.js 안드로이드 플랫폼 검증 차단, 안드로이드 커널의 `/dev/shm`(공유 메모리) 부족으로 인한 OOM 크래시 문제가 발생합니다. 본 프로젝트는 **우회 설치 파이프라인, 코어 엔진 런타임 패치, 메모리 최적화 래퍼**를 통해 이 모든 한계를 극복하고 24/7 무인 자동화 데이터 수집(Crawling)을 가능하게 합니다.
+
+---
+
+## 2. 기술 스택 (Technology Stack)
+* **OS & Environment**: Android 8.0+ (Termux), Linux (aarch64)
+* **Language**: Python 3.8+, Node.js (v20+)
+* **Framework**: Playwright (Async & Sync API)
 * **Browser**: Chromium (Termux native package)
 
-## 3. 설치 및 사용법 (Quick Start)
-공식 PyPI에 등록되어 있으므로, 복잡한 설정 없이 단 한 줄의 명령어로 설치와 우회 패치가 100% 자동 진행됩니다.
+---
+
+## 3. 설치 및 빠른 시작 (Quick Start)
+
+### 📦 1단계: 패키지 설치
+공식 PyPI에 등록되어 있으므로, 단 한 줄의 명령어로 설치와 우회 패치가 100% 자동 진행됩니다.
 
 ```bash
-pip install termux-playwright
+pip install --upgrade termux-playwright
 ```
 
-> **Note**: 위 명령어를 실행하면 기본 시스템 패키지(`chromium`, `nodejs`) 설치부터 Playwright 코어 엔진 패치(`coreBundle.js`)까지 백그라운드에서 모두 자동으로 수행됩니다.
+> **Note**: 위 명령어를 실행하면 시스템 패키지(`chromium`, `nodejs`) 설치부터 Playwright 코어 엔진 패치(`coreBundle.js`)까지 모두 자동으로 수행됩니다.
 
-설치가 완료된 후, 크롤러를 구동할 파이썬 스크립트 최상단에 반드시 환경변수를 선언해 주십시오. (데모 코드 참조)
+### 🩺 2단계: 환경 자가진단 (CLI Doctor)
+설치 및 패치가 정상적으로 적용되었는지 터미널에서 즉시 검단할 수 있습니다.
+
+```bash
+termux-playwright-doctor
+```
+
+### 💻 3단계: 초간단 크롤러 작성 및 실행
+더 이상 복잡한 환경변수 설정이나 지저분한 인자(Args)를 직접 작성할 필요가 없습니다. `termux_playwright`가 모든 최적화 설정을 자동으로 처리합니다.
+
 ```python
-import os
-os.environ["PLAYWRIGHT_CHROMIUM_PATH"] = "/data/data/com.termux/files/usr/bin/chromium-browser"
+import asyncio
+from playwright.async_api import async_playwright
+import termux_playwright
+
+async def main():
+    async with async_playwright() as p:
+        # Termux 환경 감지, Chromium 경로 탐색, 크래시 방지 인자 자동 주입
+        browser = await termux_playwright.launch(p, headless=True)
+        
+        page = await browser.new_page()
+        await page.goto("https://www.naver.com")
+        print("페이지 제목:", await page.title())
+        
+        await browser.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-## 4. 로직 (Architecture & Logic)
-본 시스템은 안드로이드 아키텍처의 한계를 우회하기 위해 다음과 같은 3단계 핵심 로직으로 구성됩니다.
+---
 
-1. **의존성(Dependency) 속임수 기법 (Wheel Renaming)**
-   - PyPI에서 제공하는 `manylinux_2_17_aarch64` 규격의 Playwright 휠(Wheel) 파일을 강제로 다운로드합니다.
-   - 단말기의 OS 종속성 검사를 피하기 위해 파일명을 `none-any.whl`로 변조하여 강제 설치(`--force-reinstall --no-deps`)를 수행합니다.
+## 4. 핵심 아키텍처 및 우회 기법 (Architecture & Workarounds)
 
-2. **코어 엔진 런타임 패치 (Runtime Injection)**
-   - Playwright 내부의 Node.js 구동 엔진(`coreBundle.js`)은 시스템 환경이 `android`로 식별될 경우 즉시 `process.exit(1)`을 호출하여 실행을 중단합니다.
-   - Python 스크립트를 통해 `coreBundle.js` 내부 최상단에 `Object.defineProperty(process, "platform", {value: "linux"});` 코드를 주입(Inject)하여 플랫폼 검증 로직을 무력화합니다.
+```mermaid
+flowchart TD
+    A[pip install termux-playwright] --> B[시스템 환경 감지 & pkg chromium/nodejs 설치]
+    B --> C[PyPI aarch64 휠 동적 획득 & Wheel Renaming 우회 설치]
+    C --> D[coreBundle.js 런타임 JS Injection 패치]
+    D --> E[termux_playwright 모듈: 환경변수 & 최적화 인자 자동 매핑]
+    E --> F[24/7 안정적인 Playwright 크롤링 구동]
+```
 
-3. **환경 변수 매핑 및 브라우저 샌드박스 비활성화**
-   - Playwright가 내장 브라우저가 아닌 Termux 패키지의 순정 Chromium(`PLAYWRIGHT_CHROMIUM_PATH`)과 Node.js(`PLAYWRIGHT_NODEJS_PATH`)를 사용하도록 환경변수를 바인딩합니다.
-   - 런타임 실행 시 안드로이드 커널과의 충돌을 방지하기 위해 샌드박스 해제 플래그(`--no-sandbox`, `--disable-setuid-sandbox`)를 반드시 포함합니다.
+1. **의존성(Dependency) 속임수 기법 (Wheel Renaming & Temp Isolation)**
+   - PyPI API에서 `manylinux_2_17_aarch64` 규격의 Playwright 휠을 동적으로 탐색합니다.
+   - 단말기의 OS 종속성 검사를 우회하기 위해 격리된 임시 폴더(`tempfile`)에서 파일명을 `none-any.whl`로 변조하여 강제 설치(`--force-reinstall --no-deps`)합니다.
 
-## 4. 트러블슈팅 및 롤백 히스토리 (History of Failures)
-본 인프라가 안정화되기까지 겪었던 기술적 실패와 해결 과정의 기록입니다.
+2. **코어 엔진 런타임 패치 (Runtime JS Injection)**
+   - Playwright 내부의 Node.js 구동 엔진(`coreBundle.js`)은 안드로이드 환경(`process.platform === 'android'`)을 식별하면 즉시 실행을 중단합니다.
+   - `coreBundle.js` 최상단에 `process.platform`과 `os.platform()`을 `"linux"`로 오버라이딩하는 코드를 주입하여 플랫폼 검증을 무력화합니다.
+
+3. **안드로이드 실전 크래시 방지 최적화 (Critical Crash Prevention)**
+   - **`--disable-dev-shm-usage` (필수)**: 안드로이드 커널은 `/dev/shm`(공유 메모리) 공간이 없거나 극도로 제한되어 있어 Chromium 렌더링 시 브라우저 탭이 즉시 크래시(OOM)됩니다. 이를 방지하기 위해 `/tmp` 스토리지를 사용하도록 강제합니다.
+   - **`--no-sandbox`, `--disable-setuid-sandbox`**: 안드로이드 권한 통제 메커니즘과의 충돌로 인한 좀비 프로세스 생성을 차단합니다.
+   - **`--disable-gpu`, `--disable-software-rasterizer`**: 불필요한 그래픽 파이프라인 에러를 차단합니다.
+   - **`--no-zygote`**: Termux 상에서의 불필요한 프로세스 포크를 방지합니다.
+
+---
+
+## 5. 제공되는 CLI 유틸리티
+
+| 명령어 | 설명 |
+| :--- | :--- |
+| `termux-playwright-doctor` | Termux 환경, Node.js/Chromium 경로, Playwright 설치 여부 및 coreBundle.js 패치 상태를 한눈에 진단 |
+| `termux-playwright-patch` | Playwright 재설치/업데이트 후 coreBundle.js 안드로이드 우회 패치만 단독 재실행 |
+| `termux-playwright-install` | 시스템 의존성 설치 및 휠 우회 설치 파이프라인 전체 수동 실행 |
+
+---
+
+## 6. 트러블슈팅 및 롤백 히스토리 (History of Failures)
 
 * **[실패 1] 순정 `pip install playwright` 시도**
   - **현상**: 컴파일 에러 및 브라우저 바이너리 다운로드 실패.
-  - **원인**: Playwright가 지원하는 aarch64 빌드는 Ubuntu/Debian 베이스를 상정하며, 안드로이드 Bionic libc와 호환되지 않음.
-  - **해결**: Termux 패키지 관리자(`pkg`)가 제공하는 네이티브 `chromium`을 사용하도록 경로를 수동 할당함.
+  - **원인**: Playwright가 지원하는 aarch64 빌드는 Bionic libc와 호환되지 않음.
+  - **해결**: Termux 네이티브 `pkg install chromium` 경로를 동적 탐색하여 바인딩.
 
-* **[실패 2] Node.js 실행 거부 (Platform Exception)**
-  - **현상**: Python 스크립트 실행 시 `Error: Unsupported platform: android` 발생 후 크래시.
-  - **원인**: Playwright의 Node.js 브릿지가 안드로이드를 식별하여 명시적으로 차단함.
-  - **해결**: 런타임 환경에서 `process.platform`을 `linux`로 강제 오버라이딩하는 자바스크립트 주입 패치 고안.
+* **[실패 2] Node.js 실행 거부 (`Unsupported platform: android`)**
+  - **현상**: Python 스크립트 실행 시 `Error: Unsupported platform: android` 크래시.
+  - **해결**: `coreBundle.js` 최상단에 플랫폼 오버라이딩 JS 주입 패치 적용.
 
-* **[실패 3] 브라우저 Launch 시 Zombie Process 생성 및 타임아웃**
-  - **현상**: 브라우저 인스턴스는 생성되나 페이지 이동이 불가능하고 30초 후 타임아웃 됨.
-  - **원인**: 안드로이드 OS 커널의 권한 통제 메커니즘이 Chromium의 샌드박스(Sandbox) 프로세스 생성을 차단함.
-  - **해결**: Launch Args에 `--no-sandbox` 및 `--disable-setuid-sandbox` 플래그를 추가하여 권한 충돌 해소.
+* **[실패 3] 브라우저 Launch 시 Zombie Process 및 OOM 크래시**
+  - **현상**: 브라우저는 실행되나 페이지 이동 중 타임아웃 또는 즉시 종료(Crash)됨.
+  - **원인**: 안드로이드의 샌드박스 권한 제약 및 `/dev/shm` 공유 메모리 결핍.
+  - **해결**: `--disable-dev-shm-usage` 및 `--no-sandbox` 플래그를 기본 런처에 필수 내장.
 
-이러한 수많은 시행착오 끝에, 단일 스크립트(`node_manager.sh`) 실행만으로 안드로이드 디바이스를 완전한 무인 크롤링 서버로 변환할 수 있는 파이프라인이 완성되었습니다.
+---
 
-## 5. 실물 기기 통합 테스트 (E2E Device Testing)
-타겟 디바이스(Android Termux) 환경에서의 패키지 정상 설치 및 런타임 구동을 검증하기 위한 E2E 테스트 시나리오입니다.
-Termux 터미널에서 아래의 명령어 시퀀스를 순차적으로 실행하여 검증을 수행합니다.
+## 7. 실물 기기 통합 테스트 (E2E Device Testing)
+
+Termux 터미널에서 아래 명령어를 순차적으로 실행하여 검증할 수 있습니다:
 
 ```bash
-# 1. 격리된 테스트 디렉토리 생성 및 이동
-mkdir test-playwright && cd test-playwright
+# 1. 패키지 설치
+pip install --upgrade termux-playwright
 
-# 2. PyPI 패키지 릴리즈 빌드 설치 (자동 의존성 주입 및 패치 수행)
-pip install termux-playwright
+# 2. 설치 및 패치 진단
+termux-playwright-doctor
 
-# 3. 검증용 런타임 데모 스크립트 페치 (Fetch)
+# 3. 데모 스크립트 실행
 wget https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/termux_crawler_demo.py
-
-# 4. 브라우저 인스턴스 할당 및 크롤링 렌더링 검증
 python termux_crawler_demo.py
 ```

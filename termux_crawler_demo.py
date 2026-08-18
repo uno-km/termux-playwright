@@ -1,24 +1,15 @@
 import asyncio
-import os
 import sys
-
-# Termux 환경 변수 강제 설정 (중요!)
-# Playwright가 Termux 내부의 Chromium과 Node.js를 올바르게 찾도록 지정합니다.
-os.environ["PLAYWRIGHT_CHROMIUM_PATH"] = "/data/data/com.termux/files/usr/bin/chromium-browser"
-os.environ["PLAYWRIGHT_NODEJS_PATH"] = "/data/data/com.termux/files/usr/bin/node"
-
 from playwright.async_api import async_playwright
+import termux_playwright
 
 async def run_crawler():
     print("🚀 [Termux] Playwright 크롤러 초기화 중...")
     
     async with async_playwright() as p:
-        # Chromium 브라우저 실행 (안드로이드에서는 반드시 no-sandbox 옵션이 필요합니다)
-        browser = await p.chromium.launch(
-            executable_path=os.environ["PLAYWRIGHT_CHROMIUM_PATH"],
-            headless=True,
-            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
-        )
+        # termux_playwright.launch()가 자동으로 Termux 환경을 감지하고,
+        # Chromium/Node.js 경로 할당 및 안드로이드 크래시 방지 필수 플래그(--disable-dev-shm-usage, --no-sandbox 등)를 자동 적용합니다.
+        browser = await termux_playwright.launch(p, headless=True)
         
         print("🌐 브라우저 실행 완료! 네이버(Naver)로 접속합니다...")
         page = await browser.new_page()
@@ -36,7 +27,7 @@ async def run_crawler():
         await browser.close()
 
 if __name__ == "__main__":
-    # Windows/Linux 상관없이 비동기 이벤트 루프 실행
+    # 비동기 이벤트 루프 실행
     try:
         asyncio.run(run_crawler())
     except Exception as e:
