@@ -1,6 +1,59 @@
-# Python / PyPI Build Artifacts
-dist/
-build/
-*.egg-info/
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller / PyPI
+*.manifest
+*.spec
+.pypirc
+
+# Environments & Secrets (Critical Security)
+.env
+.env.*
+*.env
+*.token
+*.key
+*.pem
+*.secret
+*.credentials
+secrets/
+config.local.*
+
+# Virtual Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
