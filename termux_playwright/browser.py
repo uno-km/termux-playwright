@@ -1,127 +1,108 @@
-import os
-import shutil
-import sys
-from typing import List, Optional, Any
+"""Browser launcher and execution engine for Termux Playwright.
 
-DEFAULT_CHROMIUM_ARGS = [
+Provides explicit, non-polluting configuration of Chromium execution parameters,
+deterministic process tracking, and async/sync launch helpers.
+"""
+
+import os
+from typing import List, Optional, Any, Dict
+from .platform import find_chromium_binary, find_node_binary, is_termux
+from .reaper import ProcessReaper, TermuxWakeLock
+from .exceptions import BinaryNotFoundError
+
+CORE_ANDROID_CHROMIUM_ARGS: List[str] = [
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-dev-shm-usage",
     "--disable-gpu",
     "--disable-software-rasterizer",
     "--no-zygote",
+    "--disable-blink-features=AutomationControlled",
 ]
 
-def is_termux() -> bool:
-    """Termux 환경인지 확인합니다."""
-    return "com.termux" in os.environ.get("PREFIX", "") or os.path.exists("/data/data/com.termux")
-
-def find_chromium() -> Optional[str]:
-    """시스템에 설치된 Chromium 바이너리 경로를 탐색합니다."""
-    # 1. 환경변수 우선 확인
-    if "PLAYWRIGHT_CHROMIUM_PATH" in os.environ and os.path.exists(os.environ["PLAYWRIGHT_CHROMIUM_PATH"]):
-        return os.environ["PLAYWRIGHT_CHROMIUM_PATH"]
-    
-    # 2. PATH 상의 실행 파일 탐색
-    for binary_name in ["chromium-browser", "chromium", "google-chrome", "chrome"]:
-        path = shutil.which(binary_name)
-        if path:
-            return path
-            
-    # 3. Termux 표준 경로 확인
-    prefix = os.environ.get("PREFIX", "/data/data/com.termux/files/usr")
-    termux_candidates = [
-        os.path.join(prefix, "bin", "chromium-browser"),
-        os.path.join(prefix, "bin", "chromium"),
-        "/data/data/com.termux/files/usr/bin/chromium-browser",
-        "/data/data/com.termux/files/usr/bin/chromium",
-    ]
-    for cand in termux_candidates:
-        if os.path.exists(cand):
-            return cand
-            
-    return None
-
-def find_nodejs() -> Optional[str]:
-    """시스템에 설치된 Node.js 바이너리 경로를 탐색합니다."""
-    if "PLAYWRIGHT_NODEJS_PATH" in os.environ and os.path.exists(os.environ["PLAYWRIGHT_NODEJS_PATH"]):
-        return os.environ["PLAYWRIGHT_NODEJS_PATH"]
-        
-    path = shutil.which("node")
-    if path:
-        return path
-        
-    prefix = os.environ.get("PREFIX", "/data/data/com.termux/files/usr")
-    termux_candidates = [
-        os.path.join(prefix, "bin", "node"),
-        "/data/data/com.termux/files/usr/bin/node",
-    ]
-    for cand in termux_candidates:
-        if os.path.exists(cand):
-            return cand
-            
-    return None
-
-def get_default_args(extra_args: Optional[List[str]] = None) -> List[str]:
-    """안드로이드/Termux 환경에 최적화된 Chromium 기본 실행 인자 목록을 반환합니다."""
-    args = list(DEFAULT_CHROMIUM_ARGS)
+def build_chromium_args(extra_args: Optional[List[str]] = None) -> List[str]:
+    """Construct full list of hardened Chromium arguments for Android environment."""
+    args = list(CORE_ANDROID_CHROMIUM_ARGS)
     if extra_args:
         for arg in extra_args:
             if arg not in args:
                 args.append(arg)
     return args
 
-def auto_init():
-    """Termux 환경인 경우 Playwright 경로 환경변수를 자동으로 설정합니다."""
-    if is_termux():
-        chromium_path = find_chromium()
-        if chromium_path:
-            os.environ.setdefault("PLAYWRIGHT_CHROMIUM_PATH", chromium_path)
-            
-        node_path = find_nodejs()
-        if node_path:
-            os.environ.setdefault("PLAYWRIGHT_NODEJS_PATH", node_path)
+def configure_environment(force: bool = False) -> Dict[str, str]:
+    """Explicitly configure process environment variables for Playwright paths.
+    
+    Returns:
+        Dict[str, str]: The configured environment key-value pairs.
+    """
+    configured = {}
+    if is_termux() or force:
+        try:
+            chrome = find_chromium_binary()
+            os.environ["PLAYWRIGHT_CHROMIUM_PATH"] = chrome
+            configured["PLAYWRIGHT_CHROMIUM_PATH"] = chrome
+        except BinaryNotFoundError:
+            pass
+
+        try:
+            node = find_node_binary()
+            os.environ["PLAYWRIGHT_NODEJS_PATH"] = node
+            configured["PLAYWRIGHT_NODEJS_PATH"] = node
+        except BinaryNotFoundError:
+            pass
+
+    return configured
 
 async def launch(playwright_instance: Any, **kwargs) -> Any:
-    """Termux 최적화 옵션으로 Playwright Chromium 브라우저를 비동기 실행합니다.
+    """Launch Chromium browser asynchronously with Termux-hardened configuration.
     
-    사용 예:
-        async with async_playwright() as p:
-            browser = await termux_playwright.launch(p, headless=True)
+    Args:
+        playwright_instance: AsyncPlaywright instance.
+        **kwargs: Additional parameters passed to playwright.chromium.launch().
+        
+    Returns:
+        Browser: Launched Playwright browser instance.
     """
-    auto_init()
-    
-    executable_path = kwargs.pop("executable_path", None) or find_chromium()
+    executable_path = kwargs.pop("executable_path", None)
+    if not executable_path and is_termux():
+        executable_path = find_chromium_binary()
+
     user_args = kwargs.pop("args", [])
-    merged_args = get_default_args(user_args)
-    
-    launch_kwargs = {
+    merged_args = build_chromium_args(user_args)
+
+    launch_params: Dict[str, Any] = {
         "args": merged_args,
         **kwargs
     }
     if executable_path:
-        launch_kwargs["executable_path"] = executable_path
-        
-    return await playwright_instance.chromium.launch(**launch_kwargs)
+        launch_params["executable_path"] = executable_path
+
+    browser = await playwright_instance.chromium.launch(**launch_params)
+    return browser
 
 def launch_sync(playwright_instance: Any, **kwargs) -> Any:
-    """Termux 최적화 옵션으로 Playwright Chromium 브라우저를 동기(Sync) 실행합니다.
+    """Launch Chromium browser synchronously with Termux-hardened configuration.
     
-    사용 예:
-        with sync_playwright() as p:
-            browser = termux_playwright.launch_sync(p, headless=True)
+    Args:
+        playwright_instance: SyncPlaywright instance.
+        **kwargs: Additional parameters passed to playwright.chromium.launch().
+        
+    Returns:
+        Browser: Launched Playwright browser instance.
     """
-    auto_init()
-    
-    executable_path = kwargs.pop("executable_path", None) or find_chromium()
+    executable_path = kwargs.pop("executable_path", None)
+    if not executable_path and is_termux():
+        executable_path = find_chromium_binary()
+
     user_args = kwargs.pop("args", [])
-    merged_args = get_default_args(user_args)
-    
-    launch_kwargs = {
+    merged_args = build_chromium_args(user_args)
+
+    launch_params: Dict[str, Any] = {
         "args": merged_args,
         **kwargs
     }
     if executable_path:
-        launch_kwargs["executable_path"] = executable_path
-        
-    return playwright_instance.chromium.launch(**launch_kwargs)
+        launch_params["executable_path"] = executable_path
+
+    browser = playwright_instance.chromium.launch(**launch_params)
+    return browser
