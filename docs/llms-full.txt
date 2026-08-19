@@ -152,3 +152,72 @@ async def run_worker():
 if __name__ == "__main__":
     asyncio.run(run_worker())
 ```
+
+---
+
+## Node.js & TypeScript API Reference (`npm install termux-playwright`)
+
+### Node.js Export Signatures
+```typescript
+import type { Browser, BrowserContext, Page, LaunchOptions, BrowserContextOptions } from 'playwright-core';
+
+export interface TermuxLaunchOptions extends LaunchOptions {
+    lowMemoryMode?: boolean;
+    jitless?: boolean;
+    ignoreCertificateErrors?: boolean;
+    standaloneMode?: boolean;
+    wakeLock?: boolean;
+    stealth?: boolean;
+    singleProcess?: boolean;
+    sessionToken?: string;
+}
+
+export function launch(playwrightInstance?: any, options?: TermuxLaunchOptions): Promise<Browser>;
+export function setupStealthContext(browser: Browser, options?: BrowserContextOptions): Promise<BrowserContext>;
+export function blockHeavyResources(pageOrContext: Page | BrowserContext, options?: { images?: boolean; media?: boolean; fonts?: boolean; stylesheets?: boolean }): Promise<void>;
+export function forceGarbageCollection(): boolean;
+export function isTermux(): boolean;
+export function getInstalledChromiumVersion(): string;
+export class ProcessReaper {
+    static reapUntrackedLedgerOrphans(): number;
+    static reapSessionZombies(sessionToken: string): number;
+    static killAllTracked(): void;
+}
+export class TermuxWakeLock {
+    acquire(): boolean;
+    release(): boolean;
+}
+```
+
+### Pattern 3: Node.js / TypeScript Stealth & Memory-Managed Worker
+```javascript
+const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
+
+async function runWorker() {
+    const browser = await launch({
+        headless: true,
+        stealth: true,
+        lowMemoryMode: true,
+        wakeLock: true
+    });
+
+    try {
+        const context = await setupStealthContext(browser, {
+            locale: 'en-US',
+            timezoneId: 'America/New_York'
+        });
+        const page = await context.newPage();
+        await blockHeavyResources(page, { images: true, media: true, fonts: true });
+
+        await page.goto('https://news.ycombinator.com', { timeout: 45000, waitUntil: 'domcontentloaded' });
+        console.log('Title:', await page.title());
+
+        // Flush V8 heap when running long scraping cycles
+        forceGarbageCollection();
+    } finally {
+        await browser.close();
+    }
+}
+
+runWorker().catch(console.error);
+```

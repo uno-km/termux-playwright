@@ -22,6 +22,7 @@ def get_sidebar(active_page):
         ('index.html', 'common.nav.home', 'Home / Architecture'),
         ('installation.html', 'common.nav.installation', 'Installation Guide'),
         ('quickstart.html', 'common.nav.quickstart', 'Quickstart & Recipes'),
+        ('nodejs.html', 'common.nav.nodejs', 'Node.js & Memory Guide'),
         ('api-reference.html', 'common.nav.apiReference', 'API Reference'),
         ('versions.html', 'common.nav.versions', 'Version Archive & Notes'),
         ('phantom-process.html', 'common.nav.phantomProcess', 'Android 14+ Phantom Killer'),
@@ -625,6 +626,12 @@ sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>https://uno-km.github.io/termux-playwright-demo/nodejs.html</loc>
+        <lastmod>2026-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
         <loc>https://uno-km.github.io/termux-playwright-demo/versions.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
@@ -650,11 +657,151 @@ sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
     </url>
 </urlset>"""
 
+# Node.js Guide HTML
+nodejs_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js & Memory Architecture - Termux-Playwright</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
+    <script src="i18n-translations.js"></script>
+</head>
+<body>
+{get_header('nodejs.html')}
+
+    <div class="container">
+{get_sidebar('nodejs.html')}
+
+        <main class="content">
+            <h2 data-i18n="nodejs.title">Dual-Engine Architecture: Node.js & Memory Management</h2>
+            <p data-i18n="nodejs.subtitle">Deep-dive on CPython vs V8 Garbage Collection, libuv stream buffers, and Android LMK survival strategies.</p>
+
+            <div class="card">
+                <h3 data-i18n="nodejs.divergenceTitle">1. CPython vs V8 Memory & GC Divergence on Android</h3>
+                <p data-i18n="nodejs.divergenceDesc">Python relies on deterministic Reference Counting to immediately free memory upon scope exit. In contrast, Node.js V8 uses Generational Scavenge & Mark-Sweep-Compact with Lazy GC, keeping heap allocated until pressure builds. On mobile devices with 1GB-4GB RAM, default V8 heap limits (1.4GB) trigger Android Low Memory Killer (LMK) execution.</p>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Dimension</th>
+                            <th>CPython Runtime (Python)</th>
+                            <th>V8 Engine Runtime (Node.js)</th>
+                            <th>Mobile Android Termux Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>GC Trigger</strong></td>
+                            <td>Deterministic Ref-Count (0-sec deallocation)</td>
+                            <td>Generational Lazy GC (waits for heap threshold)</td>
+                            <td>Node.js requires explicit memory caps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Default Heap Cap</strong></td>
+                            <td>OS-governed dynamic RAM</td>
+                            <td>1.4 GB ~ 4 GB desktop default</td>
+                            <td>Can trigger Android LMK OOM on <=4GB phones</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exit Lifecycle</strong></td>
+                            <td>Synchronous / async exit hooks allowed</td>
+                            <td>Event loop is dead inside process.on('exit')</td>
+                            <td>Reaper MUST use 100% sync C-syscalls</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Crash Propagation</strong></td>
+                            <td>Traceback on unhandled exception</td>
+                            <td>Unhandled Promise rejection can kill process</td>
+                            <td>Requires unhandledRejection global guard</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card highlight">
+                <h3 data-i18n="nodejs.actionsTitle">2. Hardened Runtime Protections (Audit Actions Applied)</h3>
+                
+                <h4>🛡️ <span data-i18n="nodejs.action1Title">Synchronous Signal & Exit Reaper</span></h4>
+                <p data-i18n="nodejs.action1Desc">In Node.js, process.on("exit") permanently shuts down the event loop—async calls are ignored. ProcessReaper uses pure synchronous C-level process.kill and fs.unlinkSync to guarantee zero zombie leaks.</p>
+
+                <h4>🛡️ <span data-i18n="nodejs.action2Title">Uncaught Crash Handlers (uncaughtException & unhandledRejection)</span></h4>
+                <p data-i18n="nodejs.action2Desc">Unhandled Promise rejections and uncaught exceptions automatically trigger synchronous ProcessReaper.killAllTracked() before process termination.</p>
+
+                <h4>🛡️ <span data-i18n="nodejs.action3Title">V8 Heap Capping & forceGarbageCollection()</span></h4>
+                <p data-i18n="nodejs.action3Desc">Low-memory mode caps V8 heap at 128MB. The forceGarbageCollection() helper flushes V8 young/old generation heaps during long-running crawler cycles.</p>
+            </div>
+
+            <div class="card">
+                <h3 data-i18n="nodejs.recipesTitle">3. Node.js / TypeScript Production Recipes</h3>
+                <div class="code-block">
+                    <h4>JavaScript (ESM / CommonJS):</h4>
+                    <pre><code>const {{ launch, setupStealthContext, blockHeavyResources, forceGarbageCollection }} = require('termux-playwright');
+
+async function main() {{
+    // 1. Launch with low memory mode & WakeLock
+    const browser = await launch({{
+        headless: true,
+        stealth: true,
+        lowMemoryMode: true,
+        wakeLock: true
+    }});
+
+    try {{
+        const context = await setupStealthContext(browser, {{
+            locale: 'en-US',
+            timezoneId: 'America/New_York'
+        }});
+
+        const page = await context.newPage();
+        
+        // 2. Abort heavy media to save mobile data & CPU
+        await blockHeavyResources(page, {{ images: true, media: true, fonts: true }});
+
+        await page.goto('https://news.ycombinator.com', {{ timeout: 45000, waitUntil: 'domcontentloaded' }});
+        console.log('Page Title:', await page.title());
+
+        // 3. Periodic memory purge for long-running scrapers
+        forceGarbageCollection();
+    }} finally {{
+        await browser.close();
+    }}
+}}
+
+main().catch(console.error);</code></pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 data-i18n="nodejs.pm2Title">4. 24/7 Unattended Mobile Daemon with PM2</h3>
+                <p>To run your Node.js crawler 24/7 in Termux without process teardown when Termux is backgrounded, use PM2:</p>
+                <div class="code-block">
+                    <pre><code># Install PM2 globally in Termux
+npm install -g pm2
+
+# Start crawler with V8 memory cap and auto-restart
+pm2 start app.js --name "mobile-crawler" --node-args="--max-old-space-size=256 --expose-gc"
+
+# View live logs & memory
+pm2 logs mobile-crawler
+pm2 monit</code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+
+{get_footer()}
+</body>
+</html>"""
+
 # Write all files
 pages = {
     'docs/index.html': index_html,
     'docs/installation.html': installation_html,
     'docs/quickstart.html': quickstart_html,
+    'docs/nodejs.html': nodejs_html,
     'docs/api-reference.html': api_reference_html,
     'docs/versions.html': versions_html,
     'docs/phantom-process.html': phantom_process_html,
