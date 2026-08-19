@@ -161,6 +161,88 @@ termux-playwright-doctor
 
 ---
 
+## 💡 Mobile Engineering Pro-Tips (pip, npm, venv, & Virtualization)
+
+### 🐍 1. Python Virtual Environments (`venv`) & Pip Optimization
+* **The `--system-site-packages` Rule:** Never run bare `python -m venv .venv` on Termux. Standard venvs isolate C-extensions, forcing pip to attempt building `greenlet` from source using 1.2GB Clang. Always pass `--system-site-packages`:
+  ```bash
+  python -m venv --system-site-packages .venv
+  source .venv/bin/activate
+  ```
+* **Pip Cache Acceleration:** To conserve mobile internal storage (eMMC), disable temporary wheel caching during fast script installs:
+  ```bash
+  pip install --no-cache-dir termux-playwright
+  ```
+* **Poetry / Pipenv Configuration:** If using modern dependency managers in Termux, tell them to inherit system packages:
+  ```toml
+  # pyproject.toml / poetry config
+  [virtualenvs]
+  system-site-packages = true
+  ```
+
+---
+
+### ☕ 2. Node.js & npm Storage & Speed Optimization
+* **Flash Wear Reduction & Speed:** In Termux, `node_modules` can create thousands of small inodes that slow down mobile storage. Speed up installs with:
+  ```bash
+  npm install --no-fund --no-audit --prefer-offline
+  ```
+* **pnpm Hardlink Deduplication (Saves ~70% Storage):** Use `pnpm` to share package binaries across projects without duplicating files on mobile flash storage:
+  ```bash
+  pkg install -y pnpm
+  pnpm add termux-playwright
+  ```
+* **V8 Heap Constraint on Mobile:** Default Node.js allocates up to 1.4GB heap. On 2GB~4GB RAM phones, always limit V8 heap size to prevent Android Low Memory Killer (LMK) execution:
+  ```bash
+  node --max-old-space-size=256 app.js
+  ```
+
+---
+
+### 🛡️ 3. Native Bionic vs PRoot / Virtualization (Why Native Wins)
+* **Zero Virtualization Overhead:** Do **NOT** install `proot-distro` (Ubuntu/Debian) just to run Playwright. PRoot intercepts every system call via `ptrace`, causing 3x~5x CPU latency, 60% higher RAM consumption, and broken `/dev/shm` shared memory.
+* **Native Speed:** `termux-playwright` orchestrates Termux's native Android Bionic-compiled Chromium and Node.js directly, delivering full ARM64 hardware performance with zero root required.
+
+---
+
+### 🔋 4. 24/7 Autonomous Background Scraping (Daemon Guide)
+Android aggressively suspends background apps and kills child processes when the screen turns off.
+
+#### ☕ Node.js Production Daemon with PM2:
+```bash
+# Install PM2 process manager
+npm install -g pm2
+
+# Launch scraper with 256MB memory cap and automatic crash recovery
+pm2 start app.js --name "mobile-scraper" --node-args="--max-old-space-size=256 --expose-gc"
+
+# Keep alive on reboot / background
+pm2 save
+pm2 monit
+```
+
+#### 🐍 Python Production Daemon with Tmux & WakeLock:
+```bash
+# Keep CPU awake and detach terminal session
+termux-wake-lock
+pkg install -y tmux
+tmux new -s scraper 'python crawler.py'
+# Detach with: Ctrl+B, then D
+# Re-attach anytime with: tmux attach -t scraper
+```
+
+---
+
+### ⚡ 5. Android 14+ Phantom Process Killer Bypass
+Android 12~14 limits background child processes to 32. Heavy browsers spawn multiple renderer and utility processes.
+* **In-App Single-Process Mode:** Enable `single_process=True` (Python) or `singleProcess: true` (Node.js) to collapse Chromium into a single lightweight process that stays permanently under the Android 32-process limit.
+* **ADB Command (Optional Permanent Bypass):**
+  ```bash
+  adb shell "/system/bin/device_config put activity_manager max_phantom_processes 2147483647"
+  ```
+
+---
+
 ## 🚀 Usage Examples
 
 ### Python Asynchronous API (`examples/basic_crawler.py`)
