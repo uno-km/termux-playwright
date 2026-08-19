@@ -23,7 +23,7 @@ const {
 
 const { ProcessReaper, TermuxWakeLock } = require('../lib/reaper');
 const { STEALTH_INIT_SCRIPT } = require('../lib/stealth');
-const { buildChromiumArgs, blockHeavyResources } = require('../lib/browser');
+const { buildChromiumArgs, blockHeavyResources, forceGarbageCollection } = require('../lib/browser');
 
 test('buildChromiumArgs: default flags contain eMMC RAM cache and sandbox protection', () => {
     const flags = buildChromiumArgs();
@@ -135,4 +135,11 @@ test('reaper: TermuxWakeLock graceful fallback when command absent', () => {
     assert.equal(lock.acquired, false);
     assert.doesNotThrow(() => lock.acquire());
     assert.doesNotThrow(() => lock.release());
+});
+
+test('browser: forceGarbageCollection runs without throwing exception', () => {
+    assert.doesNotThrow(() => {
+        const res = forceGarbageCollection();
+        assert.equal(typeof res, 'boolean');
+    });
 });

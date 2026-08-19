@@ -80,3 +80,5 @@ export function blockHeavyResources(
     pageOrContext: Page | BrowserContext,
     options?: BlockResourceOptions
 ): Promise<void>;
+
+export function forceGarbageCollection(): boolean;
