@@ -18,7 +18,8 @@
         <div class="header-controls">
             <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
             <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
+            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
             <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
         </div>
     </header>
@@ -44,84 +45,77 @@
         </nav>
 
         <main class="content">
-            <h2>Version Archive &amp; Release Notes</h2>
-            <p>Explore technical release notes, improvements, and architectural evolutions across all versions of <code>termux-playwright</code>.</p>
+            <h2>Version Archive &amp; Historical Release Notes</h2>
+            <p>Chronological breakdown of architecture milestones, security hardening, and engine evolutions.</p>
 
-            <div class="version-nav-tabs">
-                <button class="version-tab-btn active" onclick="switchVersion('v1612')">v1.61.2 (Current)</button>
-                <button class="version-tab-btn" onclick="switchVersion('v1611')">v1.61.1</button>
-                <button class="version-tab-btn" onclick="switchVersion('v1610')">v1.61.0</button>
-                <button class="version-tab-btn" onclick="switchVersion('v1600')">v1.60.0</button>
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchVersionTab('v1.61.2')">v1.61.2 (Latest)</button>
+                <button class="tab-btn" onclick="switchVersionTab('v1.61.1')">v1.61.1</button>
+                <button class="tab-btn" onclick="switchVersionTab('v1.61.0')">v1.61.0</button>
+                <button class="tab-btn" onclick="switchVersionTab('v1.60.0')">v1.60.0</button>
             </div>
 
-            <!-- v1.61.2 Panel -->
-            <div id="panel-v1612" class="version-panel active">
-                <h3>v1.61.2 — Resilient Phantom (2026-08-19)</h3>
-                <div class="alert alert-tip">
-                    <span class="alert-title">Official Current Release</span>
-                    <p>Live on PyPI: <code>pip install termux-playwright==1.61.2</code></p>
+            <div id="v1.61.2" class="tab-pane active">
+                <div class="card">
+                    <h3>v1.61.2 — Dual-Engine (Python & Node.js) & Resilient Phantom Release</h3>
+                    <p class="release-date">Release Date: 2026-08-19 | PyPI & npm Live</p>
+                    <ul>
+                        <li><strong>Node.js / TypeScript Edition (npm):</strong> Added official npm package distribution with TypeScript declarations and CLI tools.</li>
+                        <li><strong>Android 14 Single-Process Architecture:</strong> Added <code>single_process=True</code> / <code>singleProcess: true</code> to bypass Android 14 Phantom Process Killer.</li>
+                        <li><strong>RAM-Disk Cache Injection:</strong> Injected <code>--disk-cache-dir=/dev/shm</code> to eliminate mobile eMMC flash memory wear.</li>
+                        <li><strong>Doctor Diagnostic Upgrade:</strong> Added pre-flight storage exhaustion detection and dynamic Chromium mtime version extraction.</li>
+                    </ul>
                 </div>
-                <h4>Key Improvements &amp; Additions:</h4>
-                <ul>
-                    <li><strong>File-Backed Persistent Session Ledger:</strong> Added <code>$TMPDIR/.tp_ledger/</code> to record active session PIDs on disk. Automatically sweeps and reaps orphaned Chromium processes from previous hard kernel crashes (<code>SIGKILL</code> / Low Memory Killer).</li>
-                    <li><strong>Stat-Driven Dynamic Chromium Version Detection:</strong> Replaced static LRU cache with binary <code>st_mtime</code> stat checking. Automatically syncs Client Hints headers across live <code>pkg upgrade chromium</code> updates with 0ns overhead.</li>
-                    <li><strong>Prototype-Safe Anti-Bot Stealth:</strong> Prototype deletion (<code>delete Object.getPrototypeOf(navigator).webdriver</code>) with native <code>permissions.query</code> and <code>window.chrome.runtime</code> mocks to bypass Cloudflare Turnstile &amp; DataDome.</li>
-                    <li><strong>Android 14+ Single-Process Option:</strong> Added <code>single_process=True</code> flag to collapse Chromium into 1 process for devices with locked Phantom Process Killer (32-process limit).</li>
-                    <li><strong>Virtualenv Guidance:</strong> Pre-flight check detects isolated virtual environments and provides clear <code>--system-site-packages</code> guidance for pre-compiled <code>python-greenlet</code>.</li>
-                    <li><strong>Storage Auto-Purge Rescue:</strong> Automatically cleans unowned ephemeral profiles (<code>tp_solo_*</code>) on storage exhaustion during launch before raising errors.</li>
-                </ul>
-                <p><a href="version/v1.61.2.md" target="_blank">View Raw Markdown (v1.61.2.md)</a></p>
             </div>
 
-            <!-- v1.61.1 Panel -->
-            <div id="panel-v1611" class="version-panel">
-                <h3>v1.61.1 — Doctor Shield (2026-08-18)</h3>
-                <h4>Key Improvements &amp; Additions:</h4>
-                <ul>
-                    <li><strong>CLI Diagnostic Tooling:</strong> Added <code>termux-playwright-doctor</code>, <code>termux-playwright-install</code>, <code>termux-playwright-patch</code>, and <code>termux-playwright-reap</code> CLI commands.</li>
-                    <li><strong>Shared Memory Workaround:</strong> Initial <code>/dev/shm</code> RAM disk cache routing to protect eMMC flash memory.</li>
-                    <li><strong>Standalone Fortress Mode:</strong> Added clean-room ephemeral profiles (<code>tp_solo_*</code>) and Android CPU wake lock integration.</li>
-                </ul>
-                <p><a href="version/v1.61.1.md" target="_blank">View Raw Markdown (v1.61.1.md)</a></p>
+            <div id="v1.61.1" class="tab-pane">
+                <div class="card">
+                    <h3>v1.61.1 — Doctor Shield &amp; Dynamic Cache Release</h3>
+                    <p class="release-date">Release Date: 2026-08-19</p>
+                    <ul>
+                        <li><strong>Doctor Self-Diagnosis Suite:</strong> Integrated 7-tier pre-flight diagnostic checks.</li>
+                        <li><strong>Dynamic Stat-Driven Invalidation:</strong> 0ns cached Chromium version with auto-invalidation on <code>pkg upgrade</code>.</li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- v1.61.0 Panel -->
-            <div id="panel-v1610" class="version-panel">
-                <h3>v1.61.0 — Fortress Overhaul (2026-08-18)</h3>
-                <h4>Key Improvements &amp; Additions:</h4>
-                <ul>
-                    <li><strong>Targeted Session Reaper:</strong> Replaced destructive <code>pkill</code> commands with compact 8-character session tags (<code>--termux-session-id</code>).</li>
-                    <li><strong>Multi-Tier Process Discovery:</strong> Tier 1: <code>/proc</code> iteration, Tier 2: <code>pgrep</code>, Tier 3: <code>ps -efww</code>.</li>
-                    <li><strong>Node.js Memory Limits:</strong> Pre-configured Node.js V8 heap limits (<code>--max-old-space-size=512</code>) to prevent memory leak crashes.</li>
-                </ul>
-                <p><a href="version/v1.61.0.md" target="_blank">View Raw Markdown (v1.61.0.md)</a></p>
+            <div id="v1.61.0" class="tab-pane">
+                <div class="card">
+                    <h3>v1.61.0 — Fortress Overhaul &amp; Stealth Evasion</h3>
+                    <p class="release-date">Release Date: 2026-08-18</p>
+                    <ul>
+                        <li><strong>Persistent Disk Session Ledger:</strong> Added <code>$TMPDIR/.tp_ledger/</code> atomic file ledger.</li>
+                        <li><strong>Prototype-Safe Stealth:</strong> Eliminated <code>navigator.webdriver</code> from prototype chain.</li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- v1.60.0 Panel -->
-            <div id="panel-v1600" class="version-panel">
-                <h3>v1.60.0 — Genesis Spark (2026-08-15)</h3>
-                <h4>Key Improvements &amp; Additions:</h4>
-                <ul>
-                    <li><strong>Initial Proof-of-Concept:</strong> Basic regular-expression patcher targeting <code>coreBundle.js</code> to bypass Playwright's hardcoded platform verification checks.</li>
-                    <li><strong>Bootstrap Shell Script:</strong> Initial <code>install.sh</code> script to download wheels and configure Termux system binaries.</li>
-                </ul>
-                <p><a href="version/v1.60.0.md" target="_blank">View Raw Markdown (v1.60.0.md)</a></p>
+            <div id="v1.60.0" class="tab-pane">
+                <div class="card">
+                    <h3>v1.60.0 — Genesis Spark</h3>
+                    <p class="release-date">Release Date: 2026-08-17</p>
+                    <ul>
+                        <li>Initial release of native Playwright orchestration on Android Termux.</li>
+                    </ul>
+                </div>
             </div>
         </main>
     </div>
 
-    <script>
-    function switchVersion(verId) {
-        document.querySelectorAll('.version-tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
-        document.querySelectorAll('.version-panel').forEach(function(panel) { panel.classList.remove('active'); });
-        
-        event.target.classList.add('active');
-        var targetPanel = document.getElementById('panel-' + verId);
-        if (targetPanel) targetPanel.classList.add('active');
-    }
-    </script>
     <footer>
         <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
     </footer>
+
+<script>
+function switchVersionTab(versionId) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const targetPane = document.getElementById(versionId);
+    if (targetPane) targetPane.classList.add('active');
+    
+    event.target.classList.add('active');
+}
+</script>
 </body>
 </html>

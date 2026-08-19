@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Termux-Playwright | Production Browser Automation on Android</title>
-    <meta name="description" content="Production-grade automated Playwright & Chromium browser automation for Android Termux. Zero root, anti-bot stealth, persistent session recovery, and eMMC protection.">
+    <meta name="description" content="Production-grade automated Playwright & Chromium browser automation for Android Termux. Dual-engine Python & Node.js support.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <script src="i18n.js"></script>
@@ -19,7 +19,8 @@
         <div class="header-controls">
             <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
             <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
+            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
             <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
         </div>
     </header>
@@ -46,20 +47,27 @@
 
         <main class="content">
             <h2 data-i18n="home.title">Production-Grade Playwright Automation on Android Termux</h2>
-            <p data-i18n="home.subtitle">Run genuine Chromium browser automation directly on ARM64 mobile hardware without root, PRoot, or X11 virtualization.</p>
+            <p data-i18n="home.subtitle">Dual-engine (Python & Node.js) Chromium browser automation on ARM64 mobile hardware without root, PRoot, or X11 virtualization.</p>
 
             <div class="badges-bar">
                 <a href="https://pypi.org/project/termux-playwright/" target="_blank"><img src="https://img.shields.io/pypi/v/termux-playwright.svg?color=blue" alt="PyPI Version"></a>
+                <a href="https://www.npmjs.com/package/termux-playwright" target="_blank"><img src="https://img.shields.io/npm/v/termux-playwright.svg?color=red" alt="npm Version"></a>
                 <a href="https://pepy.tech/projects/termux-playwright" target="_blank"><img src="https://img.shields.io/pepy/dt/termux-playwright?color=orange" alt="Total Downloads"></a>
                 <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python Version">
+                <img src="https://img.shields.io/badge/node-16+-brightgreen.svg" alt="Node Version">
                 <img src="https://img.shields.io/badge/platform-Android%20Termux%20(aarch64)-green.svg" alt="Platform">
-                <img src="https://img.shields.io/badge/tests-84%20passed%20%7C%20100%25-success" alt="Tests">
+                <img src="https://img.shields.io/badge/tests-98%20passed%20%7C%20100%25-success" alt="Tests">
             </div>
 
             <div class="alert alert-tip">
-                <span class="alert-title" data-i18n="home.quickInstallTitle">1-Line Quick Installation</span>
-                <p data-i18n="home.quickInstallDesc">Run this single command inside your Termux terminal to install and configure dependencies automatically:</p>
-                <pre><code>pip install termux-playwright &amp;&amp; termux-playwright-install</code></pre>
+                <span class="alert-title" data-i18n="home.quickInstallTitle">1-Line Quick Installation (Choose Language)</span>
+                <p data-i18n="home.quickInstallDesc">Select your runtime and run the 1-line installation command in Termux:</p>
+                <div style="margin-top: 12px;">
+                    <h4 style="margin: 8px 0 4px 0; color: #0055cc;">🐍 Python Edition (PyPI):</h4>
+                    <pre><code>pip install termux-playwright && termux-playwright-install</code></pre>
+                    <h4 style="margin: 14px 0 4px 0; color: #cb3837;">☕ Node.js / TypeScript Edition (npm):</h4>
+                    <pre><code>pkg install -y chromium nodejs-lts && npm install termux-playwright && npx termux-playwright doctor</code></pre>
+                </div>
             </div>
 
             <h3 data-i18n="home.whyTitle">The Problem: Why Upstream Playwright Fails on Android</h3>
@@ -92,23 +100,58 @@
                 </div>
             </div>
 
-            <h3>Canonical Code Example</h3>
-            <pre><code>import asyncio
+            <h3>Dual-Engine Production Code Recipes</h3>
+            
+            <div style="margin-top: 16px;">
+                <h4 style="color: #0055cc; margin-bottom: 6px;">🐍 Python Canonical Recipe (`asyncio`):</h4>
+                <pre><code>import asyncio
 from termux_playwright import async_playwright_termux, launch, setup_stealth_context
 
 async def main():
     async with async_playwright_termux() as p:
-        # Launch hardened Chromium with stealth evasion
+        # Launch hardened Chromium with anti-bot stealth
         browser = await launch(p, headless=True, stealth=True)
         context = await setup_stealth_context(browser)
         page = await context.new_page()
         
-        await page.goto("https://example.com", timeout=45000)
+        await page.goto("https://news.ycombinator.com", timeout=45000)
         print(f"Title: {await page.title()}")
         await browser.close()
 
 if __name__ == "__main__":
     asyncio.run(main())</code></pre>
+
+                <h4 style="color: #cb3837; margin: 20px 0 6px 0;">☕ Node.js / JavaScript Canonical Recipe (`async/await`):</h4>
+                <pre><code>const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
+
+async function main() {
+    // Automatically provisions session ledger, eMMC RAM cache, and WakeLock
+    const browser = await launch({
+        headless: true,
+        stealth: true,
+        lowMemoryMode: true,
+        wakeLock: true
+    });
+
+    try {
+        const context = await setupStealthContext(browser);
+        const page = await context.newPage();
+        
+        // Abort heavy media to save mobile CPU & bandwidth
+        await blockHeavyResources(page, { images: true, media: true, fonts: true });
+
+        await page.goto('https://news.ycombinator.com', { timeout: 45000, waitUntil: 'domcontentloaded' });
+        console.log('Title:', await page.title());
+
+        // Periodic V8 heap flush for long-running mobile scrapers
+        forceGarbageCollection();
+    } finally {
+        await browser.close();
+    }
+}
+
+main().catch(console.error);</code></pre>
+            </div>
         </main>
     </div>
     <footer>

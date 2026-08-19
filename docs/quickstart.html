@@ -18,7 +18,8 @@
         <div class="header-controls">
             <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
             <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
+            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
             <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
         </div>
     </header>
@@ -44,10 +45,12 @@
         </nav>
 
         <main class="content">
-            <h2>Quickstart &amp; Production Recipes</h2>
-            <p>Tested, copy-paste ready recipes for common web scraping and browser automation scenarios on mobile hardware.</p>
+            <h2>Dual-Engine Quickstart &amp; Production Recipes</h2>
+            <p>Tested, copy-paste ready recipes for Python and Node.js automation scenarios on mobile hardware.</p>
 
             <h3>Recipe 1: Standard Asynchronous Web Scraping</h3>
+            
+            <h4 style="color: #0055cc;">🐍 Python:</h4>
             <pre><code>import asyncio
 from termux_playwright import async_playwright_termux, launch
 
@@ -55,7 +58,6 @@ async def main():
     async with async_playwright_termux() as p:
         browser = await launch(p, headless=True)
         page = await browser.new_page()
-        
         await page.goto("https://news.ycombinator.com", timeout=45000)
         print(f"Hacker News Title: {await page.title()}")
         await browser.close()
@@ -63,22 +65,24 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())</code></pre>
 
-            <h3>Recipe 2: Synchronous Scraping Script</h3>
-            <pre><code>from termux_playwright import sync_playwright_termux, launch_sync
+            <h4 style="color: #cb3837; margin-top: 16px;">☕ Node.js:</h4>
+            <pre><code>const { launch } = require('termux-playwright');
 
-def main():
-    with sync_playwright_termux() as p:
-        browser = launch_sync(p, headless=True)
-        page = browser.new_page()
-        
-        page.goto("https://example.com")
-        print(f"Page Title: {page.title()}")
-        browser.close()
+async function main() {
+    const browser = await launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto('https://news.ycombinator.com', { timeout: 45000 });
+    console.log('Hacker News Title:', await page.title());
+    await browser.close();
+}
 
-if __name__ == "__main__":
-    main()</code></pre>
+main().catch(console.error);</code></pre>
 
-            <h3>Recipe 3: Anti-Bot &amp; Cloudflare Turnstile Stealth Evasion</h3>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+            <h3>Recipe 2: Anti-Bot &amp; Cloudflare Turnstile Stealth Evasion</h3>
+            
+            <h4 style="color: #0055cc;">🐍 Python:</h4>
             <pre><code>import asyncio
 from termux_playwright import async_playwright_termux, launch, setup_stealth_context
 
@@ -92,7 +96,6 @@ async def main():
             extra_headers={"Accept-Language": "en-US,en;q=0.9"}
         )
         page = await context.new_page()
-        
         await page.goto("https://bot.sannysoft.com", timeout=60000)
         print(f"Test Result: {await page.title()}")
         await browser.close()
@@ -100,7 +103,28 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())</code></pre>
 
-            <h3>Recipe 4: 24/7 Resilient Infinite Daemon with WakeLock</h3>
+            <h4 style="color: #cb3837; margin-top: 16px;">☕ Node.js:</h4>
+            <pre><code>const { launch, setupStealthContext } = require('termux-playwright');
+
+async function main() {
+    const browser = await launch({ headless: true, stealth: true });
+    const context = await setupStealthContext(browser, {
+        locale: 'en-US',
+        timezoneId: 'America/New_York'
+    });
+    const page = await context.newPage();
+    await page.goto('https://bot.sannysoft.com', { timeout: 60000 });
+    console.log('Test Result:', await page.title());
+    await browser.close();
+}
+
+main().catch(console.error);</code></pre>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+            <h3>Recipe 3: 24/7 Resilient Infinite Daemon with WakeLock &amp; Resource Blocking</h3>
+            
+            <h4 style="color: #0055cc;">🐍 Python:</h4>
             <pre><code>import asyncio
 from termux_playwright import async_playwright_termux, launch, block_heavy_resources
 
@@ -121,6 +145,31 @@ async def run_worker():
 
 if __name__ == "__main__":
     asyncio.run(run_worker())</code></pre>
+
+            <h4 style="color: #cb3837; margin-top: 16px;">☕ Node.js:</h4>
+            <pre><code>const { launch, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
+
+async function runWorker() {
+    while (true) {
+        try {
+            const browser = await launch({ headless: true, lowMemoryMode: true, wakeLock: true });
+            const page = await browser.newPage();
+            await blockHeavyResources(page, { images: true, media: true, fonts: true });
+            
+            await page.goto('https://example.com', { timeout: 45000, waitUntil: 'domcontentloaded' });
+            console.log('Processed:', await page.title());
+            await browser.close();
+
+            // Periodic memory purge
+            forceGarbageCollection();
+        } catch (e) {
+            console.error('Cycle recovery:', e);
+        }
+        await new Promise(r => setTimeout(r, 60000));
+    }
+}
+
+runWorker();</code></pre>
         </main>
     </div>
     <footer>

@@ -18,7 +18,8 @@
         <div class="header-controls">
             <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
             <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
+            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
             <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
         </div>
     </header>
@@ -44,26 +45,23 @@
         </nav>
 
         <main class="content">
-            <h2>Installation Guide</h2>
+            <h2>Dual-Engine Installation Guide (Python & Node.js)</h2>
             <p>Deploying Playwright on Android Termux requires native system packages and patched platform driver files.</p>
 
-            <h3>Option 1: 1-Line Automated Installer (Recommended)</h3>
-            <pre><code>pip install termux-playwright &amp;&amp; termux-playwright-install</code></pre>
+            <div class="alert alert-tip">
+                <span class="alert-title">⚡ 1-Line Quick Installation</span>
+                <p><strong>🐍 Python (pip):</strong></p>
+                <pre><code>pip install termux-playwright && termux-playwright-install</code></pre>
+                <p style="margin-top: 10px;"><strong>☕ Node.js / TypeScript (npm):</strong></p>
+                <pre><code>pkg install -y chromium nodejs-lts && npm install termux-playwright && npx termux-playwright doctor</code></pre>
+            </div>
 
-            <h3>Option 2: Zero-Friction Bootstrap Script</h3>
-            <pre><code>curl -sL https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/install.sh | bash</code></pre>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
 
-            <h3>Option 3: Step-by-Step Manual Setup</h3>
+            <h3 style="color: #0055cc;">🐍 Python Edition: Step-by-Step Manual Setup</h3>
             
             <h4>Step 1: Install Termux System Packages</h4>
-            <pre><code>pkg update -y &amp;&amp; pkg install -y \
-  python \
-  python-pip \
-  python-greenlet \
-  chromium \
-  nodejs-lts \
-  procps \
-  termux-api</code></pre>
+            <pre><code>pkg update -y && pkg install -y   python   python-pip   python-greenlet   chromium   nodejs-lts   procps   termux-api</code></pre>
 
             <h4>Step 2: Create Python Virtual Environment (If using venv)</h4>
             <div class="alert alert-warning">
@@ -80,10 +78,18 @@ source myenv/bin/activate</code></pre>
             <pre><code>termux-playwright-patch
 termux-playwright-doctor</code></pre>
 
-            <div class="alert alert-tip">
-                <span class="alert-title">Doctor Output Verification</span>
-                <p>When <code>termux-playwright-doctor</code> runs, it checks binary paths, CPU architecture (aarch64), permissions, and driver bundle integrity.</p>
-            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+            <h3 style="color: #cb3837;">☕ Node.js / JavaScript Edition: Step-by-Step Setup</h3>
+            
+            <h4>Step 1: Install Node.js & Chromium via Termux pkg</h4>
+            <pre><code>pkg update -y && pkg install -y chromium nodejs-lts termux-api</code></pre>
+
+            <h4>Step 2: Install termux-playwright from npm</h4>
+            <pre><code>npm install termux-playwright</code></pre>
+
+            <h4>Step 3: Run Node.js Diagnostic Doctor</h4>
+            <pre><code>npx termux-playwright doctor</code></pre>
         </main>
     </div>
     <footer>

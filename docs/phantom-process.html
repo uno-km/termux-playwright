@@ -18,7 +18,8 @@
         <div class="header-controls">
             <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
             <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
+            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
             <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
         </div>
     </header>
@@ -44,29 +45,31 @@
         </nav>
 
         <main class="content">
-            <h2>Android 12/13/14+ Phantom Process Killer Guide</h2>
-            <p>Android 12 and above introduces the <strong>Phantom Process Killer</strong>, which terminates background apps if their child processes exceed 32.</p>
+            <h2>Android 12~14+ Phantom Process Killer: Technical Guide</h2>
+            <p>Android 12+ limits background apps to 32 child processes. Exceeding this limit causes Android to kill Termux with <code>SIGKILL (signal 9)</code>.</p>
 
-            <div class="alert alert-warning">
-                <span class="alert-title">Symptom: [Process completed (signal 9) - press Enter]</span>
-                <p>If Termux suddenly dies with <code>signal 9</code> during heavy crawling with multiple tabs, the Android kernel Phantom Process Killer has triggered.</p>
+            <div class="card highlight">
+                <h3>Solution 1: In-App Single-Process Mode (No Root / No ADB Required)</h3>
+                <p>Simply enable <code>single_process=True</code> (Python) or <code>singleProcess: true</code> (Node.js) when launching the browser:</p>
+                <div class="code-block">
+                    <p><strong>Python:</strong></p>
+                    <pre><code>browser = await launch(p, headless=True, single_process=True)</code></pre>
+                    <p><strong>Node.js:</strong></p>
+                    <pre><code>const browser = await launch({ headless: true, singleProcess: true });</code></pre>
+                </div>
             </div>
 
-            <h3>Solution 1: Python Single-Process Mode (No ADB Required)</h3>
-            <p>Pass <code>single_process=True</code> to collapse Chromium into 1 process:</p>
-            <pre><code>browser = await launch(p, headless=True, single_process=True)</code></pre>
-
-            <h3>Solution 2: Permanent ADB Unlock (Recommended for 24/7 Servers)</h3>
-            <p>Connect your phone to a PC via USB (or use Wireless Debugging) and run:</p>
-            <pre><code># 1. Disable the 32-process limit
-adb shell "/system/bin/device_config put activity_manager max_phantom_processes 2147483647"
-
-# 2. Prevent Android from resetting settings on reboot
+            <div class="card">
+                <h3>Solution 2: Permanent ADB Disable (One-Time Setup)</h3>
+                <p>Connect your phone to a PC via USB Debugging or Wireless ADB, and run this command once:</p>
+                <div class="code-block">
+                    <pre><code>adb shell "/system/bin/device_config put activity_manager max_phantom_processes 2147483647"
 adb shell "/system/bin/device_config set_sync_disabled_for_tests persistent"</code></pre>
-
-            <p><a href="PHANTOM_PROCESS_KILLER_GUIDE.md" target="_blank">View Full Comprehensive ADB Guide</a></p>
+                </div>
+            </div>
         </main>
     </div>
+
     <footer>
         <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
     </footer>

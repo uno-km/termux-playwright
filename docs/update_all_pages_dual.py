@@ -1,4 +1,9 @@
 """
+Update build_pages.py to feature Dual-Stack (Python & Node.js/TypeScript)
+on EVERY single documentation page: index.html, installation.html, quickstart.html, api-reference.html.
+"""
+
+build_pages_code = '''"""
 Build all HTML pages for Termux-Playwright GitHub Pages documentation.
 Dual-Engine (Python & Node.js / TypeScript) Architecture
 """
@@ -222,13 +227,13 @@ installation_html = f"""<!DOCTYPE html>
             <h3 style="color: #0055cc;">🐍 Python Edition: Step-by-Step Manual Setup</h3>
             
             <h4>Step 1: Install Termux System Packages</h4>
-            <pre><code>pkg update -y && pkg install -y \
-  python \
-  python-pip \
-  python-greenlet \
-  chromium \
-  nodejs-lts \
-  procps \
+            <pre><code>pkg update -y && pkg install -y \\
+  python \\
+  python-pip \\
+  python-greenlet \\
+  chromium \\
+  nodejs-lts \\
+  procps \\
   termux-api</code></pre>
 
             <h4>Step 2: Create Python Virtual Environment (If using venv)</h4>
@@ -698,7 +703,7 @@ versions_html = f"""<!DOCTYPE html>
 {get_footer()}
 
 <script>
-function switchVersionTab(versionId) {{
+function switchVersionTab(versionId) {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     
@@ -706,7 +711,7 @@ function switchVersionTab(versionId) {{
     if (targetPane) targetPane.classList.add('active');
     
     event.target.classList.add('active');
-}}
+}
 </script>
 </body>
 </html>"""
@@ -760,7 +765,7 @@ adb shell "/system/bin/device_config set_sync_disabled_for_tests persistent"</co
 </html>"""
 
 # 8. robots.txt
-robots_txt = """User-agent: *
+robots_txt = \"\"\"User-agent: *
 Allow: /
 
 User-agent: GPTBot
@@ -782,11 +787,11 @@ User-agent: Bingbot
 Allow: /
 
 Sitemap: https://uno-km.github.io/termux-playwright-demo/sitemap.xml
-"""
+\"\"\"
 
 # 9. sitemap.xml
-sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+sitemap_xml = \"\"\"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">
     <url>
         <loc>https://uno-km.github.io/termux-playwright-demo/</loc>
         <lastmod>2026-08-19</lastmod>
@@ -841,7 +846,7 @@ sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
-</urlset>"""
+</urlset>\"\"\"
 
 pages = {
     'docs/index.html': index_html,
@@ -861,3 +866,9 @@ for path, content in pages.items():
     print(f"Generated {path}")
 
 print("All GitHub Pages files built successfully.")
+'''
+
+with open('docs/build_pages.py', 'w', encoding='utf-8') as f:
+    f.write(build_pages_code)
+
+print('Updated docs/build_pages.py with dual-stack Python & Node.js content across all pages.')

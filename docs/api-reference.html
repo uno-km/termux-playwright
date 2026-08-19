@@ -18,7 +18,8 @@
         <div class="header-controls">
             <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
             <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
+            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
             <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
         </div>
     </header>
@@ -45,94 +46,46 @@
 
         <main class="content">
             <h2>API Reference Manual</h2>
-            <p>Comprehensive documentation of all public functions, classes, and parameter options in <code>termux_playwright</code>.</p>
+            <p>Comprehensive documentation of all public functions, classes, and parameter options in <code>termux_playwright</code> (Python) and <code>termux-playwright</code> (Node.js).</p>
 
-            <h3>1. Context Managers</h3>
+            <div class="alert alert-tip">
+                <span class="alert-title">📦 Package Identifiers</span>
+                <p><strong>Python (PyPI):</strong> <code>import termux_playwright</code></p>
+                <p><strong>Node.js (npm):</strong> <code>const termuxPlaywright = require('termux-playwright')</code></p>
+            </div>
+
+            <h3 style="color: #0055cc;">🐍 Python Public API Specification</h3>
             
             <h4><code>async_playwright_termux()</code></h4>
-            <p>Asynchronous context manager replacing upstream <code>async_playwright()</code>. Configures Node.js heap flags, checks native greenlet availability, and registers process exit hooks.</p>
+            <p>Asynchronous context manager replacing upstream <code>async_playwright()</code>.</p>
 
             <h4><code>sync_playwright_termux()</code></h4>
-            <p>Synchronous equivalent of <code>async_playwright_termux()</code>.</p>
+            <p>Synchronous context manager replacing upstream <code>sync_playwright()</code>.</p>
 
-            <h3>2. Browser Launcher</h3>
+            <h4><code>launch(p, low_memory_mode=False, jitless=None, ignore_certificate_errors=False, standalone_mode=False, wake_lock=False, stealth=False, single_process=False, **kwargs)</code></h4>
+            <p>Launches hardened Chromium on Android Termux.</p>
 
-            <h4><code>async def launch(playwright_instance, ...) -> Browser</code></h4>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 22%;">Parameter</th>
-                        <th style="width: 18%;">Type</th>
-                        <th style="width: 15%;">Default</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>playwright_instance</code></td>
-                        <td><code>Playwright</code></td>
-                        <td><em>Required</em></td>
-                        <td>Active Playwright instance from context manager.</td>
-                    </tr>
-                    <tr>
-                        <td><code>low_memory_mode</code></td>
-                        <td><code>bool</code></td>
-                        <td><code>False</code></td>
-                        <td>Caps V8 heap at 128MB and restricts renderers to 1.</td>
-                    </tr>
-                    <tr>
-                        <td><code>jitless</code></td>
-                        <td><code>Optional[bool]</code></td>
-                        <td><code>None</code></td>
-                        <td>Enforces <code>--js-flags=--jitless</code>. Defaults to True on Android 10+ (SDK &gt;= 29).</td>
-                    </tr>
-                    <tr>
-                        <td><code>stealth</code></td>
-                        <td><code>bool</code></td>
-                        <td><code>False</code></td>
-                        <td>Injects anti-bot suppression flags (AutomationControlled).</td>
-                    </tr>
-                    <tr>
-                        <td><code>single_process</code></td>
-                        <td><code>bool</code></td>
-                        <td><code>False</code></td>
-                        <td>Merges Chromium into 1 process for Android 14+ Phantom Killer.</td>
-                    </tr>
-                    <tr>
-                        <td><code>standalone_mode</code></td>
-                        <td><code>bool</code></td>
-                        <td><code>False</code></td>
-                        <td>Creates ephemeral clean-room profile in <code>/tmp/tp_solo_*</code> and auto-purges on exit.</td>
-                    </tr>
-                    <tr>
-                        <td><code>wake_lock</code></td>
-                        <td><code>bool</code></td>
-                        <td><code>False</code></td>
-                        <td>Acquires Android CPU WakeLock during browser session.</td>
-                    </tr>
-                </tbody>
-            </table>
+            <h4><code>setup_stealth_context(browser, ...)</code></h4>
+            <p>Creates an evasive BrowserContext bypassing Cloudflare Turnstile & DataDome.</p>
 
-            <h3>3. Anti-Bot Evasion</h3>
+            <h4><code>block_heavy_resources(page_or_context, images=True, media=True, fonts=True, stylesheets=False)</code></h4>
+            <p>Aborts heavy network asset requests to conserve mobile bandwidth and CPU.</p>
 
-            <h4><code>async def setup_stealth_context(browser, ...) -> BrowserContext</code></h4>
-            <p>Instantiates an evasive <code>BrowserContext</code> that removes bot signals:</p>
-            <ul>
-                <li>Deletes <code>webdriver</code> from <code>Navigator.prototype</code>.</li>
-                <li>Spoofs <code>window.chrome.app</code> and <code>window.chrome.runtime</code>.</li>
-                <li>Mocks native <code>navigator.permissions.query</code>.</li>
-                <li>Dynamically synchronizes <code>Sec-Ch-Ua</code> with installed Chromium binary version.</li>
-            </ul>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
 
-            <h3>4. Resource Optimization</h3>
+            <h3 style="color: #cb3837;">☕ Node.js / TypeScript API Specification</h3>
+            
+            <h4><code>launch(playwrightInstance?, options?: TermuxLaunchOptions): Promise&lt;Browser&gt;</code></h4>
+            <p>Launches Chromium in Node.js with automated session token tracking, eMMC RAM cache, and WakeLock.</p>
 
-            <h4><code>async def block_heavy_resources(page_or_context, images=True, media=True, fonts=True)</code></h4>
-            <p>Intercepts network requests to abort bandwidth-heavy static assets, cutting CPU consumption on ARM64 processors.</p>
+            <h4><code>setupStealthContext(browser: Browser, options?: BrowserContextOptions): Promise&lt;BrowserContext&gt;</code></h4>
+            <p>Injects prototype-safe stealth script removing <code>navigator.webdriver</code> and mocking native C++ bindings.</p>
 
-            <h3>5. Process Reaper &amp; System Tools</h3>
+            <h4><code>blockHeavyResources(pageOrContext, options?): Promise&lt;void&gt;</code></h4>
+            <p>Aborts image, media, and font downloads in Node.js.</p>
 
-            <h4><code>ProcessReaper.reap_untracked_ledger_orphans() -> int</code></h4>
-            <p>Scans <code>$TMPDIR/.tp_ledger/</code> for orphaned sessions from previous hard crashes (SIGKILL / LMK) and terminates lingering Chromium processes.</p>
+            <h4><code>forceGarbageCollection(): boolean</code></h4>
+            <p>Triggers V8 garbage collection when <code>--expose-gc</code> is enabled.</p>
         </main>
     </div>
     <footer>
