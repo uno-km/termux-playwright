@@ -95,7 +95,7 @@ index_html = f"""<!DOCTYPE html>
                     <h4 style="margin: 8px 0 4px 0; color: #0055cc;">🐍 Python Edition (PyPI):</h4>
                     <pre><code>pip install termux-playwright && termux-playwright-install</code></pre>
                     <h4 style="margin: 14px 0 4px 0; color: #cb3837;">☕ Node.js / TypeScript Edition (npm):</h4>
-                    <pre><code>pkg install -y chromium nodejs-lts && npm install termux-playwright && npx termux-playwright doctor</code></pre>
+                    <pre><code>npm install termux-playwright && npx termux-playwright install</code></pre>
                 </div>
             </div>
 
@@ -214,7 +214,7 @@ installation_html = f"""<!DOCTYPE html>
                 <p><strong>🐍 Python (pip):</strong></p>
                 <pre><code>pip install termux-playwright && termux-playwright-install</code></pre>
                 <p style="margin-top: 10px;"><strong>☕ Node.js / TypeScript (npm):</strong></p>
-                <pre><code>pkg install -y chromium nodejs-lts && npm install termux-playwright && npx termux-playwright doctor</code></pre>
+                <pre><code>npm install termux-playwright && npx termux-playwright install</code></pre>
             </div>
 
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">

@@ -70,6 +70,24 @@ function runDoctor() {
     console.log('====================================================\n');
 }
 
+function runInstall() {
+    console.log('====================================================');
+    console.log(' Termux-Playwright Auto-Installer & Provisioner');
+    console.log('====================================================');
+    if (isTermux()) {
+        console.log('[1/2] Automatically provisioning chromium & system tools via pkg...');
+        try {
+            execSync('pkg update -y && pkg install -y chromium nodejs-lts termux-api', { stdio: 'inherit' });
+        } catch (e) {
+            console.warn('[Termux-Playwright] Warning: Failed to run pkg update/install automatically.');
+        }
+    } else {
+        console.log('[1/2] Non-Termux desktop OS detected. Skipping pkg install.');
+    }
+    console.log('\n[2/2] Running full system health verification:');
+    runDoctor();
+}
+
 function runReap() {
     console.log('[Termux-Playwright] Scanning for orphaned session processes and dead ledgers...');
     const count = ProcessReaper.reapUntrackedLedgerOrphans();
@@ -81,11 +99,13 @@ function runHelp() {
 Usage: termux-playwright <command>
 
 Commands:
+  install    Auto-provision Chromium & system dependencies and run diagnostics
   doctor     Run 6-tier system diagnostics and health report
   reap       Scan and terminate orphaned Chromium zombie processes
   help       Show this help message
 
 Examples:
+  npx termux-playwright install
   npx termux-playwright doctor
   npx termux-playwright reap
 `);
@@ -95,6 +115,11 @@ const args = process.argv.slice(2);
 const command = args[0] || 'doctor';
 
 switch (command) {
+    case 'install':
+    case '--install':
+    case '-i':
+        runInstall();
+        break;
     case 'doctor':
     case '--doctor':
     case '-d':
@@ -102,6 +127,7 @@ switch (command) {
         break;
     case 'reap':
     case '--reap':
+    case '-r':
         runReap();
         break;
     case 'help':

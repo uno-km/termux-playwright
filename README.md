@@ -27,9 +27,7 @@ pip install termux-playwright && termux-playwright-install
 
 ### ☕ Node.js / JavaScript:
 ```bash
-pkg install -y chromium nodejs-lts
-npm install termux-playwright
-npx termux-playwright doctor
+npm install termux-playwright && npx termux-playwright install
 ```
 
 ### 🪄 Universal Shell Bootstrapper (Zero-Friction):
