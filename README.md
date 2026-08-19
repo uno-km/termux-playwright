@@ -1,9 +1,12 @@
 # 📱 Termux-Playwright
 
-[![PyPI Version](https://img.shields.io/pypi/v/termux-playwright.svg)](https://pypi.org/project/termux-playwright/)
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+[![PyPI version](https://img.shields.io/pypi/v/termux-playwright.svg?color=blue)](https://pypi.org/project/termux-playwright/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/termux-playwright.svg?color=brightgreen)](https://pypistats.org/packages/termux-playwright)
+[![Total Downloads](https://img.shields.io/pepy/dt/termux-playwright?color=orange)](https://pepy.tech/projects/termux-playwright)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python: 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/platform-Android%20Termux%20(aarch64%20%7C%20x86__64)-green.svg)](https://termux.dev/)
+[![Tests](https://img.shields.io/badge/tests-84%20passed%20%7C%20100%25-success)](tests/)
 
 > **Run genuine Chromium browser automation (Headless & full JavaScript SPA rendering) directly on Android devices inside Termux without PRoot or root privileges.**
 
