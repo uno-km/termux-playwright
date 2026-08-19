@@ -72,58 +72,59 @@ index_html = f"""<!DOCTYPE html>
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://uno-km.github.io/termux-playwright-demo/">
     
-    <!-- Schema.org JSON-LD Structured Data for Google & AI Search Engines -->
+    <!-- 1. SoftwareApplication Schema -->
     <script type="application/ld+json">
     {{
       "@context": "https://schema.org",
-      "@graph": [
+      "@type": "SoftwareApplication",
+      "name": "Termux-Playwright",
+      "operatingSystem": "Android Termux (ARM64, aarch64)",
+      "applicationCategory": "DeveloperApplication",
+      "offers": {{
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }},
+      "softwareVersion": "1.61.3",
+      "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux without root or PRoot.",
+      "url": "https://uno-km.github.io/termux-playwright-demo/",
+      "sameAs": [
+        "https://github.com/uno-km/termux-playwright-demo",
+        "https://pypi.org/project/termux-playwright/",
+        "https://www.npmjs.com/package/termux-playwright"
+      ]
+    }}
+    </script>
+
+    <!-- 2. FAQPage Schema for Google AI Overviews & Rich Snippets -->
+    <script type="application/ld+json">
+    {{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
         {{
-          "@type": "SoftwareApplication",
-          "name": "Termux-Playwright",
-          "operatingSystem": "Android Termux (ARM64, aarch64)",
-          "applicationCategory": "DeveloperApplication",
-          "offers": {{
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-          }},
-          "softwareVersion": "1.61.3",
-          "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux without root or PRoot.",
-          "url": "https://uno-km.github.io/termux-playwright-demo/",
-          "sameAs": [
-            "https://github.com/uno-km/termux-playwright-demo",
-            "https://pypi.org/project/termux-playwright/",
-            "https://www.npmjs.com/package/termux-playwright"
-          ]
+          "@type": "Question",
+          "name": "How do I run Playwright on Android Termux with Python & Node.js?",
+          "acceptedAnswer": {{
+            "@type": "Answer",
+            "text": "For Python, run 'pip install termux-playwright && termux-playwright-install'. For Node.js, run 'npm install termux-playwright && npx termux-playwright install'. Both automate native Termux Chromium without PRoot or root."
+          }}
         }},
         {{
-          "@type": "FAQPage",
-          "mainEntity": [
-            {{
-              "@type": "Question",
-              "name": "How do I run Playwright on Android Termux?",
-              "acceptedAnswer": {{
-                "@type": "Answer",
-                "text": "For Python, run 'pip install termux-playwright && termux-playwright-install'. For Node.js, run 'npm install termux-playwright && npx termux-playwright install'. Both automate native Termux Chromium without PRoot or root."
-              }}
-            }},
-            {{
-              "@type": "Question",
-              "name": "Does Termux-Playwright support both Python and Node.js / JavaScript?",
-              "acceptedAnswer": {{
-                "@type": "Answer",
-                "text": "Yes! Termux-Playwright is a 100% dual-engine library published on PyPI (Python) and npm (Node.js/TypeScript) with identical feature parity, anti-bot stealth, and session memory leak protection."
-              }}
-            }},
-            {{
-              "@type": "Question",
-              "name": "How to bypass Cloudflare Turnstile and DataDome on Android Termux?",
-              "acceptedAnswer": {{
-                "@type": "Answer",
-                "text": "Use setup_stealth_context() in Python or setupStealthContext() in Node.js. It removes navigator.webdriver directly from Object.getPrototypeOf(navigator) and mocks native C++ permissions."
-              }}
-            }}
-          ]
+          "@type": "Question",
+          "name": "Does Termux-Playwright support both Python and Node.js / JavaScript?",
+          "acceptedAnswer": {{
+            "@type": "Answer",
+            "text": "Yes! Termux-Playwright is a 100% dual-engine library published on PyPI (Python) and npm (Node.js/TypeScript) with identical feature parity, anti-bot stealth, and session memory leak protection."
+          }}
+        }},
+        {{
+          "@type": "Question",
+          "name": "How to bypass Cloudflare Turnstile and DataDome on Android Termux?",
+          "acceptedAnswer": {{
+            "@type": "Answer",
+            "text": "Use setup_stealth_context() in Python or setupStealthContext() in Node.js. It removes navigator.webdriver directly from Object.getPrototypeOf(navigator) and mocks native C++ permissions."
+          }}
         }}
       ]
     }}
