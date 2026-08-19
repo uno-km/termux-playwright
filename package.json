@@ -5,9 +5,9 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "bin": {
-    "termux-playwright": "./bin/cli.js",
-    "termux-playwright-doctor": "./bin/cli.js",
-    "termux-playwright-reap": "./bin/cli.js"
+    "termux-playwright": "bin/cli.js",
+    "termux-playwright-doctor": "bin/cli.js",
+    "termux-playwright-reap": "bin/cli.js"
   },
   "files": [
     "lib",
