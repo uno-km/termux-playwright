@@ -57,3 +57,15 @@ venv.bak/
 *.swo
 *~
 .DS_Store
+
+# Testing & Quality
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Termux Runtime & Temporary Artifacts
+.tp_ledger/
+tp_solo_*/

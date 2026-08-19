@@ -25,18 +25,22 @@ setup(
     license="MIT",
     keywords=["playwright", "termux", "android", "chromium", "automation", "web-scraping"],
     packages=find_packages(),
+    package_data={
+        "termux_playwright": ["py.typed"],
+    },
+    include_package_data=True,
     install_requires=[
-        "greenlet>=3.1.1,<4.0.0",
-        "pyee>=13.0.0,<14.0.0",
-        "typing-extensions>=4.12.0,<5.0.0",
+        "pyee>=8.1.0,<=13.0.0",
+        "typing-extensions>=4.0.0,<5.0.0",
     ],
     extras_require={
+        "greenlet": ["greenlet>=3.1.1,<4.0.0"],
         "playwright": ["playwright>=1.40.0"],
     },
     entry_points={
         'console_scripts': [
             'termux-playwright-install=termux_playwright.installer:run_installation_pipeline',
-            'termux-playwright-patch=termux_playwright.patcher:apply_core_bundle_patch',
+            'termux-playwright-patch=termux_playwright.patcher:cli_patch_core_bundle',
             'termux-playwright-doctor=termux_playwright.installer:doctor',
             'termux-playwright-reap=termux_playwright.reaper:cli_reap_orphans',
         ],

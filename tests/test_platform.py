@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import pytest
 from termux_playwright.platform import (
@@ -32,7 +33,23 @@ def test_is_termux_with_custom_termux_variants(monkeypatch):
 def test_is_termux_without_prefix(monkeypatch):
     monkeypatch.delenv("PREFIX", raising=False)
     monkeypatch.delenv("TERMUX_VERSION", raising=False)
-    monkeypatch.setattr("os.path.exists", lambda _: False)
+    monkeypatch.delenv("TERMUX_APP_PID", raising=False)
+    monkeypatch.delenv("TERMUX_MAIN_PACKAGE", raising=False)
+    monkeypatch.setattr("sys.executable", "/usr/bin/python3")
+    monkeypatch.setattr("sys.prefix", "/usr")
+    assert is_termux() is False
+
+def test_is_termux_other_android_app_isolation_no_false_positive(monkeypatch):
+    """If running in Pydroid3/QPython, having Termux folder on disk must not trigger is_termux."""
+    monkeypatch.delenv("PREFIX", raising=False)
+    monkeypatch.delenv("TERMUX_VERSION", raising=False)
+    monkeypatch.delenv("TERMUX_APP_PID", raising=False)
+    monkeypatch.delenv("TERMUX_MAIN_PACKAGE", raising=False)
+    monkeypatch.setattr("sys.executable", "/data/data/ru.iiec.pydroid3/files/bin/python3")
+    monkeypatch.setattr("sys.prefix", "/data/data/ru.iiec.pydroid3/files")
+    # Even if Termux folder exists on disk, permission denied (os.access = False) prevents false positive
+    monkeypatch.setattr("os.path.isdir", lambda path: True if "com.termux" in path else False)
+    monkeypatch.setattr("os.access", lambda path, mode: False)
     assert is_termux() is False
 
 def test_get_cpu_architecture_mapping(monkeypatch):
@@ -98,6 +115,16 @@ def test_check_preflight_storage_healthy(monkeypatch, tmp_path):
     free_mb = check_preflight_storage(str(tmp_path))
     assert free_mb == 500
 
+def test_check_preflight_storage_custom_env_override(monkeypatch, tmp_path):
+    import termux_playwright.platform as plat
+    monkeypatch.setattr(plat, "MINIMUM_REQUIRED_STORAGE_MB", 300)
+    class FakeUsage:
+        free = 200 * 1024 * 1024
+    monkeypatch.setattr("shutil.disk_usage", lambda _: FakeUsage())
+
+    with pytest.raises(StorageExhaustionError):
+        check_preflight_storage(str(tmp_path))
+
 def test_get_android_sdk_version_non_termux(monkeypatch):
     monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: False)
     assert get_android_sdk_version() == 0
@@ -115,5 +142,125 @@ def test_get_android_sdk_version_termux_success(monkeypatch):
 def test_get_android_sdk_version_termux_fallback_on_failure(monkeypatch):
     monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: True)
     monkeypatch.setattr("shutil.which", lambda _: None)
+    monkeypatch.setattr("os.path.isfile", lambda _: False)
+    if hasattr(sys, "getandroidapilevel"):
+        monkeypatch.delattr(sys, "getandroidapilevel")
     # Must return safe default SDK 29 to protect against SELinux W^X violation
     assert get_android_sdk_version() == ANDROID_10_SDK_VERSION
+
+def test_get_android_sdk_version_tier1_sys_api_level(monkeypatch):
+    monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: True)
+    monkeypatch.setattr(sys, "getandroidapilevel", lambda: 26, raising=False)
+    assert get_android_sdk_version() == 26
+
+def test_get_android_sdk_version_tier3_build_prop(monkeypatch, tmp_path):
+    monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: True)
+    monkeypatch.setattr("shutil.which", lambda _: None)
+    if hasattr(sys, "getandroidapilevel"):
+        monkeypatch.delattr(sys, "getandroidapilevel")
+    
+    mock_prop = tmp_path / "build.prop"
+    mock_prop.write_text("ro.build.version.release=8.0.0\nro.build.version.sdk=26\n", encoding="utf-8")
+    
+    orig_open = open
+    def fake_isfile(p):
+        return p == "/system/build.prop"
+    def fake_open(p, *a, **kw):
+        if p == "/system/build.prop":
+            return orig_open(str(mock_prop), "r", encoding="utf-8")
+        return orig_open(p, *a, **kw)
+
+    monkeypatch.setattr("os.path.isfile", fake_isfile)
+    monkeypatch.setattr("builtins.open", fake_open)
+    assert get_android_sdk_version() == 26
+
+def test_find_chromium_binary_windows_desktop_fallback(monkeypatch, tmp_path):
+    monkeypatch.delenv("PLAYWRIGHT_CHROMIUM_PATH", raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr("shutil.which", lambda _: None)
+    
+    fake_chrome = tmp_path / "chrome.exe"
+    fake_chrome.write_text("mock binary", encoding="utf-8")
+    
+    monkeypatch.setenv("ProgramFiles", str(tmp_path))
+    target_chrome = tmp_path / "Google" / "Chrome" / "Application" / "chrome.exe"
+    target_chrome.parent.mkdir(parents=True, exist_ok=True)
+    target_chrome.write_text("mock chrome", encoding="utf-8")
+    
+    found = find_chromium_binary()
+    assert os.path.realpath(str(target_chrome)) == found
+
+def test_get_installed_chromium_version_success(monkeypatch, tmp_path):
+    import termux_playwright.platform as tp_platform
+    from termux_playwright.platform import get_installed_chromium_version
+    import subprocess
+
+    tp_platform._cached_chromium_stat = None
+
+    fake_chrome = tmp_path / "chromium"
+    fake_chrome.write_text("mock binary", encoding="utf-8")
+    monkeypatch.setattr("termux_playwright.platform.find_chromium_binary", lambda: str(fake_chrome))
+    def mock_run(cmd, *args, **kwargs):
+        class MockRes:
+            returncode = 0
+            stdout = b"Chromium 131.0.6778.85 Built on Ubuntu"
+        return MockRes()
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    full_v, major_v = get_installed_chromium_version()
+    assert full_v == "131.0.6778.85"
+    assert major_v == "131"
+    tp_platform._cached_chromium_stat = None
+
+def test_get_installed_chromium_version_mtime_invalidation(monkeypatch, tmp_path):
+    import time
+    import termux_playwright.platform as tp_platform
+    from termux_playwright.platform import get_installed_chromium_version
+    import subprocess
+
+    tp_platform._cached_chromium_stat = None
+
+    fake_chrome = tmp_path / "chromium"
+    fake_chrome.write_text("mock binary v1", encoding="utf-8")
+    monkeypatch.setattr("termux_playwright.platform.find_chromium_binary", lambda: str(fake_chrome))
+
+    call_count = 0
+    def mock_run(cmd, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        class MockRes:
+            returncode = 0
+            stdout = f"Chromium 13{call_count}.0.0.0".encode("utf-8")
+        return MockRes()
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    # 1. First call -> executes subprocess
+    v1, m1 = get_installed_chromium_version()
+    assert v1 == "131.0.0.0"
+    assert call_count == 1
+
+    # 2. Second call with unchanged mtime -> hits cache (no subprocess execution)
+    v2, m2 = get_installed_chromium_version()
+    assert v2 == "131.0.0.0"
+    assert call_count == 1
+
+    # 3. Modify mtime (simulating `pkg upgrade chromium`) -> refreshes cache!
+    new_time = time.time() + 10.0
+    os.utime(str(fake_chrome), (new_time, new_time))
+    v3, m3 = get_installed_chromium_version()
+    assert v3 == "132.0.0.0"
+    assert call_count == 2
+
+    tp_platform._cached_chromium_stat = None
+
+def test_get_installed_chromium_version_fallback_on_error(monkeypatch):
+    import termux_playwright.platform as tp_platform
+    from termux_playwright.platform import get_installed_chromium_version
+    tp_platform._cached_chromium_stat = None
+
+    monkeypatch.setattr("termux_playwright.platform.find_chromium_binary", lambda: (_ for _ in ()).throw(Exception("binary missing")))
+
+    full_v, major_v = get_installed_chromium_version()
+    assert full_v == "130.0.0.0"
+    assert major_v == "130"
+    tp_platform._cached_chromium_stat = None

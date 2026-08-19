@@ -66,3 +66,21 @@ def test_locate_core_bundle_path_recursive_fallback(tmp_path, monkeypatch):
     found = locate_core_bundle_path()
     assert found == str(custom_bundle)
 
+def test_cli_patch_core_bundle_stdout(tmp_path, monkeypatch, capsys):
+    from termux_playwright.patcher import cli_patch_core_bundle
+    mock_bundle = tmp_path / "coreBundle.js"
+    mock_bundle.write_text("console.log('original');", encoding="utf-8")
+
+    monkeypatch.setattr("termux_playwright.patcher.locate_core_bundle_path", lambda: str(mock_bundle))
+    
+    # 1. First run: successfully applied
+    cli_patch_core_bundle()
+    captured = capsys.readouterr()
+    assert "Successfully applied platform bypass patch" in captured.out
+
+    # 2. Second run: already patched
+    cli_patch_core_bundle()
+    captured = capsys.readouterr()
+    assert "is already patched and verified" in captured.out
+
+

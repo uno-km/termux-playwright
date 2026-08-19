@@ -8,22 +8,26 @@ Demonstrates:
 """
 
 import asyncio
-from playwright.async_api import async_playwright
-from termux_playwright import launch, TermuxWakeLock, ProcessLifecycleError
+from termux_playwright import (
+    async_playwright_termux,
+    launch,
+    TermuxWakeLock,
+    block_heavy_resources,
+    ProcessLifecycleError,
+)
 
 async def run_247_crawler():
     print("🚀 [Termux] Starting 24/7 resilient unattended crawler...")
 
     # Acquire CPU WakeLock to keep networking and CPU active while phone screen is off
-    try:
-        wake_lock = TermuxWakeLock(fail_silently=True)
-        wake_lock.acquire()
-        print("[*] Termux CPU WakeLock acquired.")
-    except Exception as e:
-        print(f"[!] Warning: WakeLock could not be acquired: {e}")
+    wake_lock = TermuxWakeLock(fail_silently=True)
+    if wake_lock.acquire():
+        print("[*] Termux CPU WakeLock acquired successfully.")
+    else:
+        print("[*] Note: CPU WakeLock inactive (termux-api unavailable or running on standard OS).")
 
     try:
-        async with async_playwright() as p:
+        async with async_playwright_termux() as p:
             # Launch with low-memory mode (128MB heap limit) for low-end devices
             browser = await launch(
                 p,
@@ -36,6 +40,9 @@ async def run_247_crawler():
                 viewport={"width": 1280, "height": 720},
                 user_agent="Mozilla/5.0 (Linux; Android 10; SM-G930F) AppleWebKit/537.36"
             )
+            
+            # ⚡ Apply asset blocking across all pages created in this context
+            await block_heavy_resources(context)
             page = await context.new_page()
 
             urls = [

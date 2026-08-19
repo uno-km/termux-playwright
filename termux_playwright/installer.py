@@ -23,11 +23,12 @@ from .platform import (
     find_node_binary,
     check_preflight_storage,
 )
-from .patcher import apply_core_bundle_patch, is_core_bundle_patched, locate_playwright_package_dir
+from .patcher import apply_core_bundle_patch, is_core_bundle_patched, locate_playwright_package_dir, cleanup_backup
 
-DEFAULT_PLAYWRIGHT_VERSION = "1.61.1"
-SUBPROCESS_TIMEOUT_SECONDS = 300
-MAX_NETWORK_RETRIES = 3
+DEFAULT_PLAYWRIGHT_VERSION: str = "1.48.0"
+VERIFIED_COMPATIBLE_VERSIONS: Tuple[str, ...] = ("1.50.0", "1.49.0", "1.48.0", "1.47.0", "1.40.0")
+SUBPROCESS_TIMEOUT_SECONDS: int = 300
+MAX_NETWORK_RETRIES: int = 3
 
 def resolve_latest_compatible_version() -> str:
     """Query PyPI API to discover the latest compatible Playwright release."""
@@ -53,10 +54,19 @@ def resolve_latest_compatible_version() -> str:
     return DEFAULT_PLAYWRIGHT_VERSION
 
 def fetch_pypi_wheel_info(version: Optional[str] = None) -> Tuple[str, str, str]:
-    """Query PyPI JSON API for the exact matching architecture wheel URL and filename."""
+    """Query PyPI JSON API for the exact matching architecture wheel URL and filename.
+    
+    Args:
+        version: Specific version string. If None, defaults to known-good verified
+                 LTS release (DEFAULT_PLAYWRIGHT_VERSION). If 'latest', dynamically
+                 queries the bleeding-edge release from PyPI.
+    """
     arch = get_cpu_architecture()
     tag = get_wheel_tag_for_arch(arch)
-    target_version = version or resolve_latest_compatible_version()
+    if version == "latest":
+        target_version = resolve_latest_compatible_version()
+    else:
+        target_version = version or DEFAULT_PLAYWRIGHT_VERSION
     api_url = f"https://pypi.org/pypi/playwright/{target_version}/json"
 
     for attempt in range(1, MAX_NETWORK_RETRIES + 1):
@@ -84,13 +94,64 @@ def fetch_pypi_wheel_info(version: Optional[str] = None) -> Tuple[str, str, str]
 
     raise InstallationError("Exhausted retries resolving Playwright wheel.")
 
-def install_system_dependencies() -> None:
-    """Install native Termux Chromium and Node.js packages via pkg with retry."""
+REQUIRED_TERMUX_SYSTEM_PACKAGES: List[str] = [
+    "chromium",
+    "nodejs",
+    "python-greenlet",
+    "procps",
+    "termux-api",
+]
+
+OPTIONAL_TERMUX_BUILD_PACKAGES: List[str] = [
+    "clang",
+    "python",
+    "make",
+]
+
+def _format_error_report(phase: str, reason: str, details: Optional[str] = None, remedies: Optional[List[str]] = None) -> str:
+    """Construct a clean, structured, highly readable English error report."""
+    lines = [
+        "",
+        "=" * 70,
+        f"[-] INSTALLATION FAILED AT: {phase.upper()}",
+        "=" * 70,
+        f"Error Description: {reason}",
+    ]
+    if details:
+        lines.append(f"\nUnderlying System Output:\n{details.strip()}")
+    if remedies:
+        lines.append("\nRecommended Actions to Resolve:")
+        for idx, remedy in enumerate(remedies, 1):
+            lines.append(f"  {idx}. {remedy}")
+    lines.append("=" * 70)
+    return "\n".join(lines)
+
+def install_system_dependencies(include_build_tools: bool = False) -> None:
+    """Install native Termux Chromium, Node.js, and pre-compiled Python C-extensions via pkg with retry.
+    
+    Uses Termux repository's native python-greenlet to avoid pulling in 1.2GB Clang/LLVM build toolchain.
+    
+    Args:
+        include_build_tools: If True, also installs clang and make (~1.2GB toolchain).
+            Defaults to False for lean storage footprint and fast installation.
+    """
     pkg_bin = shutil.which("pkg")
     if not pkg_bin:
-        raise InstallationError("Termux 'pkg' package manager was not found in PATH.")
+        msg = _format_error_report(
+            phase="Native System Package Provisioning",
+            reason="Termux 'pkg' package manager was not found in system PATH.",
+            remedies=[
+                "Ensure you are running inside a standard Termux environment on Android.",
+                "If running in a custom proot/chroot, verify your PATH contains '/data/data/com.termux/files/usr/bin'."
+            ]
+        )
+        raise InstallationError(msg)
 
-    cmd = [pkg_bin, "install", "-y", "chromium", "nodejs"]
+    packages = list(REQUIRED_TERMUX_SYSTEM_PACKAGES)
+    if include_build_tools:
+        packages.extend(OPTIONAL_TERMUX_BUILD_PACKAGES)
+
+    cmd = [pkg_bin, "install", "-y"] + packages
     print(f"[*] Executing system package installation: {' '.join(cmd)}")
     
     for attempt in range(1, MAX_NETWORK_RETRIES + 1):
@@ -98,19 +159,65 @@ def install_system_dependencies() -> None:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
             if res.returncode == 0:
                 return
+
+            # Tier 2: Attempt apt-get --fix-missing recovery if available
+            apt_bin = shutil.which("apt-get") or shutil.which("apt")
+            if apt_bin:
+                print(f"[!] 'pkg install' encountered errors. Attempting Tier 2 recovery with '{apt_bin} install --fix-missing'...")
+                fix_cmd = [apt_bin, "install", "-y", "--fix-missing"] + packages
+                fix_res = subprocess.run(fix_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+                if fix_res.returncode == 0:
+                    print("[+] Tier 2 package recovery succeeded.")
+                    return
+
             if attempt == MAX_NETWORK_RETRIES:
-                raise InstallationError(
-                    f"Failed to install system packages via pkg (code {res.returncode}):\n{res.stderr or res.stdout}"
+                raw_out = (res.stderr or res.stdout or "No output captured").strip()
+                print("\n" + "=" * 65)
+                print(" [!] CRITICAL: Termux Package Mirror Error")
+                print(" 👉 Run 'termux-change-repo' in Termux to switch to a healthy mirror")
+                print("    (e.g., choose 'Mirrors by Tsinghua' or 'Mirrors by BFSU').")
+                print(" 👉 Then run: pkg update -y && termux-playwright-install")
+                print("=" * 65 + "\n")
+                msg = _format_error_report(
+                    phase="Native System Package Provisioning (pkg install)",
+                    reason=f"'pkg install' exited with non-zero status code {res.returncode} after {MAX_NETWORK_RETRIES} attempts (possible mirror 404 or network outage).",
+                    details=raw_out,
+                    remedies=[
+                        "Switch package mirror: Run 'termux-change-repo' and pick a fast mirror",
+                        "Update repository index: Run 'pkg update -y'",
+                        f"Attempt manual install: pkg install -y {' '.join(packages)}",
+                        "Ensure your device has active internet access."
+                    ]
                 )
+                raise InstallationError(msg)
             print(f"[!] pkg install failed (attempt {attempt}/{MAX_NETWORK_RETRIES}). Retrying in {2 ** attempt}s...")
             time.sleep(2 ** attempt)
         except subprocess.TimeoutExpired as e:
             if attempt == MAX_NETWORK_RETRIES:
-                raise InstallationError(f"System package installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
+                msg = _format_error_report(
+                    phase="Native System Package Provisioning (pkg install)",
+                    reason=f"Subprocess timed out after {SUBPROCESS_TIMEOUT_SECONDS} seconds.",
+                    remedies=[
+                        "Check your network latency or mirror download speed.",
+                        "Run 'termux-change-repo' to select a faster geographic mirror."
+                    ]
+                )
+                raise InstallationError(msg) from e
 
 def install_playwright_wheel(version: Optional[str] = None) -> None:
     """Download architecture wheel with retry, rename to bypass platform checks, and install."""
-    download_url, filename, resolved_version = fetch_pypi_wheel_info(version)
+    try:
+        download_url, filename, resolved_version = fetch_pypi_wheel_info(version)
+    except Exception as e:
+        msg = _format_error_report(
+            phase="Playwright Wheel Resolution from PyPI",
+            reason=f"Failed to locate matching architecture wheel on PyPI: {e}",
+            remedies=[
+                "Verify device has internet access to https://pypi.org.",
+                "Specify a known LTS version explicitly: termux-playwright-install (or set version='1.61.0')."
+            ]
+        )
+        raise InstallationError(msg) from e
     
     with tempfile.TemporaryDirectory() as temp_dir:
         download_target = os.path.join(temp_dir, filename)
@@ -125,7 +232,15 @@ def install_playwright_wheel(version: Optional[str] = None) -> None:
                 break
             except Exception as e:
                 if attempt == MAX_NETWORK_RETRIES:
-                    raise InstallationError(f"Failed to download wheel after {MAX_NETWORK_RETRIES} attempts: {e}") from e
+                    msg = _format_error_report(
+                        phase="Playwright Wheel Download",
+                        reason=f"Network transfer failed after {MAX_NETWORK_RETRIES} attempts: {e}",
+                        remedies=[
+                            "Check network stability and DNS configuration.",
+                            f"Test downloading manually via curl: curl -LO {download_url}"
+                        ]
+                    )
+                    raise InstallationError(msg) from e
                 time.sleep(2 ** attempt)
 
         # Atomic rename to any platform
@@ -143,48 +258,108 @@ def install_playwright_wheel(version: Optional[str] = None) -> None:
         try:
             res = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
             if res.returncode != 0:
-                raise InstallationError(
-                    f"pip installation of renamed wheel failed (code {res.returncode}):\n{res.stderr}"
+                msg = _format_error_report(
+                    phase="Pip Wheel Installation (Bypass Injection)",
+                    reason=f"pip failed to install renamed wheel (code {res.returncode}).",
+                    details=res.stderr or res.stdout,
+                    remedies=[
+                        "Upgrade pip and setuptools: pip install --upgrade pip setuptools",
+                        "Ensure your user has write permissions to Python site-packages."
+                    ]
                 )
+                raise InstallationError(msg)
         except subprocess.TimeoutExpired as e:
-            raise InstallationError(f"pip install timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
+            msg = _format_error_report(
+                phase="Pip Wheel Installation",
+                reason=f"pip command timed out after {SUBPROCESS_TIMEOUT_SECONDS}s.",
+                remedies=["Verify storage I/O speed and available disk space."]
+            )
+            raise InstallationError(msg) from e
 
 def install_python_dependencies() -> None:
     """Install core Python dependencies required by Playwright."""
-    deps = ["greenlet>=3.1.1", "pyee>=13.0.0", "typing-extensions>=4.12.0"]
-    pip_cmd = [sys.executable, "-m", "pip", "install"] + deps
+    deps = ["pyee>=8.1.0,<=13.0.0", "typing-extensions>=4.12.0"]
+    try:
+        import greenlet  # Check if provided by native python-greenlet package
+    except ImportError:
+        deps.insert(0, "greenlet>=3.1.1")
+
+    pip_cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary"] + deps
     print(f"[*] Installing Python dependencies: {deps}")
     try:
         res = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
         if res.returncode != 0:
-            raise InstallationError(f"Failed to install Python dependencies:\n{res.stderr}")
+            msg = _format_error_report(
+                phase="Python Dependencies Installation",
+                reason=f"Failed to install required Python libraries {deps} (code {res.returncode}).",
+                details=res.stderr or res.stdout,
+                remedies=[
+                    "If building greenlet failed due to missing C-compiler, install native package: pkg install -y python-greenlet",
+                    "Upgrade pip: pip install --upgrade pip",
+                    f"Attempt manual install: pip install --prefer-binary {' '.join(deps)}"
+                ]
+            )
+            raise InstallationError(msg)
     except subprocess.TimeoutExpired as e:
-        raise InstallationError(f"Python dependency installation timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from e
+        msg = _format_error_report(
+            phase="Python Dependencies Installation",
+            reason=f"pip timed out after {SUBPROCESS_TIMEOUT_SECONDS}s.",
+            remedies=["Check network connectivity."]
+        )
+        raise InstallationError(msg) from e
 
 def run_installation_pipeline(version: Optional[str] = None) -> None:
     """Execute complete end-to-end installation and verification pipeline."""
     print("=" * 60)
-    print("🚀 [Termux-Playwright] Deterministic Installation Pipeline")
+    print("[*] [Termux-Playwright] Deterministic Installation Pipeline")
     print("=" * 60)
 
     if is_termux():
-        check_preflight_storage()
+        try:
+            check_preflight_storage(min_mb=300)
+        except StorageExhaustionError as e:
+            msg = _format_error_report(
+                phase="Pre-flight Storage Health Check",
+                reason=str(e),
+                remedies=[
+                    "Clean cached apt/pkg packages: pkg clean",
+                    "Clean temporary directory: rm -rf $TMPDIR/* /tmp/*",
+                    "Remove unused pip cache: pip cache purge"
+                ]
+            )
+            raise InstallationError(msg) from e
 
     if not is_termux():
         target_v = version or DEFAULT_PLAYWRIGHT_VERSION
         print(f"[!] Non-Termux environment detected. Installing standard upstream Playwright ({target_v})...")
         res = subprocess.run([sys.executable, "-m", "pip", "install", f"playwright=={target_v}"], check=False, timeout=SUBPROCESS_TIMEOUT_SECONDS)
         if res.returncode != 0:
-            raise InstallationError(f"Standard playwright install failed with code {res.returncode}")
+            msg = _format_error_report(
+                phase="Standard Playwright Installation (Non-Termux)",
+                reason=f"pip install playwright=={target_v} failed with exit code {res.returncode}.",
+                remedies=["Check internet connection and pip configuration."]
+            )
+            raise InstallationError(msg)
         print("[+] Standard Playwright installation complete.")
         return
 
     # 1. Check Architecture
-    arch = get_cpu_architecture()
-    print(f"[*] Detected CPU architecture: {arch}")
+    try:
+        arch = get_cpu_architecture()
+        print(f"[*] Detected CPU architecture: {arch}")
+    except UnsupportedPlatformError as e:
+        msg = _format_error_report(
+            phase="CPU Architecture Validation",
+            reason=str(e),
+            remedies=[
+                "Termux-Playwright requires a 64-bit ARM CPU (aarch64/arm64) or x86_64.",
+                "32-bit ARM (armv7l) does not have compatible Chromium / Node.js binaries."
+            ]
+        )
+        raise InstallationError(msg) from e
 
     # 2. System Packages
-    print("[1/4] Installing native Termux packages (Chromium, Node.js)...")
+    print("[1/4] Installing native Termux packages (Chromium, Node.js, python-greenlet)...")
     install_system_dependencies()
 
     # 3. Wheel Bypass
@@ -197,7 +372,22 @@ def run_installation_pipeline(version: Optional[str] = None) -> None:
 
     # 5. JS Platform Patch
     print("[4/4] Applying atomic platform verification bypass patch...")
-    apply_core_bundle_patch()
+    try:
+        apply_core_bundle_patch()
+        try:
+            cleanup_backup()
+        except Exception as cleanup_err:
+            print(f"[*] Optional backup cleanup skipped: {cleanup_err}")
+    except PatchingError as e:
+        msg = _format_error_report(
+            phase="coreBundle.js Platform Patch",
+            reason=f"Failed to inject platform verification bypass: {e}",
+            remedies=[
+                "Verify Playwright package is installed: python -c 'import playwright; print(playwright.__file__)'",
+                "Run manual patcher CLI: termux-playwright-patch"
+            ]
+        )
+        raise InstallationError(msg) from e
 
     print("\n[+] Installation and patching successfully completed!")
     doctor()
@@ -205,7 +395,7 @@ def run_installation_pipeline(version: Optional[str] = None) -> None:
 def doctor() -> bool:
     """Perform diagnostic health check and report system readiness."""
     print("\n" + "=" * 60)
-    print("🩺 [Termux-Playwright] Diagnostic Health Check")
+    print("[*] [Termux-Playwright] Diagnostic Health Check")
     print("=" * 60)
 
     all_healthy = True
@@ -270,13 +460,41 @@ def doctor() -> bool:
         print(f"[*] 6. JS Bypass Patch    : [FAIL] Package missing")
         all_healthy = False
 
+    # 7. Power Management (termux-wake-lock)
+    if tmx:
+        wake_lock_bin = shutil.which("termux-wake-lock")
+        if wake_lock_bin:
+            try:
+                res = subprocess.run([wake_lock_bin], capture_output=True, timeout=2, check=False)
+                if res.returncode == 0:
+                    print(f"[*] 7. Power Management   : [OK] {wake_lock_bin} (Service responsive)")
+                    unlock_bin = shutil.which("termux-wake-unlock")
+                    if unlock_bin:
+                        subprocess.run([unlock_bin], capture_output=True, timeout=2, check=False)
+                else:
+                    print(f"[*] 7. Power Management   : [!] termux-wake-lock exited with code {res.returncode}")
+            except subprocess.TimeoutExpired:
+                print(f"[*] 7. Power Management   : [!] termux-wake-lock timed out. Termux:API APK may be missing.")
+        else:
+            print(f"[*] 7. Power Management   : [!] 'termux-wake-lock' missing (pkg install termux-api + Termux:API APK)")
+
+    # 8. Virtual Environment Integrity
+    if hasattr(sys, "base_prefix") and sys.prefix != sys.base_prefix:
+        print(f"[*] 8. Virtualenv Check   : [!] Running inside venv ({sys.prefix})")
+        print("                           Note: If greenlet is not found, recreate venv with: python -m venv --system-site-packages")
+
     print("=" * 60)
     print(f"Overall Status: {'[HEALTHY]' if all_healthy else '[UNHEALTHY - ACTION REQUIRED]'}\n")
     return all_healthy
 
 if __name__ == "__main__":
-    try:
-        run_installation_pipeline()
-    except Exception as err:
-        print(f"\n[-] Installation Pipeline Failed: {err}", file=sys.stderr)
-        sys.exit(1)
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ("doctor", "--doctor", "-d"):
+        healthy = doctor()
+        sys.exit(0 if healthy else 1)
+    else:
+        try:
+            target_version = sys.argv[1] if len(sys.argv) > 1 else None
+            run_installation_pipeline(version=target_version)
+        except Exception as err:
+            print(f"\n{err}", file=sys.stderr)
+            sys.exit(1)

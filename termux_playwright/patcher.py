@@ -14,10 +14,17 @@ from .exceptions import PatchingError
 
 logger = logging.getLogger(__name__)
 
-PATCH_SIGNATURE = 'Object.defineProperty(process, "platform", {value: "linux"});'
+PATCH_SIGNATURE = 'Object.defineProperty(process, "platform"'
+PATCH_SIGNATURES: List[str] = [
+    'Object.defineProperty(process, "platform"',
+    "Object.defineProperty(process, 'platform'",
+    'process.platform = "linux"',
+    "process.platform = 'linux'",
+    "os.platform = () => 'linux'",
+]
 PATCH_PAYLOAD = (
-    'Object.defineProperty(process, "platform", {value: "linux"});\n'
-    'Object.defineProperty(require("os"), "platform", {value: () => "linux"});\n'
+    'Object.defineProperty(process, "platform", {value: "linux", configurable: true});\n'
+    'Object.defineProperty(require("os"), "platform", {value: () => "linux", configurable: true});\n'
 )
 
 def locate_playwright_package_dir() -> str:
@@ -60,8 +67,8 @@ def locate_core_bundle_path() -> str:
         if os.path.isfile(full_path):
             return full_path
 
-    # Dynamic recursive scan fallback for future Playwright directory layout changes
-    target_filenames = {"coreBundle.js", "inprocess.js"}
+    # Dynamic recursive scan fallback for diverse Playwright packaging layouts
+    target_filenames = {"coreBundle.js", "inprocess.js", "bundle.js", "index.js", "cli.js"}
     for root, _, files in os.walk(pw_dir):
         for f in files:
             if f in target_filenames:
@@ -89,14 +96,21 @@ def ensure_file_writable(path: str) -> None:
             ) from e
 
 def is_core_bundle_patched(target_path: Optional[str] = None) -> bool:
-    """Verify if target coreBundle.js already has the platform bypass injected."""
-    path = target_path or locate_core_bundle_path()
+    """Verify if target coreBundle.js already has the platform bypass injected.
+    
+    Reads up to 2048 bytes from the file header to detect single-quote, double-quote,
+    or minified variants of the platform patch.
+    """
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            header = f.read(512)
-            return PATCH_SIGNATURE in header
+        path = target_path or locate_core_bundle_path()
+        if not os.path.isfile(path):
+            return False
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            header = f.read(2048)
+            return any(sig in header for sig in PATCH_SIGNATURES)
     except Exception as e:
-        raise PatchingError(f"Failed to read coreBundle.js: {e}") from e
+        logger.debug("is_core_bundle_patched check failed on '%s': %s", target_path, e)
+        return False
 
 def apply_core_bundle_patch(target_path: Optional[str] = None) -> bool:
     """Atomically inject platform bypass into coreBundle.js with backup and verification.
@@ -184,3 +198,17 @@ def cleanup_backup(target_path: Optional[str] = None) -> bool:
         return True
     except OSError as e:
         raise PatchingError(f"Failed to remove backup file '{backup_path}': {e}") from e
+
+def cli_patch_core_bundle() -> None:
+    """CLI entry point for termux-playwright-patch command with user feedback."""
+    import sys
+    try:
+        newly_patched = apply_core_bundle_patch()
+        if newly_patched:
+            print("[+] Successfully applied platform bypass patch to coreBundle.js")
+        else:
+            print("[*] coreBundle.js is already patched and verified.")
+    except Exception as e:
+        print(f"[-] Patching failed: {e}", file=sys.stderr)
+        sys.exit(1)
+
