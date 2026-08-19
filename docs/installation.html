@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation Guide | Termux-Playwright</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
+    <script src="i18n-translations.js"></script>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="header-brand">
+            <img src="favicon.svg" alt="Logo">
+            <h1 data-i18n="common.brand">Termux-Playwright</h1>
+        </a>
+        <div class="header-controls">
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <div class="lang-selector-wrapper"></div>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <h3 data-i18n="common.nav.overview">Overview</h3>
+            <ul>
+                <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
+                <li><a href="installation.html" class="active" data-i18n="common.nav.installation">Installation Guide</a></li>
+                <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+                <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
+                <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
+                <li><a href="phantom-process.html" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
+                <li><a href="blog_post.md" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
+            </ul>
+            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
+            <ul>
+                <li><a href="../llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
+                <li><a href="../llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2>Installation Guide</h2>
+            <p>Deploying Playwright on Android Termux requires native system packages and patched platform driver files.</p>
+
+            <h3>Option 1: 1-Line Automated Installer (Recommended)</h3>
+            <pre><code>pip install termux-playwright &amp;&amp; termux-playwright-install</code></pre>
+
+            <h3>Option 2: Zero-Friction Bootstrap Script</h3>
+            <pre><code>curl -sL https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/install.sh | bash</code></pre>
+
+            <h3>Option 3: Step-by-Step Manual Setup</h3>
+            
+            <h4>Step 1: Install Termux System Packages</h4>
+            <pre><code>pkg update -y &amp;&amp; pkg install -y \
+  python \
+  python-pip \
+  python-greenlet \
+  chromium \
+  nodejs-lts \
+  procps \
+  termux-api</code></pre>
+
+            <h4>Step 2: Create Python Virtual Environment (If using venv)</h4>
+            <div class="alert alert-warning">
+                <span class="alert-title">Virtual Environment Requirement</span>
+                <p>When creating a venv on Termux, you <strong>MUST</strong> pass <code>--system-site-packages</code> so Python can access pre-compiled C-extensions (<code>python-greenlet</code>):</p>
+                <pre><code>python -m venv --system-site-packages myenv
+source myenv/bin/activate</code></pre>
+            </div>
+
+            <h4>Step 3: Install Package from PyPI</h4>
+            <pre><code>pip install termux-playwright</code></pre>
+
+            <h4>Step 4: Execute Core Patcher &amp; Diagnostics</h4>
+            <pre><code>termux-playwright-patch
+termux-playwright-doctor</code></pre>
+
+            <div class="alert alert-tip">
+                <span class="alert-title">Doctor Output Verification</span>
+                <p>When <code>termux-playwright-doctor</code> runs, it checks binary paths, CPU architecture (aarch64), permissions, and driver bundle integrity.</p>
+            </div>
+        </main>
+    </div>
+    <footer>
+        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android 14+ Phantom Process Killer Guide | Termux-Playwright</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
+    <script src="i18n-translations.js"></script>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="header-brand">
+            <img src="favicon.svg" alt="Logo">
+            <h1 data-i18n="common.brand">Termux-Playwright</h1>
+        </a>
+        <div class="header-controls">
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <div class="lang-selector-wrapper"></div>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <h3 data-i18n="common.nav.overview">Overview</h3>
+            <ul>
+                <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
+                <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
+                <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+                <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
+                <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
+                <li><a href="phantom-process.html" class="active" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
+                <li><a href="blog_post.md" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
+            </ul>
+            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
+            <ul>
+                <li><a href="../llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
+                <li><a href="../llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2>Android 12/13/14+ Phantom Process Killer Guide</h2>
+            <p>Android 12 and above introduces the <strong>Phantom Process Killer</strong>, which terminates background apps if their child processes exceed 32.</p>
+
+            <div class="alert alert-warning">
+                <span class="alert-title">Symptom: [Process completed (signal 9) - press Enter]</span>
+                <p>If Termux suddenly dies with <code>signal 9</code> during heavy crawling with multiple tabs, the Android kernel Phantom Process Killer has triggered.</p>
+            </div>
+
+            <h3>Solution 1: Python Single-Process Mode (No ADB Required)</h3>
+            <p>Pass <code>single_process=True</code> to collapse Chromium into 1 process:</p>
+            <pre><code>browser = await launch(p, headless=True, single_process=True)</code></pre>
+
+            <h3>Solution 2: Permanent ADB Unlock (Recommended for 24/7 Servers)</h3>
+            <p>Connect your phone to a PC via USB (or use Wireless Debugging) and run:</p>
+            <pre><code># 1. Disable the 32-process limit
+adb shell "/system/bin/device_config put activity_manager max_phantom_processes 2147483647"
+
+# 2. Prevent Android from resetting settings on reboot
+adb shell "/system/bin/device_config set_sync_disabled_for_tests persistent"</code></pre>
+
+            <p><a href="PHANTOM_PROCESS_KILLER_GUIDE.md" target="_blank">View Full Comprehensive ADB Guide</a></p>
+        </main>
+    </div>
+    <footer>
+        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
+    </footer>
+</body>
+</html>

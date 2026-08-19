@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quickstart &amp; Recipes | Termux-Playwright</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
+    <script src="i18n-translations.js"></script>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="header-brand">
+            <img src="favicon.svg" alt="Logo">
+            <h1 data-i18n="common.brand">Termux-Playwright</h1>
+        </a>
+        <div class="header-controls">
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <div class="lang-selector-wrapper"></div>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <h3 data-i18n="common.nav.overview">Overview</h3>
+            <ul>
+                <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
+                <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
+                <li><a href="quickstart.html" class="active" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+                <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
+                <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
+                <li><a href="phantom-process.html" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
+                <li><a href="blog_post.md" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
+            </ul>
+            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
+            <ul>
+                <li><a href="../llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
+                <li><a href="../llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2>Quickstart &amp; Production Recipes</h2>
+            <p>Tested, copy-paste ready recipes for common web scraping and browser automation scenarios on mobile hardware.</p>
+
+            <h3>Recipe 1: Standard Asynchronous Web Scraping</h3>
+            <pre><code>import asyncio
+from termux_playwright import async_playwright_termux, launch
+
+async def main():
+    async with async_playwright_termux() as p:
+        browser = await launch(p, headless=True)
+        page = await browser.new_page()
+        
+        await page.goto("https://news.ycombinator.com", timeout=45000)
+        print(f"Hacker News Title: {await page.title()}")
+        await browser.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+
+            <h3>Recipe 2: Synchronous Scraping Script</h3>
+            <pre><code>from termux_playwright import sync_playwright_termux, launch_sync
+
+def main():
+    with sync_playwright_termux() as p:
+        browser = launch_sync(p, headless=True)
+        page = browser.new_page()
+        
+        page.goto("https://example.com")
+        print(f"Page Title: {page.title()}")
+        browser.close()
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+            <h3>Recipe 3: Anti-Bot &amp; Cloudflare Turnstile Stealth Evasion</h3>
+            <pre><code>import asyncio
+from termux_playwright import async_playwright_termux, launch, setup_stealth_context
+
+async def main():
+    async with async_playwright_termux() as p:
+        browser = await launch(p, headless=True, stealth=True)
+        context = await setup_stealth_context(
+            browser,
+            locale="en-US",
+            timezone_id="America/New_York",
+            extra_headers={"Accept-Language": "en-US,en;q=0.9"}
+        )
+        page = await context.new_page()
+        
+        await page.goto("https://bot.sannysoft.com", timeout=60000)
+        print(f"Test Result: {await page.title()}")
+        await browser.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+
+            <h3>Recipe 4: 24/7 Resilient Infinite Daemon with WakeLock</h3>
+            <pre><code>import asyncio
+from termux_playwright import async_playwright_termux, launch, block_heavy_resources
+
+async def run_worker():
+    while True:
+        try:
+            async with async_playwright_termux() as p:
+                browser = await launch(p, headless=True, low_memory_mode=True, wake_lock=True)
+                page = await browser.new_page()
+                await block_heavy_resources(page, images=True, media=True, fonts=True)
+                
+                await page.goto("https://example.com", timeout=45000, wait_until="domcontentloaded")
+                print(f"Processed: {await page.title()}")
+                await browser.close()
+        except Exception as e:
+            print(f"Recovering from cycle error: {e}")
+        await asyncio.sleep(60)
+
+if __name__ == "__main__":
+    asyncio.run(run_worker())</code></pre>
+        </main>
+    </div>
+    <footer>
+        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
+    </footer>
+</body>
+</html>

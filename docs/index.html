@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termux-Playwright | Production Browser Automation on Android</title>
+    <meta name="description" content="Production-grade automated Playwright & Chromium browser automation for Android Termux. Zero root, anti-bot stealth, persistent session recovery, and eMMC protection.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
+    <script src="i18n-translations.js"></script>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="header-brand">
+            <img src="favicon.svg" alt="Logo">
+            <h1 data-i18n="common.brand">Termux-Playwright</h1>
+        </a>
+        <div class="header-controls">
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <div class="lang-selector-wrapper"></div>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <h3 data-i18n="common.nav.overview">Overview</h3>
+            <ul>
+                <li><a href="index.html" class="active" data-i18n="common.nav.home">Home / Architecture</a></li>
+                <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
+                <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+                <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
+                <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
+                <li><a href="phantom-process.html" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
+                <li><a href="blog_post.md" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
+            </ul>
+            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
+            <ul>
+                <li><a href="../llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
+                <li><a href="../llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2 data-i18n="home.title">Production-Grade Playwright Automation on Android Termux</h2>
+            <p data-i18n="home.subtitle">Run genuine Chromium browser automation directly on ARM64 mobile hardware without root, PRoot, or X11 virtualization.</p>
+
+            <div class="badges-bar">
+                <a href="https://pypi.org/project/termux-playwright/" target="_blank"><img src="https://img.shields.io/pypi/v/termux-playwright.svg?color=blue" alt="PyPI Version"></a>
+                <a href="https://pypistats.org/packages/termux-playwright" target="_blank"><img src="https://img.shields.io/pypi/dm/termux-playwright.svg?color=brightgreen" alt="PyPI Downloads"></a>
+                <a href="https://pepy.tech/projects/termux-playwright" target="_blank"><img src="https://img.shields.io/pepy/dt/termux-playwright?color=orange" alt="Total Downloads"></a>
+                <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python Version">
+                <img src="https://img.shields.io/badge/platform-Android%20Termux%20(aarch64)-green.svg" alt="Platform">
+                <img src="https://img.shields.io/badge/tests-84%20passed%20%7C%20100%25-success" alt="Tests">
+            </div>
+
+            <div class="alert alert-tip">
+                <span class="alert-title" data-i18n="home.quickInstallTitle">1-Line Quick Installation</span>
+                <p data-i18n="home.quickInstallDesc">Run this single command inside your Termux terminal to install and configure dependencies automatically:</p>
+                <pre><code>pip install termux-playwright &amp;&amp; termux-playwright-install</code></pre>
+            </div>
+
+            <h3 data-i18n="home.whyTitle">The Problem: Why Upstream Playwright Fails on Android</h3>
+            <p data-i18n="home.whyText">Upstream Playwright is hardcoded to strictly support desktop Linux glibc, macOS, and Windows. When invoked on Android Termux, it fails due to incompatible pre-compiled binaries, Bionic libc syscall differences, dynamic shared memory (/dev/shm) crashes, and Android kernel process reaping.</p>
+
+            <h3 data-i18n="home.solTitle">The Architectural Solution</h3>
+            <p data-i18n="home.solText">Termux-Playwright provides native Bionic binary orchestration, targeted session process isolation (ProcessReaper), persistent disk ledger recovery (.tp_ledger), prototype-safe anti-bot stealth, and flash memory wear protection.</p>
+
+            <h3 data-i18n="home.capTitle">Key Capabilities &amp; Built-in Hardening</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>Zero-Root Native Execution</h4>
+                    <p data-i18n="home.cap1">Orchestrates Termux-compiled Chromium and Node.js without PRoot overhead.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Persistent Disk Ledger</h4>
+                    <p data-i18n="home.cap2">Guarantees 100% orphan process reaping across hard kernel crashes (SIGKILL / LMK).</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Prototype-Safe Stealth</h4>
+                    <p data-i18n="home.cap3">Deletes navigator.webdriver from prototype to bypass Cloudflare Turnstile &amp; DataDome.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>eMMC Hardware Protection</h4>
+                    <p data-i18n="home.cap4">Injects RAM-based caching to prevent mobile flash wear.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Virtualenv Diagnostic Repair</h4>
+                    <p data-i18n="home.cap5">Pre-flight diagnostics and auto-repair guidance for venv environments.</p>
+                </div>
+            </div>
+
+            <h3>Canonical Code Example</h3>
+            <pre><code>import asyncio
+from termux_playwright import async_playwright_termux, launch, setup_stealth_context
+
+async def main():
+    async with async_playwright_termux() as p:
+        # Launch hardened Chromium with stealth evasion
+        browser = await launch(p, headless=True, stealth=True)
+        context = await setup_stealth_context(browser)
+        page = await context.new_page()
+        
+        await page.goto("https://example.com", timeout=45000)
+        print(f"Title: {await page.title()}")
+        await browser.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+        </main>
+    </div>
+    <footer>
+        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference | Termux-Playwright</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <script src="i18n.js"></script>
+    <script src="i18n-translations.js"></script>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="header-brand">
+            <img src="favicon.svg" alt="Logo">
+            <h1 data-i18n="common.brand">Termux-Playwright</h1>
+        </a>
+        <div class="header-controls">
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <div class="lang-selector-wrapper"></div>
+            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI Package</a>
+            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <h3 data-i18n="common.nav.overview">Overview</h3>
+            <ul>
+                <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
+                <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
+                <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+                <li><a href="api-reference.html" class="active" data-i18n="common.nav.apiReference">API Reference</a></li>
+                <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
+                <li><a href="phantom-process.html" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
+                <li><a href="blog_post.md" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
+            </ul>
+            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
+            <ul>
+                <li><a href="../llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
+                <li><a href="../llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2>API Reference Manual</h2>
+            <p>Comprehensive documentation of all public functions, classes, and parameter options in <code>termux_playwright</code>.</p>
+
+            <h3>1. Context Managers</h3>
+            
+            <h4><code>async_playwright_termux()</code></h4>
+            <p>Asynchronous context manager replacing upstream <code>async_playwright()</code>. Configures Node.js heap flags, checks native greenlet availability, and registers process exit hooks.</p>
+
+            <h4><code>sync_playwright_termux()</code></h4>
+            <p>Synchronous equivalent of <code>async_playwright_termux()</code>.</p>
+
+            <h3>2. Browser Launcher</h3>
+
+            <h4><code>async def launch(playwright_instance, ...) -> Browser</code></h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 22%;">Parameter</th>
+                        <th style="width: 18%;">Type</th>
+                        <th style="width: 15%;">Default</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>playwright_instance</code></td>
+                        <td><code>Playwright</code></td>
+                        <td><em>Required</em></td>
+                        <td>Active Playwright instance from context manager.</td>
+                    </tr>
+                    <tr>
+                        <td><code>low_memory_mode</code></td>
+                        <td><code>bool</code></td>
+                        <td><code>False</code></td>
+                        <td>Caps V8 heap at 128MB and restricts renderers to 1.</td>
+                    </tr>
+                    <tr>
+                        <td><code>jitless</code></td>
+                        <td><code>Optional[bool]</code></td>
+                        <td><code>None</code></td>
+                        <td>Enforces <code>--js-flags=--jitless</code>. Defaults to True on Android 10+ (SDK &gt;= 29).</td>
+                    </tr>
+                    <tr>
+                        <td><code>stealth</code></td>
+                        <td><code>bool</code></td>
+                        <td><code>False</code></td>
+                        <td>Injects anti-bot suppression flags (AutomationControlled).</td>
+                    </tr>
+                    <tr>
+                        <td><code>single_process</code></td>
+                        <td><code>bool</code></td>
+                        <td><code>False</code></td>
+                        <td>Merges Chromium into 1 process for Android 14+ Phantom Killer.</td>
+                    </tr>
+                    <tr>
+                        <td><code>standalone_mode</code></td>
+                        <td><code>bool</code></td>
+                        <td><code>False</code></td>
+                        <td>Creates ephemeral clean-room profile in <code>/tmp/tp_solo_*</code> and auto-purges on exit.</td>
+                    </tr>
+                    <tr>
+                        <td><code>wake_lock</code></td>
+                        <td><code>bool</code></td>
+                        <td><code>False</code></td>
+                        <td>Acquires Android CPU WakeLock during browser session.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3. Anti-Bot Evasion</h3>
+
+            <h4><code>async def setup_stealth_context(browser, ...) -> BrowserContext</code></h4>
+            <p>Instantiates an evasive <code>BrowserContext</code> that removes bot signals:</p>
+            <ul>
+                <li>Deletes <code>webdriver</code> from <code>Navigator.prototype</code>.</li>
+                <li>Spoofs <code>window.chrome.app</code> and <code>window.chrome.runtime</code>.</li>
+                <li>Mocks native <code>navigator.permissions.query</code>.</li>
+                <li>Dynamically synchronizes <code>Sec-Ch-Ua</code> with installed Chromium binary version.</li>
+            </ul>
+
+            <h3>4. Resource Optimization</h3>
+
+            <h4><code>async def block_heavy_resources(page_or_context, images=True, media=True, fonts=True)</code></h4>
+            <p>Intercepts network requests to abort bandwidth-heavy static assets, cutting CPU consumption on ARM64 processors.</p>
+
+            <h3>5. Process Reaper &amp; System Tools</h3>
+
+            <h4><code>ProcessReaper.reap_untracked_ledger_orphans() -> int</code></h4>
+            <p>Scans <code>$TMPDIR/.tp_ledger/</code> for orphaned sessions from previous hard crashes (SIGKILL / LMK) and terminates lingering Chromium processes.</p>
+        </main>
+    </div>
+    <footer>
+        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
+    </footer>
+</body>
+</html>
