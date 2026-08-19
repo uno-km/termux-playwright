@@ -19,6 +19,8 @@ setup(
     author_email="hosequelbo@gmail.com",
     url="https://github.com/uno-km/termux-playwright-demo",
     project_urls={
+        "Documentation": "https://uno-km.github.io/termux-playwright-demo/",
+        "npm Package": "https://www.npmjs.com/package/termux-playwright",
         "Bug Tracker": "https://github.com/uno-km/termux-playwright-demo/issues",
         "Source": "https://github.com/uno-km/termux-playwright-demo",
     },
