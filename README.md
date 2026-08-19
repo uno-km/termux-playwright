@@ -1,7 +1,6 @@
 # 📱 Termux-Playwright
 
 [![PyPI version](https://img.shields.io/pypi/v/termux-playwright.svg?color=blue)](https://pypi.org/project/termux-playwright/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/termux-playwright.svg?color=brightgreen)](https://pypistats.org/packages/termux-playwright)
 [![Total Downloads](https://img.shields.io/pepy/dt/termux-playwright?color=orange)](https://pepy.tech/projects/termux-playwright)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
