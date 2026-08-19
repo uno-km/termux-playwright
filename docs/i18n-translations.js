@@ -11,16 +11,17 @@
         'en': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.2 (Resilient Phantom)',
-                'pypiBtn': 'PyPI Package',
+                'releaseTag': 'v1.61.3 (Dual Engine)',
+                'pypiBtn': 'PyPI (Python)',
+                'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub Repository',
                 'nav': {
                     'overview': 'Overview',
                     'home': 'Home / Architecture',
                     'installation': 'Installation Guide',
                     'quickstart': 'Quickstart & Recipes',
+                    'nodejs': 'Node.js & Memory Guide',
                     'apiReference': 'API Reference',
-                    'advanced': 'Advanced & Deep Dives',
                     'versions': 'Version Archive & Notes',
                     'phantomProcess': 'Android 14+ Phantom Killer',
                     'koreanBlog': 'Engineering Deep-Dive'
@@ -29,7 +30,7 @@
             },
             'home': {
                 'title': 'Production-Grade Playwright Automation on Android Termux',
-                'subtitle': 'Run genuine Chromium browser automation directly on ARM64 mobile hardware without root, PRoot, or X11 virtualization.',
+                'subtitle': 'Dual-engine (Python & Node.js) Chromium browser automation on ARM64 mobile hardware without root, PRoot, or X11 virtualization.',
                 'whyTitle': 'The Problem: Why Upstream Playwright Fails on Android',
                 'whyText': 'Upstream Playwright is hardcoded to strictly support desktop Linux glibc, macOS, and Windows. When invoked on Android Termux, it fails due to incompatible pre-compiled binaries, Bionic libc syscall differences, dynamic shared memory (/dev/shm) crashes, and Android kernel process reaping.',
                 'solTitle': 'The Architectural Solution',
@@ -40,32 +41,48 @@
                 'cap3': 'Prototype-Safe Stealth: Deletes navigator.webdriver from prototype to bypass Cloudflare Turnstile & DataDome.',
                 'cap4': 'Hardware Flash Wear Protection: Injects RAM-based caching to prevent eMMC mobile flash wear.',
                 'cap5': 'Virtualenv System Integration: Pre-flight diagnostics and auto-repair guidance for venv environments.',
-                'quickInstallTitle': '1-Line Quick Installation',
-                'quickInstallDesc': 'Run this single command inside your Termux terminal to install and configure dependencies automatically:'
+                'quickInstallTitle': '1-Line Quick Installation (Choose Language)',
+                'quickInstallDesc': 'Select your preferred runtime and run the 1-line installation command in Termux:'
+            },
+            'nodejs': {
+                'title': 'Dual-Engine Architecture: Node.js & Memory Management',
+                'subtitle': 'Deep-dive on CPython vs V8 Garbage Collection, libuv stream buffers, and Android LMK survival strategies.',
+                'divergenceTitle': '1. CPython vs V8 Memory & GC Divergence on Android',
+                'divergenceDesc': 'Python relies on deterministic Reference Counting to immediately free memory upon scope exit. In contrast, Node.js V8 uses Generational Scavenge & Mark-Sweep-Compact with Lazy GC, keeping heap allocated until pressure builds. On mobile devices with 1GB-4GB RAM, default V8 heap limits (1.4GB) trigger Android Low Memory Killer (LMK) execution.',
+                'actionsTitle': '2. Hardened Runtime Protections (Audit Actions Applied)',
+                'action1Title': 'Synchronous Signal & Exit Reaper',
+                'action1Desc': 'In Node.js, process.on("exit") permanently shuts down the event loop—async calls are ignored. ProcessReaper uses pure synchronous C-level process.kill and fs.unlinkSync to guarantee zero zombie leaks.',
+                'action2Title': 'Uncaught Crash Handlers (uncaughtException & unhandledRejection)',
+                'action2Desc': 'Unhandled Promise rejections and uncaught exceptions automatically trigger synchronous ProcessReaper.killAllTracked() before process termination.',
+                'action3Title': 'V8 Heap Capping & forceGarbageCollection()',
+                'action3Desc': 'Low-memory mode caps V8 heap at 128MB. The forceGarbageCollection() helper flushes V8 young/old generation heaps during long-running crawler cycles.',
+                'recipesTitle': '3. Node.js / TypeScript Production Recipes',
+                'pm2Title': '4. 24/7 Unattended Mobile Daemon with PM2'
             }
         },
         'zh': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.2 (强韧幽灵)',
-                'pypiBtn': 'PyPI 软件包',
+                'releaseTag': 'v1.61.3 (双引擎版)',
+                'pypiBtn': 'PyPI (Python)',
+                'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub 仓库',
                 'nav': {
                     'overview': '概览',
                     'home': '首页与架构',
                     'installation': '安装指南',
                     'quickstart': '快速入门与示例',
+                    'nodejs': 'Node.js 与内存管理',
                     'apiReference': 'API 参考手册',
-                    'advanced': '高级进阶',
                     'versions': '版本历史档案',
-                    'phantomProcess': 'Android 14+ 幽灵进程限制',
-                    'koreanBlog': '工程深度解析'
+                    'phantomProcess': 'Android 14 幽灵杀手',
+                    'koreanBlog': '深度工程博客'
                 },
                 'footerText': '© 2026 Termux-Playwright 项目。遵循 MIT 开源许可证。'
             },
             'home': {
                 'title': '适用于 Android Termux 的生产级 Playwright 自动化工具',
-                'subtitle': '无需 Root、无需 PRoot 或 X11 桌面虚拟化，直接在 ARM64 移动设备上运行真实的 Chromium 浏览器自动化。',
+                'subtitle': '双引擎（Python 与 Node.js）直接在 ARM64 移动硬件上运行 Chromium 浏览器自动化，无需 root、PRoot 或 X11。',
                 'whyTitle': '核心痛点：为什么原生 Playwright 在 Android 上无法运行',
                 'whyText': '官方 Playwright 仅支持桌面级 Linux (glibc)、macOS 和 Windows。在 Android Termux 上运行时，会因缺少预编译二进制、Bionic libc 系统调用差异、共享内存崩溃以及 Android 内核进程清理机制而直接崩溃。',
                 'solTitle': '系统级架构解决方案',
@@ -76,164 +93,234 @@
                 'cap3': '原型链安全隐身：彻底从原型链移除 navigator.webdriver，轻松绕过 Cloudflare Turnstile 与 DataDome。',
                 'cap4': '硬件闪存防磨损：强制使用 RAM 内存缓存，防止移动设备 eMMC 寿命损耗。',
                 'cap5': '虚拟环境深度集成：自动检测 venv 环境并提供 --system-site-packages 修复指引。',
-                'quickInstallTitle': '单行命令极速安装',
-                'quickInstallDesc': '在 Termux 终端中运行以下单行命令即可自动完成安装与依赖配置：'
+                'quickInstallTitle': '单行命令极速安装（选择语言）',
+                'quickInstallDesc': '选择您的运行环境并在 Termux 终端中运行以下单行命令：'
+            },
+            'nodejs': {
+                'title': '双引擎架构：Node.js 与内存管理深度解析',
+                'subtitle': 'CPython 与 V8 垃圾回收差异、libuv 流缓冲区及安卓 LMK 内存保活策略。',
+                'divergenceTitle': '1. CPython 与 V8 内存机制在安卓上的差异',
+                'divergenceDesc': 'Python 依靠引用计数在作用域结束时立即释放内存；而 Node.js V8 采用惰性分代垃圾回收，容易导致内存膨胀，触发安卓 LMK 查杀。',
+                'actionsTitle': '2. 加固运行防护措施（审计措施已落地）',
+                'action1Title': '同步信号与退出清理器',
+                'action1Desc': 'Node.js process.on("exit") 触发时事件循环已停止。ProcessReaper 采用纯同步 C 级调用，确保无僵尸进程残留。',
+                'action2Title': '全局异常守护（uncaughtException 与 unhandledRejection）',
+                'action2Desc': '发生未捕获 Promise 错误时，自动触发 ProcessReaper.killAllTracked() 同步清理。',
+                'action3Title': 'V8 堆上限约束与 forceGarbageCollection()',
+                'action3Desc': '低内存模式将 V8 堆限制在 128MB，配合 forceGarbageCollection() 保持长周期爬虫内存纯净。',
+                'recipesTitle': '3. Node.js / TypeScript 生产代码示例',
+                'pm2Title': '4. 使用 PM2 打造 24 小时无人值守移动守护进程'
             }
         },
         'ja': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.2 (レジリエント・ファントム)',
-                'pypiBtn': 'PyPI パッケージ',
+                'releaseTag': 'v1.61.3 (デュアルエンジン)',
+                'pypiBtn': 'PyPI (Python)',
+                'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub リポジトリ',
                 'nav': {
                     'overview': '概要',
                     'home': 'ホーム / アーキテクチャ',
                     'installation': 'インストールガイド',
-                    'quickstart': 'クイックスタート & レシピ',
+                    'quickstart': 'クイックスタート＆レシピ',
+                    'nodejs': 'Node.js とメモリ管理',
                     'apiReference': 'API リファレンス',
-                    'advanced': '高度な機能',
-                    'versions': 'バージョン履歴アーカイブ',
-                    'phantomProcess': 'Android 14+ ファントム制限',
-                    'koreanBlog': '技術ディープダイブ'
+                    'versions': 'バージョン履歴',
+                    'phantomProcess': 'Android 14+ ファントムキラー',
+                    'koreanBlog': '技術詳細ブログ'
                 },
-                'footerText': '© 2026 Termux-Playwright Project. MITライセンスの下で公開されています。'
+                'footerText': '© 2026 Termux-Playwright Project. MIT License の下で公開。'
             },
             'home': {
-                'title': 'Android Termux向け本番グレードPlaywright自動化ツール',
-                'subtitle': 'Root権限やPRoot、X11デスクトップ仮想化なしで、ARM64端末上でChromiumブラウザ自動化を直接実行。',
-                'whyTitle': '背景課題：公式PlaywrightがAndroidで動作しない理由',
-                'whyText': '公式PlaywrightはデスクトップLinux(glibc)、macOS、Windows向けに設計されています。Android Termux上では、Bionic libcの差異、共有メモリ(/dev/shm)クラッシュ、OSのプロセス制限により動作しません。',
-                'solTitle': 'アーキテクチャによる解決策',
-                'solText': 'Termux-Playwrightは、Bionicバイナリの自動検出、セッション単位のゾンビプロセス回収(ProcessReaper)、ディスク台帳による永続的復旧(.tp_ledger)、反検知ステルス機能、eMMC寿命保護を提供します。',
-                'capTitle': '主要機能と堅牢化メカニズム',
-                'cap1': 'Root不要のネイティブ実行：Termux環境のChromiumとNode.jsを直接制御しオーバーヘッドゼロ。',
-                'cap2': '永続的ディスク台帳：カーネル強制終了(SIGKILL/LMK)後も孤立プロセスを100%自動回収。',
-                'cap3': '安全なステルス偽装：navigator.webdriverを完全に偽装しCloudflare Turnstile等を回避。',
-                'cap4': 'eMMCフラッシュ保護：RAMディスクキャッシュを活用しスマホのストレージ劣化を防止。',
-                'cap5': '仮想環境完全サポート：venv環境におけるシステムライブラリ自動診断と修復ガイダンス。',
-                'quickInstallTitle': '1行クイックインストール',
-                'quickInstallDesc': 'Termuxターミナルで以下のコマンドを実行するだけで自動セットアップが完了します：'
+                'title': 'Android Termux 向け本番対応 Playwright 自動化',
+                'subtitle': 'デュアルエンジン（Python & Node.js）対応。root や PRoot、X11 なしで ARM64 上で Chromium を直接操作。',
+                'whyTitle': '問題定義：公式 Playwright が Android でクラッシュする理由',
+                'whyText': '公式 Playwright はデスクトップ glibc 専用です。Android Termux で実行すると、Bionic libc の相違、/dev/shm 欠如、メモリ不足（OOM）により強制終了します。',
+                'solTitle': 'アーキテクチャによる根本的解決',
+                'solText': 'Termux-Playwright はネイティブ Bionic バイナリ連携、セッションプロセス隔離（ProcessReaper）、ディスク台帳復旧（.tp_ledger）、ステルス回避、eMMC 寿命保護を提供します。',
+                'capTitle': '主な機能と堅牢化メカニズム',
+                'cap1': 'Zero-Root ネイティブ実行：PRoot オーバーヘッドなしで Termux ネイティブの Chromium/Node.js を直接駆動。',
+                'cap2': '永続ディスクセッション台帳：カーネル強制終了（SIGKILL / LMK）時も孤立プロセスを 100% 追跡回収。',
+                'cap3': 'プロトタイプセーフ・ステルス：navigator.webdriver を削除し Cloudflare や DataDome を回避。',
+                'cap4': 'ハードウェア寿命保護：RAM キャッシュ（/dev/shm）を注入し、スマホの eMMC 摩耗を防止。',
+                'cap5': '仮想環境（venv）の完全サポート：--system-site-packages の自動診断とガイダンス。',
+                'quickInstallTitle': '1 行クイックインストール（言語選択）',
+                'quickInstallDesc': 'お好みの言語を選択し、Termux ターミナルで実行してください：'
+            },
+            'nodejs': {
+                'title': 'デュアルエンジン設計：Node.js とメモリ管理の深層',
+                'subtitle': 'CPython と V8 GC の違い、libuv バッファ、Android LMK 対策。',
+                'divergenceTitle': '1. CPython vs V8 メモリおよび GC の相違点',
+                'divergenceDesc': 'Python は参照カウントにより即座にメモリを解放しますが、Node.js V8 は遅延 GC のためメモリが膨張しやすく、スマホの LMK に終了されるリスクがあります。',
+                'actionsTitle': '2. 堅牢化対策（適用済みのアクション項目）',
+                'action1Title': '完全同期型シグナル＆終了リーパー',
+                'action1Desc': 'Node.js の process.on("exit") は非同期コードを実行できません。純粋な同期 C レベル kill によりゾンビプロセスを皆殺しにします。',
+                'action2Title': '未処理例外ガード（uncaughtException & unhandledRejection）',
+                'action2Desc': '予期せぬ例外時にも自動で ProcessReaper.killAllTracked() を同期実行します。',
+                'action3Title': 'V8 ヒープ制限と forceGarbageCollection()',
+                'action3Desc': '低メモリモードでヒープを 128MB に制限し、手動 GC 呼び出しで 24 時間安定稼働を実現。',
+                'recipesTitle': '3. Node.js / TypeScript レシピ',
+                'pm2Title': '4. PM2 による 24 時間無人デーモン運用'
             }
         },
         'ko': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.2 (Resilient Phantom)',
-                'pypiBtn': 'PyPI 패키지',
+                'releaseTag': 'v1.61.3 (Dual Engine)',
+                'pypiBtn': 'PyPI (Python)',
+                'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub 저장소',
                 'nav': {
                     'overview': '개요',
-                    'home': '홈 및 아키텍처',
+                    'home': '홈 / 아키텍처',
                     'installation': '설치 가이드',
-                    'quickstart': '빠른 시작 및 레시피',
+                    'quickstart': '퀵스타트 & 레시피',
+                    'nodejs': 'Node.js 및 메모리 아키텍처',
                     'apiReference': 'API 레퍼런스',
-                    'advanced': '심화 기능',
-                    'versions': '버전별 기술 문서 아카이브',
-                    'phantomProcess': '안드로이드 14+ 프로세스 제한 해제',
-                    'koreanBlog': '한국어 기술 블로그'
+                    'versions': '버전별 변경 아카이브',
+                    'phantomProcess': '안드로이드 14 팬텀 킬러',
+                    'koreanBlog': '엔지니어링 개발기'
                 },
-                'footerText': '© 2026 Termux-Playwright 프로젝트. MIT 라이선스에 따라 배포됩니다.'
+                'footerText': '© 2026 Termux-Playwright Project. MIT 라이선스 하에 배포됩니다.'
             },
             'home': {
-                'title': '안드로이드 Termux 전용 프로덕션급 Playwright 브라우저 자동화 툴킷',
-                'subtitle': '루팅(Root), PRoot 컨테이너, X11 가상화 없이 스마트폰에서 정품 크로미움 브라우저를 24/7 백그라운드로 안전하게 구동합니다.',
-                'whyTitle': '기존 Playwright가 안드로이드에서 폭발하는 이유',
-                'whyText': '공식 Playwright는 데스크톱 glibc 환경만 지원합니다. 안드로이드 Bionic libc 환경에서는 바이너리 불일치, /dev/shm 공유 메모리 고갈, 프로세스 누수 및 LMK 강제 사살 문제가 발생합니다.',
-                'solTitle': '시스템 레벨 아키텍처 해결책',
-                'solText': 'Termux-Playwright는 네이티브 바이너리 연결, 세션 태그 기반 프로세스 정밀 사살(ProcessReaper), 디스크 영속성 장부(.tp_ledger), 프로토타입 기반 안티봇 스텔스 우회 및 eMMC 수명 보호를 제공합니다.',
-                'capTitle': '주요 기능 및 하드닝 핵심',
-                'cap1': '루팅 없는 네이티브 구동: Termux 크로미움 및 Node.js를 직접 제어하여 성능 손실 제로.',
-                'cap2': '파일 기반 디스크 영속 장부: LMK나 SIGKILL 강제 종료 후에도 좀비 크로미움을 100% 자동 추적 사살.',
-                'cap3': '프로토타입 안전 스텔스: navigator.webdriver를 완벽 제거하여 Cloudflare Turnstile 및 DataDome 우회.',
-                'cap4': 'eMMC 플래시 메모리 보호: RAM 캐시를 강제 주입하여 모바일 저장장치 수명 마모 방지.',
-                'cap5': '가상환경(venv) 완벽 호환: --system-site-packages 진단 및 원클릭 복구 가이드 제공.',
-                'quickInstallTitle': '1초 원클릭 자동 설치',
-                'quickInstallDesc': 'Termux 터미널에서 다음 명령어를 입력하면 모든 패키지와 의존성이 자동으로 세팅됩니다:'
+                'title': '안드로이드 Termux 프로덕션급 Playwright 브라우저 자동화',
+                'subtitle': '듀얼 엔진(Python & Node.js) 완벽 지원. 루팅, PRoot, X11 가상화 없이 ARM64 스마트폰에서 크로미움을 네이티브로 직접 구동합니다.',
+                'whyTitle': '문제 정의: 공식 Playwright가 안드로이드에서 폭발하는 이유',
+                'whyText': '공식 Playwright는 데스크톱 Linux glibc만을 지원하도록 하드코딩되어 있습니다. 안드로이드 Termux 환경에서는 Bionic libc 시스템 콜 불일치, 공유 메모리(/dev/shm) 부재, C-확장 모듈 빌드 폭탄 및 좀비 프로세스 누수로 인해 즉시 크래시됩니다.',
+                'solTitle': '시스템 레벨 아키텍처 솔루션',
+                'solText': 'Termux-Playwright는 네이티브 Bionic 바이너리 오케스트레이션, 세션 격리 좀비 사살기(ProcessReaper), 영속 디스크 세션 장부(.tp_ledger), 프로토타입 체인 안전 스텔스, eMMC 플래시 마모 방지 기술을 탑재하여 문제를 완벽 해결합니다.',
+                'capTitle': '핵심 기능 및 빌트인 하드닝 아키텍처',
+                'cap1': 'Zero-Root 네이티브 실행: PRoot 가상화 오버헤드 없이 Termux 네이티브 Chromium과 Node.js를 0초 만에 직접 구동.',
+                'cap2': '영속 디스크 세션 장부: 안드로이드 커널의 강제 사살(SIGKILL / LMK) 후에도 다음 기동 시 고아 프로세스를 100% 추적 사살.',
+                'cap3': '프로토타입 체인 안전 스텔스: navigator.webdriver를 원천 삭제하여 Cloudflare Turnstile 및 DataDome 무력화.',
+                'cap4': '하드웨어 플래시 수명 보호: RAM 기반 캐시(/dev/shm) 강제 주입으로 스마트폰 eMMC 플래시 메모리 마모 원천 방지.',
+                'cap5': '가상환경(venv) 완벽 호환: --system-site-packages 자가 진단 및 원클릭 복구 가이드 제공.',
+                'quickInstallTitle': '1줄 초간단 설치 (언어 선택)',
+                'quickInstallDesc': '원하는 프로그래밍 언어(Python / Node.js)를 선택하고 Termux 터미널에서 다음 명령어를 실행하세요:'
+            },
+            'nodejs': {
+                'title': '듀얼 엔진 아키텍처: Node.js & 메모리 수명주기 관리',
+                'subtitle': 'CPython vs V8 가비지 컬렉션 차이, libuv 스트림 버퍼, 안드로이드 LMK 완벽 방어 전략.',
+                'divergenceTitle': '1. CPython vs V8 메모리 및 GC 차이 분석',
+                'divergenceDesc': '파이썬은 참조 카운팅(Ref-Counting)으로 스코프 종료 즉시 메모리를 반환하지만, Node.js V8은 메모리가 찰 때까지 GC를 미루는 Lazy GC 특성이 있어 모바일 LMK에 사살될 위험이 큽니다. termux-playwright는 V8 힙 상한선(128MB)과 forceGarbageCollection()으로 이를 완벽히 통제합니다.',
+                'actionsTitle': '2. 철옹성 런타임 방어 조치 (감사 보고서 조치 완료)',
+                'action1Title': '100% 동기식 시그널 & Exit 사살 가드',
+                'action1Desc': 'Node.js의 process.on("exit") 훅은 이벤트 루프가 정지되므로 비동기 코드가 무시됩니다. ProcessReaper는 순수 동기식 C-레벨 process.kill과 fs.unlinkSync만 사용하여 단 1마리의 좀비 프로세스도 남기지 않습니다.',
+                'action2Title': '전역 크래시 가드 (uncaughtException & unhandledRejection)',
+                'action2Desc': '처리되지 않은 Promise 에러나 예외 발생 시에도 프로세스 종료 직전 ProcessReaper.killAllTracked()를 자동 실행합니다.',
+                'action3Title': 'V8 힙 캡핑 & forceGarbageCollection() 헬퍼',
+                'action3Desc': '저메모리 모드 시 V8 힙을 128MB로 제한하며, 24시간 루프 크롤링 중 메모리를 즉각 정화하는 forceGarbageCollection() 함수를 제공합니다.',
+                'recipesTitle': '3. Node.js / TypeScript 실전 프로덕션 레시피',
+                'pm2Title': '4. PM2 프로세스 매니저를 통한 24시간 무중단 백그라운드 구동'
             }
         },
         'es': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.2 (Fantasma Resiliente)',
-                'pypiBtn': 'Paquete PyPI',
+                'releaseTag': 'v1.61.3 (Motor Dual)',
+                'pypiBtn': 'PyPI (Python)',
+                'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'Repositorio GitHub',
                 'nav': {
                     'overview': 'Resumen',
-                    'home': 'Inicio y Arquitectura',
+                    'home': 'Inicio / Arquitectura',
                     'installation': 'Guía de Instalación',
                     'quickstart': 'Inicio Rápido y Recetas',
-                    'apiReference': 'Referencia de la API',
-                    'advanced': 'Avanzado',
+                    'nodejs': 'Node.js y Memoria',
+                    'apiReference': 'Referencia de API',
                     'versions': 'Archivo de Versiones',
-                    'phantomProcess': 'Límites en Android 14+',
-                    'koreanBlog': 'Documentación Técnica'
+                    'phantomProcess': 'Android 14+ Phantom Killer',
+                    'koreanBlog': 'Blog de Ingeniería'
                 },
                 'footerText': '© 2026 Proyecto Termux-Playwright. Publicado bajo Licencia MIT.'
             },
             'home': {
-                'title': 'Automatización de Playwright para Android Termux',
-                'subtitle': 'Ejecute automatización real de navegadores Chromium en hardware móvil ARM64 sin root, sin PRoot y sin X11.',
-                'whyTitle': 'El Problema: Por qué Playwright falla en Android',
-                'whyText': 'Playwright oficial solo soporta Linux glibc, macOS y Windows. En Termux falla debido a diferencias en Bionic libc, memoria compartida (/dev/shm) y restricciones del kernel de Android.',
+                'title': 'Automatización Playwright de Nivel de Producción en Android Termux',
+                'subtitle': 'Automatización Chromium con motor dual (Python y Node.js) en ARM64 sin root ni PRoot.',
+                'whyTitle': 'El Problema: Por qué Playwright Oficial Falla en Android',
+                'whyText': 'Playwright oficial requiere glibc de escritorio. En Termux falla por llamadas Bionic libc incompatibles, falta de /dev/shm y fugas de procesos zombis.',
                 'solTitle': 'La Solución Arquitectónica',
-                'solText': 'Termux-Playwright proporciona orquestación binaria nativa, aislamiento de procesos por sesión (ProcessReaper), registro persistente en disco (.tp_ledger) y protección de memoria eMMC.',
-                'capTitle': 'Capacidades Clave',
-                'cap1': 'Ejecución Nativa Sin Root: Controla Chromium y Node.js compilados para Termux sin sobrecarga.',
-                'cap2': 'Registro Persistente en Disco: Garantiza la limpieza total de procesos huérfanos incluso tras caídas del kernel (SIGKILL / LMK).',
-                'cap3': 'Evasión Anti-Bot: Elimina navigator.webdriver para eludir Cloudflare Turnstile y DataDome.',
-                'cap4': 'Protección de Memoria Flash: Caché forzada en RAM para evitar el desgaste de la memoria eMMC.',
-                'cap5': 'Integración con Venv: Diagnóstico y guía de configuración con --system-site-packages.',
-                'quickInstallTitle': 'Instalación Rápida en 1 Línea',
-                'quickInstallDesc': 'Ejecute este comando en su terminal Termux para instalar y configurar automáticamente:'
+                'solText': 'Termux-Playwright proporciona orquestación binaria Bionic nativa, aislamiento de procesos, libro mayor persistente (.tp_ledger) y evasión stealth.',
+                'capTitle': 'Capacidades Clave y Blindaje',
+                'cap1': 'Ejecución Nativa Sin Root: Ejecuta Chromium y Node.js nativos sin sobrecarga de PRoot.',
+                'cap2': 'Libro Mayor Persistente en Disco: Garantiza la eliminación de procesos huérfanos tras caídas forzadas (SIGKILL / LMK).',
+                'cap3': 'Modo Sigiloso: Elimina navigator.webdriver para eludir Cloudflare Turnstile y DataDome.',
+                'cap4': 'Protección Flash: Caché en RAM (/dev/shm) para evitar desgaste del almacenamiento eMMC.',
+                'cap5': 'Integración Virtualenv: Diagnóstico y reparación automática para entornos venv.',
+                'quickInstallTitle': 'Instalación Rápida en 1 Línea (Elegir Lenguaje)',
+                'quickInstallDesc': 'Elija su lenguaje y ejecute el comando en Termux:'
+            },
+            'nodejs': {
+                'title': 'Arquitectura de Motor Dual: Node.js y Memoria',
+                'subtitle': 'Diferencias entre CPython y V8 GC, buffers de libuv y supervivencia ante LMK de Android.',
+                'divergenceTitle': '1. Divergencia de Memoria y GC entre CPython y V8',
+                'divergenceDesc': 'Python libera memoria de inmediato mediante conteo de referencias; Node.js V8 usa recolección perezosa que puede provocar cierres por LMK en móviles.',
+                'actionsTitle': '2. Protecciones en Tiempo de Ejecución Aplicadas',
+                'action1Title': 'Segador Síncrono de Señales y Salida',
+                'action1Desc': 'ProcessReaper usa llamadas síncronas a nivel C para garantizar cero procesos zombis al salir.',
+                'action2Title': 'Manejadores de Fallos Globales (uncaughtException y unhandledRejection)',
+                'action2Desc': 'Limpia automáticamente los procesos huérfanos antes de que el proceso termine.',
+                'action3Title': 'Límite de Heap V8 y forceGarbageCollection()',
+                'action3Desc': 'Limita el heap a 128MB y ofrece una función para purgar memoria durante ciclos largos.',
+                'recipesTitle': '3. Recetas de Producción para Node.js / TypeScript',
+                'pm2Title': '4. Servicio Móvil Desatendido 24/7 con PM2'
             }
         },
         'hi': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.2 (Resilient Phantom)',
-                'pypiBtn': 'PyPI पैकेज',
+                'releaseTag': 'v1.61.3 (Dual Engine)',
+                'pypiBtn': 'PyPI (Python)',
+                'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub रिपॉजिटरी',
                 'nav': {
                     'overview': 'अवलोकन',
                     'home': 'होम / आर्किटेक्चर',
-                    'installation': 'स्थापना गाइड',
-                    'quickstart': 'त्वरित शुरुआत और कोड',
-                    'apiReference': 'एपीआई संदर्भ',
-                    'advanced': 'उन्नत सुविधाएँ',
+                    'installation': 'इंस्टॉलेशन गाइड',
+                    'quickstart': 'त्वरित शुरुआत',
+                    'nodejs': 'Node.js और मेमोरी',
+                    'apiReference': 'API संदर्भ',
                     'versions': 'संस्करण पुरालेख',
                     'phantomProcess': 'Android 14+ फैंटम किलर',
-                    'koreanBlog': 'तकनीकी विश्लेषण'
+                    'koreanBlog': 'इंजीनियरिंग ब्लॉग'
                 },
-                'footerText': '© 2026 Termux-Playwright प्रोजेक्ट। MIT लाइसेंस के तहत जारी किया गया।'
+                'footerText': '© 2026 Termux-Playwright Project. MIT लाइसेंस के तहत जारी।'
             },
             'home': {
-                'title': 'Android Termux के लिए प्रोडक्शन-ग्रेड Playwright ऑटोमेशन',
-                'subtitle': 'बिना रूट, बिना PRoot या X11 के ARM64 मोबाइल हार्डवेयर पर वास्तविक Chromium ब्राउज़र ऑटोमेशन चलाएं।',
-                'whyTitle': 'समस्या: Playwright Android पर क्यों विफल होता है',
-                'whyText': 'मूल Playwright केवल डेस्कटॉप Linux, macOS और Windows का समर्थन करता है। Android Bionic libc, साझा मेमोरी और प्रोसेस किलिंग के कारण यह Termux पर क्रैश हो जाता है।',
-                'solTitle': 'वास्तुशिल्प समाधान',
-                'solText': 'Termux-Playwright मूल Bionic बाइनरी आर्केस्ट्रा, सटीक प्रोसेस रीपर, डिस्क लेज़र (.tp_ledger), और एंटी-बॉट स्टील्थ तकनीक प्रदान करता है।',
-                'capTitle': 'मुख्य क्षमताएं',
-                'cap1': 'बिना रूट निष्पादन: Termux-संकलित Chromium और Node.js का उपयोग करता है।',
-                'cap2': 'स्थायी डिस्क लेज़र: सिस्टम क्रैश (SIGKILL/LMK) के बाद भी अवांछित प्रोसेस को 100% साफ करता है।',
-                'cap3': 'एंटी-बॉट स्टील्थ: Cloudflare Turnstile और DataDome को बायपास करने के लिए navigator.webdriver को हटाता है।',
-                'cap4': 'हार्डवेयर फ्लैश सुरक्षा: मोबाइल स्टोरेज के घिसाव को रोकने के लिए RAM डिस्क कैश का उपयोग करता है।',
-                'cap5': 'वर्चुअल पर्यावरण समर्थन: venv के लिए --system-site-packages का स्वत: निदान।',
-                'quickInstallTitle': '1-लाइन त्वरित स्थापना',
-                'quickInstallDesc': 'स्वचालित स्थापना के लिए अपने Termux टर्मिनल में यह कमांड चलाएं:'
+                'title': 'Android Termux पर प्रोडक्शन-ग्रेड Playwright ऑटोमेशन',
+                'subtitle': 'बिना root या PRoot के ARM64 पर Python और Node.js डुअल इंजन ब्राउज़र ऑटोमेशन।',
+                'whyTitle': 'समस्या: Playwright Android पर क्रैश क्यों होता है',
+                'whyText': 'आधिकारिक Playwright केवल डेस्कटॉप glibc का समर्थन करता है। Termux पर Bionic libc अंतर और /dev/shm की कमी के कारण यह क्रैश हो जाता है।',
+                'solTitle': 'आर्किटेक्चरल समाधान',
+                'solText': 'Termux-Playwright नेटिव Bionic बाइनरी ऑर्케स्ट्रेशन, प्रोसेस लेजर (.tp_ledger) और स्टेल्थ एंटी-बॉट सुरक्षा प्रदान करता है।',
+                'capTitle': 'मुख्य क्षमताएं और सुरक्षा',
+                'cap1': 'Zero-Root नेटिव निष्पादन: PRoot ओवरहेड के बिना Chromium और Node.js का संचालन।',
+                'cap2': 'स्थिर डिस्क लेजर: SIGKILL या LMK क्रैश के बाद 100% ज़ॉम्비 प्रोसेस की सफाई।',
+                'cap3': 'प्रोटोटाइप स्टेल्थ: Cloudflare और DataDome को बायपास करने के लिए navigator.webdriver को हटाना।',
+                'cap4': 'फ्लैश सुरक्षा: eMMC लाइफ की सुरक्षा के लिए RAM कैशिंग (/dev/shm) का उपयोग।',
+                'cap5': 'Virtualenv एकीकरण: venv वातावरण के लिए स्वचालित निदान और मार्गदर्शन।',
+                'quickInstallTitle': '1-लाइन त्वरित इंस्टॉलेशन (भाषा चुनें)',
+                'quickInstallDesc': 'अपनी पसंदीदा भाषा चुनें और Termux टर्मिनल में चलाएं:'
+            },
+            'nodejs': {
+                'title': 'डुअल-इंजन आर्किटेक्चर: Node.js और मेमोरी प्रबंधन',
+                'subtitle': 'CPython बनाम V8 GC अंतर और Android LMK सुरक्षा रणनीतियाँ।',
+                'divergenceTitle': '1. CPython बनाम V8 मेमोरी और GC का अंतर',
+                'divergenceDesc': 'Python तुरंत मेमोरी खाली करता है जबकि V8 लेजी GC का उपयोग करता है। termux-playwright मेमोरी कैप और forceGarbageCollection() द्वारा इसे नियंत्रित करता है।',
+                'actionsTitle': '2. मजबूत रनटाइम सुरक्षात्मक उपाय',
+                'action1Title': 'सिंक्रोनस सिग्नल और एग्जिट रीपर',
+                'action1Desc': 'Node.js एग्जिट पर शुद्ध सिंक्रोनस C-लेवल कॉल्स का उपयोग करके ज़ॉम्비 प्रोसेस को रोकता है।',
+                'action2Title': 'ग्लोबल क्रैश हैंडलर (uncaughtException & unhandledRejection)',
+                'action2Desc': 'अप्रत्याशित क्रैश के समय भी स्वचालित रूप से प्रोसेस की सफाई सुनिश्चित करता है।',
+                'action3Title': 'V8 हीप कैपिंग और forceGarbageCollection()',
+                'action3Desc': 'मेमोरी को 128MB पर सीमित करता है और 24/7 क्रॉलर में मेमोरी फ्लश की अनुमति देता है।',
+                'recipesTitle': '3. Node.js / TypeScript प्रोडक्शन रेसिपी',
+                'pm2Title': '4. PM2 के साथ 24/7 बैकग्राउंड डेमन'
             }
         }
     };
 
-    if (global.TermuxPlaywrightI18n) {
-        global.TermuxPlaywrightI18n.registerTranslations(DICT);
-    } else {
-        document.addEventListener('DOMContentLoaded', () => {
-            if (global.TermuxPlaywrightI18n) {
-                global.TermuxPlaywrightI18n.registerTranslations(DICT);
-            }
-        });
-    }
-
-})(typeof window !== 'undefined' ? window : this);
+    global.I18N_DICT = DICT;
+})(typeof window !== 'undefined' ? window : global);

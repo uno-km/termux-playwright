@@ -97,8 +97,30 @@ async def run_stealth_crawler():
             cookies=[{"name": "session_id", "value": "secret", "domain": "example.com", "path": "/"}],
         )
         page = await context.new_page()
-        await page.goto("https://bot.sannysoft.com")
-        await browser.close()
+### 6. Node.js / TypeScript Async Pattern (`npm install termux-playwright`)
+```javascript
+const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
+
+async function main() {
+    const browser = await launch({
+        headless: true,
+        stealth: true,
+        lowMemoryMode: true,
+        wakeLock: true
+    });
+    try {
+        const context = await setupStealthContext(browser);
+        const page = await context.newPage();
+        await blockHeavyResources(page, { images: true, media: true, fonts: true });
+        await page.goto("https://news.ycombinator.com", { timeout: 45000 });
+        console.log(await page.title());
+        forceGarbageCollection();
+    } finally {
+        await browser.close();
+    }
+}
+
+main().catch(console.error);
 ```
 
 ## AI Agent Decision Matrix: Choosing the Right `launch()` Flags
