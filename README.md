@@ -673,6 +673,14 @@ if __name__ == "__main__":
 
 ---
 
+## 🌌 The AMEVA Mobile AI & Automation Ecosystem
+
+* **🎨 [Termux-Diffusion](https://github.com/uno-km/termux-diffusion)** ([PyPI](https://pypi.org/project/termux-diffusion/) | [npm](https://www.npmjs.com/package/termux-diffusion) | [📖 Official Docs](https://uno-km.github.io/termux-diffusion/)): Production-grade on-device Stable Diffusion AI image generation pipeline for Android Termux & Samsung Galaxy without root or PRoot.
+  * **Python:** `pip install termux-diffusion && termux-diffusion-install`
+  * **Node.js:** `npm install -g termux-diffusion && npx termux-diffusion install`
+
+---
+
 ## 📄 License
 
 This project is licensed under the terms of the [MIT License](LICENSE).
