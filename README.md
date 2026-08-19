@@ -1,13 +1,16 @@
 # 📱 Termux-Playwright
 
 [![PyPI version](https://img.shields.io/pypi/v/termux-playwright.svg?color=blue)](https://pypi.org/project/termux-playwright/)
+[![npm version](https://img.shields.io/npm/v/termux-playwright.svg?color=red)](https://www.npmjs.com/package/termux-playwright)
 [![Total Downloads](https://img.shields.io/pepy/dt/termux-playwright?color=orange)](https://pepy.tech/projects/termux-playwright)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+[![Node: 16+](https://img.shields.io/badge/node-16+-brightgreen.svg)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-Android%20Termux%20(aarch64%20%7C%20x86__64)-green.svg)](https://termux.dev/)
-[![Tests](https://img.shields.io/badge/tests-84%20passed%20%7C%20100%25-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-98%20passed%20%7C%20100%25-success)](tests/)
 
 > **Run genuine Chromium browser automation (Headless & full JavaScript SPA rendering) directly on Android devices inside Termux without PRoot or root privileges.**
+> **Dual Engine Support: Native Python & Node.js / JavaScript.**
 
 Transform any spare Android smartphone into a 24/7 autonomous web scraping and data harvesting node.
 
@@ -17,16 +20,19 @@ Transform any spare Android smartphone into a 24/7 autonomous web scraping and d
 
 ## ⚡ Quick Start (1-Click Installation)
 
-Choose your preferred installation method:
-
-### Option A: Python Developer 1-Line Command (Recommended)
-Copy and paste this single command into your Termux terminal:
+### 🐍 Python:
 ```bash
 pip install termux-playwright && termux-playwright-install
 ```
 
-### Option B: All-in-One Bootstrap Script (Zero-Friction)
-Run the automated bootstrap installer directly via `curl`:
+### ☕ Node.js / JavaScript:
+```bash
+pkg install -y chromium nodejs-lts
+npm install termux-playwright
+npx termux-playwright doctor
+```
+
+### 🪄 Universal Shell Bootstrapper (Zero-Friction):
 ```bash
 curl -sL https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/install.sh | bash
 ```
@@ -178,6 +184,39 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+### ☕ Node.js / JavaScript API (`examples/crawler.js`)
+```javascript
+const { launch, setupStealthContext, blockHeavyResources } = require('termux-playwright');
+
+async function main() {
+    // Automatically provisions session ledger, eMMC RAM cache, and WakeLock
+    const browser = await launch({
+        headless: true,
+        stealth: true,
+        lowMemoryMode: true,
+        wakeLock: true
+    });
+
+    try {
+        const context = await setupStealthContext(browser, {
+            locale: 'en-US',
+            timezoneId: 'America/New_York'
+        });
+        const page = await context.newPage();
+        
+        // Abort images and media to save mobile data & CPU
+        await blockHeavyResources(page, { images: true, media: true, fonts: true });
+
+        await page.goto('https://news.ycombinator.com', { timeout: 45000, waitUntil: 'domcontentloaded' });
+        console.log('Page Title:', await page.title());
+    } finally {
+        await browser.close();
+    }
+}
+
+main().catch(console.error);
 ```
 
 ### 🔋 24/7 Unattended Crawling with WakeLock & Context Recycling (`examples/advanced_crawler.py`)
