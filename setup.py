@@ -11,7 +11,7 @@ if os.path.exists("README.md"):
 
 setup(
     name="termux-playwright",
-    version="1.61.1",
+    version="1.61.2",
     description="Production-grade automated Playwright integration and runtime optimizer for Android Termux",
     long_description=long_description,
     long_description_content_type="text/markdown",

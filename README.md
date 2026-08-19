@@ -530,7 +530,7 @@ if __name__ == "__main__":
 
 ## 📜 Version History & Changelog
 
-### 🟢 [Current] v1.61.1 — Resilient Phantom (2026-08-19)
+### 🟢 [Current] v1.61.2 — Resilient Phantom (2026-08-19)
 * **File-Backed Persistent Session Ledger:** Added `$TMPDIR/.tp_ledger/` to guarantee 100% automatic orphan Chromium discovery and reaping even across hard kernel crashes (`SIGKILL` / Android LMK).
 * **Stat-Driven Dynamic Chromium Version Detection:** Real-time `mtime` checking automatically syncs Client Hints headers across live `pkg upgrade chromium` updates.
 * **Prototype-Safe Anti-Bot Stealth:** Prototype deletion (`delete Object.getPrototypeOf(navigator).webdriver`) with native `permissions.query` and `window.chrome.runtime` mocks to bypass Cloudflare Turnstile & DataDome.
@@ -538,14 +538,14 @@ if __name__ == "__main__":
 * **Virtualenv Guidance:** Clear diagnostic guidance for `--system-site-packages` requirement.
 * **Storage Auto-Purge Rescue:** Automatic pre-flight cleanup of unowned ephemeral profiles on storage exhaustion.
 
-### 🔵 [Previous] v1.61.0 — Fortress Overhaul (2026-08-18)
-* **Principal Engineering Refactor:** Replaced indiscriminate `pkill` with targeted `--termux-session-id` session tags and multi-tier process discovery.
+### 🔵 [Previous] v1.61.1 — Doctor Diagnostics & Dev-Shm (2026-08-18)
+* **Diagnostic Tooling:** Added `termux-playwright-doctor`, `termux-playwright-install`, `termux-playwright-patch`, and `termux-playwright-reap` CLI commands.
 * **eMMC Protection & Memory Optimization:** `/dev/shm` RAM disk cache and Node.js V8 512MB heap limits.
 * **Standalone Fortress Mode & WakeLock:** Clean-room ephemeral profiles (`tp_solo_*`) and Android CPU wake lock integration.
-* **Diagnostic Tooling:** Added `termux-playwright-doctor`, `termux-playwright-install`, `termux-playwright-patch`, and `termux-playwright-reap` CLI commands.
 
 > [!TIP]
 > **Full Version Archive:** For earlier release notes and in-depth changelogs, explore the complete [docs/version/](docs/version) directory:
+> * [v1.61.2 Release Notes](docs/version/v1.61.2.md)
 > * [v1.61.1 Release Notes](docs/version/v1.61.1.md)
 > * [v1.61.0 Release Notes](docs/version/v1.61.0.md)
 > * [v1.60.0 Release Notes](docs/version/v1.60.0.md)
