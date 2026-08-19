@@ -16,7 +16,7 @@
             <h1 data-i18n="common.brand">Termux-Playwright</h1>
         </a>
         <div class="header-controls">
-            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.3 (Dual Engine)</span>
             <div class="lang-selector-wrapper"></div>
             <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
             <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
@@ -49,21 +49,32 @@
             <p>Chronological breakdown of architecture milestones, security hardening, and engine evolutions.</p>
 
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchVersionTab('v1.61.2')">v1.61.2 (Latest)</button>
+                <button class="tab-btn active" onclick="switchVersionTab('v1.61.3')">v1.61.3 (Latest)</button>
+                <button class="tab-btn" onclick="switchVersionTab('v1.61.2')">v1.61.2</button>
                 <button class="tab-btn" onclick="switchVersionTab('v1.61.1')">v1.61.1</button>
                 <button class="tab-btn" onclick="switchVersionTab('v1.61.0')">v1.61.0</button>
                 <button class="tab-btn" onclick="switchVersionTab('v1.60.0')">v1.60.0</button>
             </div>
 
-            <div id="v1.61.2" class="tab-pane active">
+            <div id="v1.61.3" class="tab-pane active">
                 <div class="card">
-                    <h3>v1.61.2 — Dual-Engine (Python & Node.js) & Resilient Phantom Release</h3>
-                    <p class="release-date">Release Date: 2026-08-19 | PyPI & npm Live</p>
+                    <h3>v1.61.3 — Dual-Engine (Python & Node.js) Synchronization Release</h3>
+                    <p class="release-date">Release Date: 2026-08-19 | PyPI & npm Synchronized</p>
                     <ul>
-                        <li><strong>Node.js / TypeScript Edition (npm):</strong> Added official npm package distribution with TypeScript declarations and CLI tools.</li>
-                        <li><strong>Android 14 Single-Process Architecture:</strong> Added <code>single_process=True</code> / <code>singleProcess: true</code> to bypass Android 14 Phantom Process Killer.</li>
-                        <li><strong>RAM-Disk Cache Injection:</strong> Injected <code>--disk-cache-dir=/dev/shm</code> to eliminate mobile eMMC flash memory wear.</li>
-                        <li><strong>Doctor Diagnostic Upgrade:</strong> Added pre-flight storage exhaustion detection and dynamic Chromium mtime version extraction.</li>
+                        <li><strong>Official npm Package Release:</strong> Published official Node.js / TypeScript package at <a href="https://www.npmjs.com/package/termux-playwright" target="_blank">npm: termux-playwright</a>.</li>
+                        <li><strong>1-Line Auto-Installer:</strong> Added <code>npx termux-playwright install</code> to provision Chromium and Bionic dependencies automatically.</li>
+                        <li><strong>Mobile Engineering Pro-Tips:</strong> Added documentation for <code>venv --system-site-packages</code>, <code>pnpm</code> hardlink optimization, and PM2 mobile daemons.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="v1.61.2" class="tab-pane">
+                <div class="card">
+                    <h3>v1.61.2 — Resilient Phantom & RAM Disk Cache Release</h3>
+                    <p class="release-date">Release Date: 2026-08-19</p>
+                    <ul>
+                        <li><strong>Android 14 Single-Process Architecture:</strong> Added <code>single_process=True</code> / <code>singleProcess: true</code>.</li>
+                        <li><strong>RAM-Disk Cache Injection:</strong> Injected <code>--disk-cache-dir=/dev/shm</code> to eliminate eMMC mobile flash memory wear.</li>
                     </ul>
                 </div>
             </div>

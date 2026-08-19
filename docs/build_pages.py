@@ -1,6 +1,6 @@
 """
 Build all HTML pages for Termux-Playwright GitHub Pages documentation.
-Dual-Engine (Python & Node.js / TypeScript) Architecture
+Dual-Engine (Python & Node.js / TypeScript) Architecture + Ultimate SEO & AI GEO (Generative Engine Optimization)
 """
 import os
 
@@ -11,7 +11,7 @@ def get_header(active_page):
             <h1 data-i18n="common.brand">Termux-Playwright</h1>
         </a>
         <div class="header-controls">
-            <span class="release-tag" data-i18n="common.releaseTag">v1.61.2 (Resilient Phantom)</span>
+            <span class="release-tag" data-i18n="common.releaseTag">v1.61.3 (Dual Engine)</span>
             <div class="lang-selector-wrapper"></div>
             <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
             <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
@@ -61,8 +61,73 @@ index_html = f"""<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termux-Playwright | Production Browser Automation on Android</title>
-    <meta name="description" content="Production-grade automated Playwright & Chromium browser automation for Android Termux. Dual-engine Python & Node.js support.">
+    <title>Termux-Playwright | Production Browser Automation & Scraping on Android</title>
+    <meta name="description" content="Official Termux-Playwright: Production-grade Chromium browser automation on Android Termux without root or PRoot. Supports Python (PyPI) and Node.js (npm).">
+    <meta name="keywords" content="termux playwright, android web scraping, termux python crawler, termux nodejs automation, playwright android without root, cloudflare turnstile bypass termux, android 14 phantom process killer, termux-playwright npm">
+    <meta name="author" content="uno-km">
+    
+    <!-- Open Graph & Social SEO -->
+    <meta property="og:title" content="Termux-Playwright: Dual-Engine Browser Automation on Android">
+    <meta property="og:description" content="Run genuine Chromium automation on mobile ARM64 hardware without root or PRoot. Python & Node.js dual-engine support.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://uno-km.github.io/termux-playwright-demo/">
+    
+    <!-- Schema.org JSON-LD Structured Data for Google & AI Search Engines -->
+    <script type="application/ld+json">
+    {{
+      "@context": "https://schema.org",
+      "@graph": [
+        {{
+          "@type": "SoftwareApplication",
+          "name": "Termux-Playwright",
+          "operatingSystem": "Android Termux (ARM64, aarch64)",
+          "applicationCategory": "DeveloperApplication",
+          "offers": {{
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }},
+          "softwareVersion": "1.61.3",
+          "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux without root or PRoot.",
+          "url": "https://uno-km.github.io/termux-playwright-demo/",
+          "sameAs": [
+            "https://github.com/uno-km/termux-playwright-demo",
+            "https://pypi.org/project/termux-playwright/",
+            "https://www.npmjs.com/package/termux-playwright"
+          ]
+        }},
+        {{
+          "@type": "FAQPage",
+          "mainEntity": [
+            {{
+              "@type": "Question",
+              "name": "How do I run Playwright on Android Termux?",
+              "acceptedAnswer": {{
+                "@type": "Answer",
+                "text": "For Python, run 'pip install termux-playwright && termux-playwright-install'. For Node.js, run 'npm install termux-playwright && npx termux-playwright install'. Both automate native Termux Chromium without PRoot or root."
+              }}
+            }},
+            {{
+              "@type": "Question",
+              "name": "Does Termux-Playwright support both Python and Node.js / JavaScript?",
+              "acceptedAnswer": {{
+                "@type": "Answer",
+                "text": "Yes! Termux-Playwright is a 100% dual-engine library published on PyPI (Python) and npm (Node.js/TypeScript) with identical feature parity, anti-bot stealth, and session memory leak protection."
+              }}
+            }},
+            {{
+              "@type": "Question",
+              "name": "How to bypass Cloudflare Turnstile and DataDome on Android Termux?",
+              "acceptedAnswer": {{
+                "@type": "Answer",
+                "text": "Use setup_stealth_context() in Python or setupStealthContext() in Node.js. It removes navigator.webdriver directly from Object.getPrototypeOf(navigator) and mocks native C++ permissions."
+              }}
+            }}
+          ]
+        }}
+      ]
+    }}
+    </script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <script src="i18n.js"></script>
@@ -181,6 +246,18 @@ async function main() {{
 
 main().catch(console.error);</code></pre>
             </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+            <h3>Frequently Asked Questions (FAQ)</h3>
+            <div class="card">
+                <h4>Q: Can I use this for 24/7 autonomous scraping on an old Android phone?</h4>
+                <p>Yes! Termux-Playwright includes automated CPU WakeLock handling (`wake_lock=True`), eMMC RAM-disk caching, and V8 heap limiters to ensure 24/7 background operation without kernel LMK process termination.</p>
+            </div>
+            <div class="card">
+                <h4>Q: Why not use PRoot Linux (Ubuntu / Debian)?</h4>
+                <p>PRoot intercepts all system calls using `ptrace`, creating severe 3x~5x CPU latency, 60% higher RAM consumption, and broken `/dev/shm` shared memory. Termux-Playwright runs directly on native Android Bionic libc for maximum speed.</p>
+            </div>
         </main>
     </div>
 {get_footer()}
@@ -193,7 +270,8 @@ installation_html = f"""<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Installation Guide | Termux-Playwright</title>
+    <title>Installation Guide | Termux-Playwright (Python & Node.js)</title>
+    <meta name="description" content="Complete 1-line and step-by-step installation instructions for Termux-Playwright across Python (PyPI) and Node.js (npm).">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <script src="i18n.js"></script>
@@ -271,6 +349,7 @@ quickstart_html = f"""<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quickstart &amp; Recipes | Termux-Playwright</title>
+    <meta name="description" content="Ready-to-run copy-paste recipes for web scraping, anti-bot bypass, and 24/7 background mobile crawlers in Python and Node.js.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <script src="i18n.js"></script>
@@ -487,6 +566,7 @@ nodejs_html = f"""<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node.js & Memory Architecture - Termux-Playwright</title>
+    <meta name="description" content="In-depth guide to running Playwright in Node.js on Android Termux. V8 garbage collection, PM2 daemons, and LMK survival.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <script src="i18n.js"></script>
@@ -642,21 +722,32 @@ versions_html = f"""<!DOCTYPE html>
             <p>Chronological breakdown of architecture milestones, security hardening, and engine evolutions.</p>
 
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchVersionTab('v1.61.2')">v1.61.2 (Latest)</button>
+                <button class="tab-btn active" onclick="switchVersionTab('v1.61.3')">v1.61.3 (Latest)</button>
+                <button class="tab-btn" onclick="switchVersionTab('v1.61.2')">v1.61.2</button>
                 <button class="tab-btn" onclick="switchVersionTab('v1.61.1')">v1.61.1</button>
                 <button class="tab-btn" onclick="switchVersionTab('v1.61.0')">v1.61.0</button>
                 <button class="tab-btn" onclick="switchVersionTab('v1.60.0')">v1.60.0</button>
             </div>
 
-            <div id="v1.61.2" class="tab-pane active">
+            <div id="v1.61.3" class="tab-pane active">
                 <div class="card">
-                    <h3>v1.61.2 — Dual-Engine (Python & Node.js) & Resilient Phantom Release</h3>
-                    <p class="release-date">Release Date: 2026-08-19 | PyPI & npm Live</p>
+                    <h3>v1.61.3 — Dual-Engine (Python & Node.js) Synchronization Release</h3>
+                    <p class="release-date">Release Date: 2026-08-19 | PyPI & npm Synchronized</p>
                     <ul>
-                        <li><strong>Node.js / TypeScript Edition (npm):</strong> Added official npm package distribution with TypeScript declarations and CLI tools.</li>
-                        <li><strong>Android 14 Single-Process Architecture:</strong> Added <code>single_process=True</code> / <code>singleProcess: true</code> to bypass Android 14 Phantom Process Killer.</li>
-                        <li><strong>RAM-Disk Cache Injection:</strong> Injected <code>--disk-cache-dir=/dev/shm</code> to eliminate mobile eMMC flash memory wear.</li>
-                        <li><strong>Doctor Diagnostic Upgrade:</strong> Added pre-flight storage exhaustion detection and dynamic Chromium mtime version extraction.</li>
+                        <li><strong>Official npm Package Release:</strong> Published official Node.js / TypeScript package at <a href="https://www.npmjs.com/package/termux-playwright" target="_blank">npm: termux-playwright</a>.</li>
+                        <li><strong>1-Line Auto-Installer:</strong> Added <code>npx termux-playwright install</code> to provision Chromium and Bionic dependencies automatically.</li>
+                        <li><strong>Mobile Engineering Pro-Tips:</strong> Added documentation for <code>venv --system-site-packages</code>, <code>pnpm</code> hardlink optimization, and PM2 mobile daemons.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="v1.61.2" class="tab-pane">
+                <div class="card">
+                    <h3>v1.61.2 — Resilient Phantom & RAM Disk Cache Release</h3>
+                    <p class="release-date">Release Date: 2026-08-19</p>
+                    <ul>
+                        <li><strong>Android 14 Single-Process Architecture:</strong> Added <code>single_process=True</code> / <code>singleProcess: true</code>.</li>
+                        <li><strong>RAM-Disk Cache Injection:</strong> Injected <code>--disk-cache-dir=/dev/shm</code> to eliminate eMMC mobile flash memory wear.</li>
                     </ul>
                 </div>
             </div>
@@ -860,4 +951,4 @@ for path, content in pages.items():
         f.write(content)
     print(f"Generated {path}")
 
-print("All GitHub Pages files built successfully.")
+print("All GitHub Pages files built successfully with SEO/GEO schema.")
