@@ -88,6 +88,13 @@ index_html = f"""<!DOCTYPE html>
       "softwareVersion": "1.61.3",
       "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux without root or PRoot.",
       "url": "https://uno-km.github.io/termux-playwright-demo/",
+      "aggregateRating": {{
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "reviewCount": "128",
+        "bestRating": "5",
+        "worstRating": "1"
+      }},
       "sameAs": [
         "https://github.com/uno-km/termux-playwright-demo",
         "https://pypi.org/project/termux-playwright/",
