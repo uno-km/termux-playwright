@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="space-fill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#162244" />
+      <stop offset="70%" stop-color="#0B132B" />
+      <stop offset="100%" stop-color="#060A17" />
+    </radialGradient>
+    <linearGradient id="aqua-sky-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F5D4" />
+      <stop offset="40%" stop-color="#00E5FF" />
+      <stop offset="70%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#3A86FF" />
+    </linearGradient>
+    <radialGradient id="cyan-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1" />
+      <stop offset="40%" stop-color="#00F5D4" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#3A86FF" stop-opacity="0" />
+    </radialGradient>
+    <filter id="emblem-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.8" />
+    </filter>
+  </defs>
+
+  <g filter="url(#emblem-shadow)">
+    <path d="M 256 36 C 390 36, 465 112, 460 240 C 455 368, 380 445, 256 440 C 132 435, 48 355, 52 235 C 57 115, 122 36, 256 36 Z" fill="url(#space-fill)" />
+
+    <path d="M 256 36 C 395 36, 470 112, 465 240 C 460 368, 385 448, 256 442 C 175 436, 105 395, 72 335" fill="none" stroke="url(#aqua-sky-grad)" stroke-width="40" stroke-linecap="round" />
+
+    <line x1="256" y1="95" x2="162" y2="335" stroke="url(#aqua-sky-grad)" stroke-width="36" stroke-linecap="round" />
+    <line x1="256" y1="95" x2="350" y2="335" stroke="url(#aqua-sky-grad)" stroke-width="36" stroke-linecap="round" />
+    <line x1="195" y1="240" x2="317" y2="240" stroke="url(#aqua-sky-grad)" stroke-width="30" stroke-linecap="round" />
+    
+    <line x1="195" y1="240" x2="260" y2="325" stroke="#00F5D4" stroke-width="24" stroke-linecap="round" stroke-dasharray="10 5" />
+
+    <circle cx="256" cy="95" r="40" fill="url(#cyan-glow)" />
+    <circle cx="256" cy="95" r="22" fill="#FFFFFF" stroke="#00F5D4" stroke-width="6" />
+
+    <circle cx="195" cy="240" r="26" fill="#00E5FF" stroke="#FFFFFF" stroke-width="5" />
+    <circle cx="162" cy="335" r="32" fill="#00F5D4" stroke="#FFFFFF" stroke-width="4" />
+    <circle cx="260" cy="325" r="26" fill="#00F5D4" stroke="#FFFFFF" stroke-width="5" />
+    <circle cx="317" cy="240" r="24" fill="#38BDF8" />
+    <circle cx="350" cy="335" r="32" fill="#3A86FF" stroke="#FFFFFF" stroke-width="4" />
+  </g>
+</svg>
