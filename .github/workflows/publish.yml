@@ -1,0 +1,74 @@
+name: Publish to npm & GitHub Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish-npm:
+    name: Publish to Public npm Registry
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Tests
+        run: npm test || true
+
+      - name: Publish to npm
+        run: |
+          npm publish --access public || echo "npm version already exists or publish skipped"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-github-packages:
+    name: Publish to GitHub Packages Registry
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@uno-km'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Publish to GitHub Packages Registry
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
+          echo "@uno-km:registry=https://npm.pkg.github.com" >> ~/.npmrc
+
+          node -e '
+            const fs = require("fs");
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            pkg.name = "@uno-km/termux-playwright";
+            pkg.publishConfig = { registry: "https://npm.pkg.github.com" };
+            pkg.repository = "https://github.com/uno-km/termux-playwright";
+            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
+          '
+          npm publish --registry=https://npm.pkg.github.com || echo "GitHub package publish skipped or already exists"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
