@@ -32,7 +32,7 @@ npm install termux-playwright && npx termux-playwright install
 
 ### 🪄 Universal Shell Bootstrapper (Zero-Friction):
 ```bash
-curl -sL https://raw.githubusercontent.com/uno-km/termux-playwright-demo/main/install.sh | bash
+curl -sL https://raw.githubusercontent.com/uno-km/termux-playwright/main/install.sh | bash
 ```
 
 > [!TIP]
@@ -415,7 +415,7 @@ If Playwright is updated in the future (e.g. `pip install --upgrade playwright`)
 ## 📁 Repository Structure
 
 ```
-termux-playwright-demo/
+termux-playwright/
 ├── docs/                     # Technical documentation & audit reports
 │   ├── blog_post.md          # Complete Korean engineering writeup
 │   ├── INDEPENDENT_AUDIT_REPORT.md  # Comprehensive security audit report
