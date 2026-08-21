@@ -159,7 +159,7 @@ termux-playwright-doctor
 > **💡 Key Engineering Design Principles:**
 > 1. **Greenlet Ownership Isolation:** Pre-compiled `python-greenlet` MUST be installed via `pkg` to prevent `pip` from invoking `clang` compilation failure on Android Bionic.
 > 2. **Slim `setup.py` Metadata:** `termux-playwright` specifies pure-Python dependencies to enable instant 1-second installation on mobile devices.
-> 3. **Deterministic Order:** `pkg` $\rightarrow$ `pip` $\rightarrow$ `installer (wheel + patch)` $\rightarrow$ `doctor` guarantees a 100% fail-safe deployment.
+> 3. **Deterministic Order:** `pkg` $\rightarrow$ `pip` $\rightarrow$ `installer (wheel + patch)` $\rightarrow$ `doctor` maintains a 100% fail-safe deployment.
 
 ---
 
