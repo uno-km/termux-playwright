@@ -3,6 +3,8 @@
 [![PyPI version](https://img.shields.io/pypi/v/termux-playwright.svg?color=blue)](https://pypi.org/project/termux-playwright/)
 [![npm version](https://img.shields.io/npm/v/termux-playwright.svg?color=red)](https://www.npmjs.com/package/termux-playwright)
 [![Total Downloads](https://img.shields.io/pepy/dt/termux-playwright?color=orange)](https://pepy.tech/projects/termux-playwright)
+[![Open Collective](https://img.shields.io/badge/Open_Collective-AOSF_Fund-004499?style=flat&logo=opencollective)](https://opencollective.com/ameva-foundation)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub_Sponsors-uno--km-ea4aaa?style=flat&logo=githubsponsors)](https://github.com/sponsors/uno-km)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![Node: 16+](https://img.shields.io/badge/node-16+-brightgreen.svg)](https://nodejs.org/)
@@ -694,3 +696,14 @@ if __name__ == "__main__":
 
 This project is licensed under the terms of the [MIT License](LICENSE).
 
+
+
+---
+
+## 💖 Sponsorship & Community Backing
+
+AMEVA is an independent open-source public good governed under the **AMEVA Open-Source Foundation (AOSF)**. All sponsorship funds are 100% publicly audited and dedicated to physical ARM64 testbeds and CI/CD GPU runners.
+
+- **Open Collective (Non-Profit 501(c)(6))**: [https://opencollective.com/ameva-foundation](https://opencollective.com/ameva-foundation)
+- **GitHub Sponsors**: [https://github.com/sponsors/uno-km](https://github.com/sponsors/uno-km)
+- **Official Foundation Portal**: [https://uno-km.vercel.app/docs/foundation/sponsorship.html](https://uno-km.vercel.app/docs/foundation/sponsorship.html)
