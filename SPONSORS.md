@@ -8,7 +8,7 @@
 
 The **AMEVA Open-Source Foundation (AOSF)** accepts community and corporate contributions through transparent, publicly auditable platforms:
 
-- **💖 Open Collective**: [https://opencollective.com/ameva-foundation](https://opencollective.com/ameva-foundation)
+- **💖 Open Collective**: [https://opencollective.com/ameva-fund](https://opencollective.com/ameva-fund)
 - **🐙 GitHub Sponsors**: [https://github.com/sponsors/uno-km](https://github.com/sponsors/uno-km)
 - **🏛️ Foundation Sponsorship Portal**: [https://uno-km.vercel.app/docs/foundation/sponsorship.html](https://uno-km.vercel.app/docs/foundation/sponsorship.html)
 
@@ -53,7 +53,7 @@ The **AMEVA Open-Source Foundation (AOSF)** accepts community and corporate cont
 
 ## ☕ Community Supporters ($5 / mo)
 
-*All community supporters are permanently honored on the [Open Collective Public Ledger](https://opencollective.com/ameva-foundation).*
+*All community supporters are permanently honored on the [Open Collective Public Ledger](https://opencollective.com/ameva-fund).*
 
 ---
 
