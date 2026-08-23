@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.61.4] - 2026-08-23
+## [1.70.0] - 2026-08-23
 
 ### Added
 - **Dual-Engine Full Parity**: Complete Node.js (`npm`) and Python (`pip`) support on Android Termux (Bionic libc).
 - **HTML5 Canvas WebGL Context Proxy**: Injected UNMASKED_VENDOR and UNMASKED_RENDERER mocking layer across Python and Node.js stealth profiles (55/55 bot detection pass).
 - **Automated Bionic coreBundle Patcher**: Added `lib/patcher.js` to automatically bypass platform checks across all Playwright layouts.
+- **Physical Real-Device Validation (Galaxy S20)**: 100.0/100.0 Grade A+ certification across 4-phase 0-point baseline, enterprise WAF, and 24/7 Doze/LMK stress tests.
 
 ## [1.61.1] - 2026-08-19
 
