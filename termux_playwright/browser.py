@@ -136,14 +136,57 @@ STEALTH_INIT_SCRIPT: str = """
         }
     } catch (e) {}
 
-    // 5. Standard languages profile
+    // 6. WebGL context proxy & UNMASKED_VENDOR/RENDERER spoofing
     try {
-        if (!navigator.languages || navigator.languages.length === 0) {
-            Object.defineProperty(navigator, 'languages', {
-                get: () => ['en-US', 'en'],
-                enumerable: true,
-                configurable: true,
-            });
+        const origGetContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function(type, attributes) {
+            const ctx = origGetContext.apply(this, arguments);
+            if (ctx) {
+                const origGetParam = ctx.getParameter ? ctx.getParameter.bind(ctx) : null;
+                if (origGetParam) {
+                    ctx.getParameter = function(param) {
+                        if (param === 37445) return 'Google Inc. (Intel)';
+                        if (param === 37446) return 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)';
+                        return origGetParam(param);
+                    };
+                }
+                return ctx;
+            }
+            if (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2') {
+                return {
+                    canvas: this,
+                    getParameter: function(param) {
+                        if (param === 37445) return 'Google Inc. (Intel)';
+                        if (param === 37446) return 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)';
+                        if (param === 7936) return 'WebKit';
+                        if (param === 7937) return 'WebKit WebGL';
+                        if (param === 7938) return 'WebGL 1.0 (OpenGL ES 2.0 Chromium)';
+                        if (param === 35724) return 'WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)';
+                        return 0;
+                    },
+                    getExtension: function(name) {
+                        if (name === 'WEBGL_debug_renderer_info') {
+                            return {
+                                UNMASKED_VENDOR_WEBGL: 37445,
+                                UNMASKED_RENDERER_WEBGL: 37446
+                            };
+                        }
+                        return null;
+                    },
+                    getSupportedExtensions: function() {
+                        return ['WEBGL_debug_renderer_info', 'EXT_texture_filter_anisotropic'];
+                    }
+                };
+            }
+            return ctx;
+        };
+        if (typeof WebGLRenderingContext !== 'undefined') {
+            const origGetParam = WebGLRenderingContext.prototype.getParameter;
+            WebGLRenderingContext.prototype.getParameter = function(param) {
+                if (param === 37445) return 'Google Inc. (Intel)';
+                if (param === 37446) return 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)';
+                return origGetParam.apply(this, arguments);
+            };
         }
     } catch (e) {}
 })();
