@@ -13,7 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bézier & Fitts's Law Interaction Model (`physics`)**: Implemented `CubicBezierTrajectory`, `HumanMouse`, and `HumanKeyboard` simulating non-linear hand curves, target overshoot, muscle tremor jitter, and Gaussian typing intervals ($\mu=120\text{ms}, \sigma=35\text{ms}$).
 - **Dual-Mode Cellular IP Rotator (`mobile`)**: Implemented `CellularIpRotator` with Termux Native and PC ADB Bridge modes for 2~3 second LTE/5G IP rotation via airplane mode toggle with multi-endpoint public IP verification.
 - **WAF & Cloudflare Turnstile Solver (`waf`)**: Auto-detection of Cloudflare Turnstile, Managed Challenge, hCaptcha, and reCAPTCHA with automated Bézier mouse solve orchestration.
-- **0-Point Baseline Test Suite**: 126 automated unit and integration tests (100 Python + 26 Node.js) with 100% pass rate.
+- **Android 15 (API Level 35) & Modern Chromium (v128~138+) Engine Compatibility**:
+  - Automatic `--single-process` injection on Android 14+ (SDK >= 34) to bypass Phantom Process Killer (32 child processes).
+  - Native ELF binary resolution hierarchy (`/data/data/com.termux/files/usr/lib/chromium/chrome`) bypassing Android 14/15 Bionic linker script `execve` denial (`EACCES`).
+  - Auto-injected modern headless flags (`PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW=1` / `PW_EXPERIMENTAL_CHROMIUM_USE_HEADLESS_NEW=1`) supporting Chromium 128~138+.
+  - Safe eMMC cache normalization (`--disk-cache-size=1`, `--media-cache-size=1`) replacing legacy `/dev/null` `mkdir()` collision (`EEXIST 17`).
+  - Accurate runtime OS SDK level detection via Priority 1 `getprop ro.build.version.sdk`.
+  - Added `x11-repo` and `procps` to automated installer for 20-second clean Termux provisioning.
+- **0-Point Baseline Test Suite & Real-Device Validation**:
+  - 129 automated unit and integration tests (103 Python + 26 Node.js) with 100% pass rate.
+  - Cross-device verification across physical Galaxy S20 (Android 13) and Galaxy S21 (Android 15) with 100.0/100.0 Grade A+ pass.
 
 ## [1.70.0] - 2026-08-23
 

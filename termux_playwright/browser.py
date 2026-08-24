@@ -43,7 +43,7 @@ CORE_ANDROID_CHROMIUM_ARGS: List[str] = [
     "--disable-setuid-sandbox",
     # 2. Shared memory & eMMC Flash wear mitigation
     "--disable-dev-shm-usage",
-    "--disk-cache-dir=/dev/null",
+    "--disk-cache-size=1",
     "--media-cache-size=1",
     "--disable-application-cache",
     "--aggressive-cache-discard",
@@ -371,6 +371,14 @@ def configure_environment(strict: bool = True) -> Dict[str, str]:
             os.environ["NODE_OPTIONS"] = " ".join(tokens)
         configured["NODE_OPTIONS"] = os.environ.get("NODE_OPTIONS", "")
 
+        # Enable modern Chromium (v128+) new headless mode in Playwright RPC driver
+        os.environ["PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW"] = "1"
+        os.environ["PW_EXPERIMENTAL_CHROMIUM_USE_HEADLESS_NEW"] = "1"
+        os.environ["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"] = "1"
+        configured["PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW"] = "1"
+        configured["PW_EXPERIMENTAL_CHROMIUM_USE_HEADLESS_NEW"] = "1"
+        configured["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"] = "1"
+
         try:
             chrome = find_chromium_binary()
             os.environ.setdefault("PLAYWRIGHT_CHROMIUM_PATH", chrome)
@@ -419,8 +427,8 @@ def verify_runtime_dependencies() -> None:
 async def async_playwright_termux():
     """Async context manager that pre-configures environment and guarantees non-blocking process cleanup."""
     verify_runtime_dependencies()
-    from playwright.async_api import async_playwright
     configure_environment(strict=False)
+    from playwright.async_api import async_playwright
     async with async_playwright() as p:
         try:
             yield p
@@ -432,8 +440,8 @@ async def async_playwright_termux():
 def sync_playwright_termux():
     """Sync context manager that pre-configures environment and guarantees process cleanup."""
     verify_runtime_dependencies()
-    from playwright.sync_api import sync_playwright
     configure_environment(strict=False)
+    from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         try:
             yield p
@@ -494,7 +502,7 @@ async def launch(
     standalone_mode: bool = False,
     wake_lock: bool = False,
     stealth: bool = False,
-    single_process: bool = False,
+    single_process: Optional[bool] = None,
     **kwargs,
 ) -> Any:
     """Launch Chromium browser asynchronously with Termux-hardened configuration and session tracking.
@@ -576,6 +584,9 @@ async def launch(
         acquired_wakelock = TermuxWakeLock(fail_silently=True)
         acquired_wakelock.acquire()
 
+    # Auto-enable single_process on Android 14+ (SDK >= 34) when running on Termux
+    effective_single_process = single_process if single_process is not None else (is_termux() and get_android_sdk_version() >= 34)
+
     # 6. Build hardened args with eMMC protection, standalone flags, and session tag
     merged_args = build_chromium_args(
         extra_args=user_args,
@@ -585,7 +596,7 @@ async def launch(
         ignore_certificate_errors=ignore_certificate_errors,
         standalone_mode=standalone_mode,
         stealth=stealth,
-        single_process=single_process,
+        single_process=effective_single_process,
     )
 
     launch_params: Dict[str, Any] = {
@@ -657,7 +668,7 @@ def launch_sync(
     standalone_mode: bool = False,
     wake_lock: bool = False,
     stealth: bool = False,
-    single_process: bool = False,
+    single_process: Optional[bool] = None,
     **kwargs,
 ) -> Any:
     """Launch Chromium browser synchronously with Termux-hardened configuration and session tracking.
@@ -735,6 +746,9 @@ def launch_sync(
         acquired_wakelock = TermuxWakeLock(fail_silently=True)
         acquired_wakelock.acquire()
 
+    # Auto-enable single_process on Android 14+ (SDK >= 34) when running on Termux
+    effective_single_process = single_process if single_process is not None else (is_termux() and get_android_sdk_version() >= 34)
+
     merged_args = build_chromium_args(
         extra_args=user_args,
         session_token=session_token,
@@ -743,7 +757,7 @@ def launch_sync(
         ignore_certificate_errors=ignore_certificate_errors,
         standalone_mode=standalone_mode,
         stealth=stealth,
-        single_process=single_process,
+        single_process=effective_single_process,
     )
 
     launch_params: Dict[str, Any] = {

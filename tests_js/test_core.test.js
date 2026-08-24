@@ -29,7 +29,6 @@ test('buildChromiumArgs: default flags contain eMMC RAM cache and sandbox protec
     const flags = buildChromiumArgs();
     assert.ok(flags.includes('--no-sandbox'));
     assert.ok(flags.includes('--disable-dev-shm-usage'));
-    assert.ok(flags.includes('--disk-cache-dir=/dev/shm'));
     assert.ok(flags.includes('--disk-cache-size=1'));
     assert.ok(flags.includes('--media-cache-size=1'));
 });

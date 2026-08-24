@@ -24,7 +24,7 @@ def test_build_chromium_args_default():
     for core_arg in CORE_ANDROID_CHROMIUM_ARGS:
         assert core_arg in args
     assert "--disable-dev-shm-usage" in args
-    assert "--disk-cache-dir=/dev/null" in args
+    assert "--disk-cache-size=1" in args
     assert "--no-sandbox" in args
     # SSL certificate validation must be enabled by default (security)
     assert "--ignore-certificate-errors" not in args

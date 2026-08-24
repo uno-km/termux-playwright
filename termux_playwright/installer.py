@@ -95,6 +95,7 @@ def fetch_pypi_wheel_info(version: Optional[str] = None) -> Tuple[str, str, str]
     raise InstallationError("Exhausted retries resolving Playwright wheel.")
 
 REQUIRED_TERMUX_SYSTEM_PACKAGES: List[str] = [
+    "x11-repo",
     "chromium",
     "nodejs",
     "python-greenlet",

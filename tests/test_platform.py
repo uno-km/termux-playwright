@@ -74,15 +74,15 @@ def test_get_cpu_architecture_mapping(monkeypatch):
 
 def test_get_cpu_architecture_unsupported(monkeypatch):
     monkeypatch.setattr("platform.machine", lambda: "i686")
-    with pytest.raises(UnsupportedPlatformError, match="Unsupported CPU architecture: i686"):
+    with pytest.raises(UnsupportedPlatformError, match="32-bit architecture detected: 'i686'"):
         get_cpu_architecture()
 
     monkeypatch.setattr("platform.machine", lambda: "armv7l")
-    with pytest.raises(UnsupportedPlatformError, match="Unsupported CPU architecture: armv7l"):
+    with pytest.raises(UnsupportedPlatformError, match="32-bit architecture detected: 'armv7l'"):
         get_cpu_architecture()
 
 def test_get_wheel_tag_unsupported():
-    with pytest.raises(UnsupportedPlatformError, match="No pre-built Playwright wheel tag mapped for architecture: mips"):
+    with pytest.raises(UnsupportedPlatformError, match="Unsupported CPU architecture: 'mips'"):
         get_wheel_tag_for_arch("mips")
 
 def test_find_chromium_binary_from_env(monkeypatch, tmp_path):
@@ -117,7 +117,7 @@ def test_find_chromium_binary_not_found(monkeypatch):
     monkeypatch.setattr("os.path.isfile", lambda _: False)
     monkeypatch.setattr(sys, "platform", "linux")
 
-    with pytest.raises(BinaryNotFoundError, match="Native Chromium binary was not found"):
+    with pytest.raises(BinaryNotFoundError, match="Chromium executable not found"):
         find_chromium_binary()
 
 def test_find_node_binary_success(monkeypatch, tmp_path):
@@ -129,7 +129,7 @@ def test_find_node_binary_success(monkeypatch, tmp_path):
 def test_find_node_binary_not_found(monkeypatch):
     monkeypatch.setattr("termux_playwright.platform.is_termux", lambda: False)
     monkeypatch.setattr("shutil.which", lambda _: None)
-    with pytest.raises(BinaryNotFoundError, match="Node.js binary not found in PATH"):
+    with pytest.raises(BinaryNotFoundError, match="Node.js executable not found"):
         find_node_binary()
 
 def test_check_preflight_storage_exhaustion(monkeypatch, tmp_path):

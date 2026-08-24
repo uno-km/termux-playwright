@@ -131,29 +131,27 @@ def get_android_sdk_version() -> int:
     if not is_termux():
         return 0
         
-    # Tier 1: Python standard C-runtime Android API level (Most reliable if compiled for Android)
-    if hasattr(sys, "getandroidapilevel"):
-        try:
-            lvl = int(sys.getandroidapilevel())
-            if lvl > 0:
-                return lvl
-        except Exception as e:
-            logger.debug("sys.getandroidapilevel failed: %s", e)
+    # Tier 1: Live Android runtime OS property inspection (getprop)
+    candidates = []
+    found_which = shutil.which("getprop")
+    if found_which:
+        candidates.append(found_which)
+    for hardcoded in ["/system/bin/getprop", "/vendor/bin/getprop"]:
+        if hardcoded not in candidates and os.path.exists(hardcoded):
+            candidates.append(hardcoded)
 
-    # Tier 2: Android getprop command line tool
-    getprop = shutil.which("getprop")
-    if getprop:
+    for getprop_cmd in candidates:
         try:
             res = subprocess.run(
-                [getprop, "ro.build.version.sdk"],
+                [getprop_cmd, "ro.build.version.sdk"],
                 capture_output=True, text=True, timeout=3,
             )
             if res.returncode == 0 and res.stdout.strip().isdigit():
                 return int(res.stdout.strip())
         except Exception as e:
-            logger.debug("getprop check failed: %s", e)
+            logger.debug("getprop check failed on %s: %s", getprop_cmd, e)
 
-    # Tier 3: Direct /system/build.prop parsing fallback
+    # Tier 2: Direct /system/build.prop parsing fallback
     build_prop_candidates = ["/system/build.prop", "/default.prop", "/vendor/build.prop"]
     for prop_file in build_prop_candidates:
         if os.path.isfile(prop_file):
@@ -166,6 +164,15 @@ def get_android_sdk_version() -> int:
                                 return int(val)
             except Exception as e:
                 logger.debug("build.prop check failed on %s: %s", prop_file, e)
+
+    # Tier 3: Python standard C-runtime Android API level fallback (NDK target)
+    if hasattr(sys, "getandroidapilevel"):
+        try:
+            lvl = int(sys.getandroidapilevel())
+            if lvl > 0:
+                return lvl
+        except Exception as e:
+            logger.debug("sys.getandroidapilevel failed: %s", e)
             
     # Conservative safe default for Android Termux: Enforce W^X policy compliance
     logger.info(
@@ -235,7 +242,20 @@ def find_chromium_binary() -> str:
         if os.path.isfile(real_path) and os.access(real_path, os.X_OK):
             return real_path
 
-    # 2. PATH resolution
+    # 2. Termux prefix candidate inspection across all known terminal forks
+    for prefix in _get_candidate_prefix_paths():
+        termux_paths = [
+            os.path.join(prefix, "lib", "chromium", "chrome"),
+            os.path.join(prefix, "lib", "chromium", "chromium-launcher.sh"),
+            os.path.join(prefix, "bin", "chromium-browser"),
+            os.path.join(prefix, "bin", "chromium"),
+        ]
+        for path in termux_paths:
+            real_p = os.path.realpath(path)
+            if os.path.isfile(real_p) and os.access(real_p, os.X_OK):
+                return real_p
+
+    # 3. PATH resolution
     candidates = ["chromium-browser", "chromium", "google-chrome", "chrome"]
     for name in candidates:
         found = shutil.which(name)
@@ -244,24 +264,13 @@ def find_chromium_binary() -> str:
             if os.path.isfile(real_found) and os.access(real_found, os.X_OK):
                 return real_found
 
-    # 3. Windows standard desktop installations fallback (dynamic wildcard search)
+    # 4. Windows standard desktop installations fallback (dynamic wildcard search)
     if sys.platform == "win32":
         for base in filter(None, [os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")]):
             for pattern in (r"*\Chrome\Application\chrome.exe", r"*\Edge\Application\msedge.exe", r"*\Chromium\Application\chrome.exe"):
                 matches = glob.glob(os.path.join(base, pattern))
                 if matches and os.path.isfile(matches[0]):
                     return os.path.realpath(matches[0])
-
-    # 4. Termux prefix candidate inspection across all known terminal forks
-    for prefix in _get_candidate_prefix_paths():
-        termux_paths = [
-            os.path.join(prefix, "bin", "chromium-browser"),
-            os.path.join(prefix, "bin", "chromium"),
-        ]
-        for path in termux_paths:
-            real_p = os.path.realpath(path)
-            if os.path.isfile(real_p) and os.access(real_p, os.X_OK):
-                return real_p
 
     raise BinaryNotFoundError(
         "Chromium executable not found. "

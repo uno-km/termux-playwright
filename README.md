@@ -9,7 +9,7 @@
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![Node: 16+](https://img.shields.io/badge/node-16+-brightgreen.svg)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-Android%20Termux%20(aarch64%20%7C%20x86__64)-green.svg)](https://termux.dev/)
-[![Tests](https://img.shields.io/badge/tests-126%20passed%20%7C%20100%25-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-129%20passed%20%7C%20100%25-success)](tests/)
 
 > **Run genuine Chromium browser automation (Headless & full JavaScript SPA rendering) directly on Android devices inside Termux without PRoot or root privileges.**
 > **Dual Engine Support: Native Python & Node.js / JavaScript.**
@@ -42,7 +42,7 @@ curl -sL https://raw.githubusercontent.com/uno-km/termux-playwright/main/install
 > If `pkg install` ever stalls or reports HTTP mirror errors on a fresh Termux install, simply switch to an optimal mirror by running `termux-change-repo` and `pkg update -y` manually before retrying.
 
 > **🔥 What the automated installer provisions behind the scenes:**
-> 1. Provisions native Termux packages (`chromium`, `nodejs`, `python-greenlet`, `termux-api`) with zero 1.2GB Clang build bloat.
+> 1. Provisions native Termux packages (`x11-repo`, `chromium`, `nodejs`, `python-greenlet`, `procps`, `termux-api`) with zero 1.2GB Clang build bloat.
 > 2. Downloads and injects the official architecture-specific Playwright wheel as platform-agnostic `none-any.whl`.
 > 3. Atomically applies the `coreBundle.js` platform verification bypass patch.
 > 4. Runs a comprehensive 7-phase `termux-playwright-doctor` diagnostic health check.
@@ -126,7 +126,7 @@ flowchart TD
 Install pre-compiled native binaries to avoid triggering heavy in-place compilation:
 ```bash
 pkg update -y
-pkg install -y chromium nodejs python python-greenlet termux-api
+pkg install -y x11-repo chromium nodejs python python-greenlet procps termux-api
 ```
 
 ### 🔵 Step 2: Python Tooling & Pure Packages (`pip`)
@@ -781,6 +781,7 @@ if __name__ == "__main__":
 
 > [!TIP]
 > **Full Version Archive:** For earlier release notes and in-depth changelogs, explore the complete [docs/version/](docs/version) directory:
+> * [v1.80.0 Release Notes](docs/version/v1.80.0.md) (Universal Android 15 & Next-Gen Mobile Automation)
 > * [v1.61.2 Release Notes](docs/version/v1.61.2.md)
 > * [v1.61.1 Release Notes](docs/version/v1.61.1.md)
 > * [v1.61.0 Release Notes](docs/version/v1.61.0.md)

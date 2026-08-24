@@ -147,3 +147,6 @@ __all__ = [
     "fetch_pypi_wheel_info",
     "__version__",
 ]
+
+# Auto-configure process environment safely (idempotent, no-op outside Termux)
+configure_environment(strict=False)
