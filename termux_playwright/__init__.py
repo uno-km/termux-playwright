@@ -1,48 +1,8 @@
 """Termux-Playwright: Hardened, Architecture-Aware Playwright Integration for Android Termux.
 
-Canonical Usage Pattern for Developers & AI Coding Agents:
-----------------------------------------------------------
-1. Asynchronous Automation (Recommended):
-    ```python
-    import asyncio
-    from termux_playwright import async_playwright_termux, launch
-
-    async def main():
-        async with async_playwright_termux() as p:
-            browser = await launch(p, headless=True)
-            page = await browser.new_page()
-            await page.goto("https://example.com")
-            print(await page.title())
-            await browser.close()
-
-    asyncio.run(main())
-    ```
-
-2. 24/7 Unattended Crawling with WakeLock:
-    ```python
-    import asyncio
-    from termux_playwright import async_playwright_termux, launch, TermuxWakeLock
-
-    async def main():
-        with TermuxWakeLock(fail_silently=True):
-            async with async_playwright_termux() as p:
-                browser = await launch(p, headless=True)
-                page = await browser.new_page()
-                await page.goto("https://example.com")
-                await browser.close()
-    ```
-
-3. Synchronous Automation:
-    ```python
-    from termux_playwright import sync_playwright_termux, launch_sync
-
-    with sync_playwright_termux() as p:
-        browser = launch_sync(p, headless=True)
-        page = browser.new_page()
-        page.goto("https://example.com")
-        print(page.title())
-        browser.close()
-    ```
+Next-Gen Autonomous Scraping & Evasion Engine (Python & Node.js Dual Engine).
+Includes Kernel ProcessReaper, eMMC Storage Protection, Sub-pixel Canvas 2D LSB Noise,
+AudioContext Frequency Deviation, Cubic Bézier Physics, and Dual-Mode Cellular IP Rotator.
 """
 
 from .exceptions import (
@@ -80,7 +40,26 @@ from .browser import (
     LOW_MEMORY_CHROMIUM_ARGS,
     STEALTH_CHROMIUM_ARGS,
 )
-
+from .stealth import (
+    generate_stealth_script,
+    CanvasNoiseInjector,
+    AudioNoiseInjector,
+    StealthEngine,
+)
+from .physics import (
+    Point,
+    CubicBezierTrajectory,
+    HumanMouse,
+    HumanKeyboard,
+)
+from .mobile import (
+    RotationMode,
+    CellularIpRotator,
+)
+from .waf import (
+    WafChallengeType,
+    TurnstileEvaluator,
+)
 from .reaper import (
     ProcessReaper,
     TermuxWakeLock,
@@ -100,7 +79,7 @@ from .installer import (
     fetch_pypi_wheel_info,
 )
 
-__version__ = "1.61.3"
+__version__ = "1.80.0"
 
 __all__ = [
     # Exceptions
@@ -135,6 +114,22 @@ __all__ = [
     "CORE_ANDROID_CHROMIUM_ARGS",
     "LOW_MEMORY_CHROMIUM_ARGS",
     "STEALTH_CHROMIUM_ARGS",
+    # Stealth
+    "generate_stealth_script",
+    "CanvasNoiseInjector",
+    "AudioNoiseInjector",
+    "StealthEngine",
+    # Physics
+    "Point",
+    "CubicBezierTrajectory",
+    "HumanMouse",
+    "HumanKeyboard",
+    # Mobile
+    "RotationMode",
+    "CellularIpRotator",
+    # WAF
+    "WafChallengeType",
+    "TurnstileEvaluator",
     # Process & WakeLock
     "ProcessReaper",
     "TermuxWakeLock",

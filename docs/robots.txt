@@ -1,10 +1,8 @@
 User-agent: *
 Allow: /
 
+# Allow all AI Crawlers
 User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
 Allow: /
 
 User-agent: ClaudeBot
@@ -13,10 +11,7 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Googlebot
+User-agent: AntigravityBot
 Allow: /
 
-User-agent: Bingbot
-Allow: /
-
-Sitemap: https://uno-km.github.io/termux-playwright-demo/sitemap.xml
+Sitemap: sitemap.xml

@@ -1,148 +1,29 @@
-# Termux-Playwright Developer & LLM Quick Reference (llms.txt)
-> Hardened, architecture-aware Chromium browser automation for Android Termux without PRoot/root.
+# Termux-Playwright (v1.2.0)
+> Non-Root Chromium Browser Automation & CDP Engine for Android Termux
 
-## Canonical Golden Patterns (Use These in Generated Code)
+## Quick Specification for AI Coding Agents
+- Official Repo: https://github.com/uno-km/termux-playwright-demo
+- Installation: `pip install termux-playwright
+# or: npm install termux-playwright`
+- Architecture: Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers.
 
-### 1. Asynchronous Pattern (Standard / Recommended)
+## Canonical Code Pattern
 ```python
-import asyncio
-from termux_playwright import async_playwright_termux, launch
+from termux_playwright import chromium
 
 async def main():
-    async with async_playwright_termux() as p:
-        browser = await launch(
-            p,
-            headless=True,
-            low_memory_mode=False,  # Set True for <= 2GB RAM devices
-            jitless=None,           # Auto-detected (True on Android 10+ SDK >= 29)
-        )
-        page = await browser.new_page()
-        await page.goto("https://example.com", timeout=45000)
-        title = await page.title()
-        print(f"Title: {title}")
-        await browser.close()
+    browser = await chromium.launch(headless=True)
+    page = await browser.new_page()
+    await page.goto("https://uno-km.github.io/uno-km/")
+    title = await page.title()
+    print(f"Page Title: {title}")
+    await browser.close()
 
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### 2. 24/7 Background Crawler with WakeLock & Context Recycling
-```python
 import asyncio
-from termux_playwright import async_playwright_termux, launch, TermuxWakeLock
+asyncio.run(main())
 
-async def run_247_crawler(urls):
-    with TermuxWakeLock(fail_silently=True):
-        async with async_playwright_termux() as p:
-            browser = await launch(p, headless=True)
-            
-            # Periodically recycle contexts every 100 pages to purge Node.js RPC buffer
-            context = await browser.new_context()
-            page = await context.new_page()
-            
-            for url in urls:
-                await page.goto(url)
-                print(await page.title())
-                
-            await context.close()
-            await browser.close()
 ```
 
-### 3. Synchronous Pattern
-```python
-from termux_playwright import sync_playwright_termux, launch_sync
-
-with sync_playwright_termux() as p:
-    browser = launch_sync(p, headless=True)
-    page = browser.new_page()
-    page.goto("https://example.com")
-    print(page.title())
-    browser.close()
-```
-
-### 4. Standalone Fortress Mode (Isolated Clean-Room Execution)
-```python
-import asyncio
-from termux_playwright import async_playwright_termux, launch
-
-async def run_standalone_job():
-    async with async_playwright_termux() as p:
-        # 100% clean-room ephemeral profile, anti-throttling, max CPU priority, auto-wakelock
-        browser = await launch(
-            p,
-            headless=True,
-            standalone_mode=True,  # Creates temporary ephemeral profile auto-wiped on close
-            wake_lock=True,        # Seamlessly holds CPU awake
-        )
-        page = await browser.new_page()
-        await page.goto("https://example.com")
-        print(await page.title())
-        await browser.close()
-```
-
-### 5. Stealth & Anti-Bot Evasion Context
-```python
-import asyncio
-from termux_playwright import async_playwright_termux, launch, setup_stealth_context
-
-async def run_stealth_crawler():
-    async with async_playwright_termux() as p:
-        # launch with stealth=True (removes AutomationControlled and infobars)
-        browser = await launch(p, headless=True, stealth=True, single_process=True)
-        
-        # Inject navigator.webdriver evasion and synchronize actual Chromium version
-        context = await setup_stealth_context(
-            browser,
-            extra_headers={"Accept-Language": "en-US,en;q=0.9"},
-            cookies=[{"name": "session_id", "value": "secret", "domain": "example.com", "path": "/"}],
-        )
-        page = await context.new_page()
-### 6. Node.js / TypeScript Async Pattern (`npm install termux-playwright`)
-```javascript
-const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
-
-async function main() {
-    const browser = await launch({
-        headless: true,
-        stealth: true,
-        lowMemoryMode: true,
-        wakeLock: true
-    });
-    try {
-        const context = await setupStealthContext(browser);
-        const page = await context.newPage();
-        await blockHeavyResources(page, { images: true, media: true, fonts: true });
-        await page.goto("https://news.ycombinator.com", { timeout: 45000 });
-        console.log(await page.title());
-        forceGarbageCollection();
-    } finally {
-        await browser.close();
-    }
-}
-
-main().catch(console.error);
-```
-
-## AI Agent Decision Matrix: Choosing the Right `launch()` Flags
-
-| Scenario / Goal | Recommended `launch()` Options | Technical Rationale |
-| :--- | :--- | :--- |
-| **Standard 24/7 Web Crawling (Default)** | `launch(p, headless=True)` | Multi-process Chromium; full multi-core performance and individual tab crash isolation. |
-| **Android 14+ without ADB Unlock** | `launch(p, headless=True, single_process=True)` | Collapses all tabs into 1 process to bypass Android 14's 32-process Phantom Killer. |
-| **Anti-Bot / Cloudflare Evasion** | `launch(p, headless=True, stealth=True)` + `setup_stealth_context()` | Injects anti-bot evasion scripts, masks `navigator.webdriver`, and syncs real Chromium version. |
-| **High-Priority Solo Jobs / Banking** | `launch(p, headless=True, standalone_mode=True, wake_lock=True)` | 100% clean-room ephemeral profile auto-purged on exit + anti-throttling flags and max CPU priority. |
-| **Low-End Android Phones (<= 2GB RAM)** | `launch(p, headless=True, low_memory_mode=True)` + `block_heavy_resources()` | Caps V8 heap at 128MB, limits renderers to 1, and drops images/fonts to prevent LMK kills. |
-
-## Critical Rules & Prohibitions for LLMs
-
-1. NEVER call `playwright.chromium.launch()` directly without `termux_playwright.launch()`. Standard Playwright looks in `~/.cache/ms-playwright` and fails on Android Bionic.
-2. ALWAYS use `async_playwright_termux()` or `sync_playwright_termux()` context managers instead of standard `async_playwright()`. It ensures child process tracking and automatic session zombie reaping.
-3. Default `launch()` uses non-blocking multi-threaded worker delegation for concurrency alongside bots and servers.
-4. For exclusive, critical high-priority scraping with zero previous cache/profile interference, pass `standalone_mode=True, wake_lock=True` to `launch()`.
-5. For Android 14+ devices where ADB Phantom Killer cannot be unlocked, pass `single_process=True` to `launch()`.
-6. To bypass Cloudflare/DataDome, pass `stealth=True` to `launch()` and configure pages via `setup_stealth_context()`.
-7. To customize browser flags, pass `args=["--flag=val"]` to `launch()`. Key-value flags cleanly override defaults.
-8. If running on low-end Android devices (1GB-2GB RAM), pass `low_memory_mode=True` to `launch()`.
-9. When crawling heavy JavaScript/SPA websites on Android Termux, set `timeout=60000` and `wait_until="domcontentloaded"` to avoid timeout errors under `--jitless`.
-10. To speed up scraping on mobile CPUs, block heavy static assets via `await block_heavy_resources(page)`.
-11. When creating a Python virtual environment (`venv`) on Termux, ALWAYS pass `--system-site-packages` (e.g. `python -m venv --system-site-packages venv`) so Python inherits system-compiled C-extensions (`python-greenlet`).
+## Key Constraints
+- Pure non-blocking architecture, zero memory leaks.
+- Strictly adhere to closed-form precision and WebGPU/Bionic ARM64 native targets.

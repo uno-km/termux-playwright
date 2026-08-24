@@ -9,7 +9,7 @@
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![Node: 16+](https://img.shields.io/badge/node-16+-brightgreen.svg)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-Android%20Termux%20(aarch64%20%7C%20x86__64)-green.svg)](https://termux.dev/)
-[![Tests](https://img.shields.io/badge/tests-98%20passed%20%7C%20100%25-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-126%20passed%20%7C%20100%25-success)](tests/)
 
 > **Run genuine Chromium browser automation (Headless & full JavaScript SPA rendering) directly on Android devices inside Termux without PRoot or root privileges.**
 > **Dual Engine Support: Native Python & Node.js / JavaScript.**
@@ -348,32 +348,120 @@ browser = await launch(
 ```
 
 ### 🥷 Stealth Mode & Anti-Bot Evasion (`setup_stealth_context`)
-Bypass Cloudflare, DataDome, and bot detection systems by injecting anti-fingerprinting evasion scripts and custom HTTP headers/cookies:
+Bypass Cloudflare, DataDome, CreepJS, and advanced fingerprinting engines with prototype-safe navigator masking, Sub-pixel Canvas 2D LSB noise injection, AudioContext micro-frequency deviation, and WebGL driver spoofing:
 
 ```python
 import asyncio
-from termux_playwright import async_playwright_termux, launch, setup_stealth_context
+from termux_playwright import (
+    async_playwright_termux,
+    launch,
+    setup_stealth_context,
+    HumanMouse,
+    HumanKeyboard,
+    CellularIpRotator,
+    TurnstileEvaluator,
+)
 
 async def main():
     async with async_playwright_termux() as p:
-        # Enable stealth flags & single_process to evade Android 14 Phantom Killer
         browser = await launch(p, headless=True, stealth=True, single_process=True)
         
-        # Configure stealth context with custom cookies, headers, and navigator masking
+        # Configure stealth context with granular noise and fingerprint toggles
         context = await setup_stealth_context(
             browser,
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-            extra_headers={"Accept-Language": "en-US,en;q=0.9", "X-Custom-Client": "Verified"},
-            cookies=[{"name": "session_id", "value": "abc123secret", "domain": "example.com", "path": "/"}],
+            user_agent="Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
+            enable_canvas_noise=True,    # 1-bit LSB micro-noise on 10x10 top-left pixels
+            enable_audio_noise=True,     # Micro frequency variance in AudioBuffer
+            enable_webgl_mask=True,      # UNMASKED_VENDOR/RENDERER spoofing
+            enable_webdriver_mask=True,  # Prototype-safe navigator.webdriver deletion
+            extra_headers={"Accept-Language": "en-US,en;q=0.9"},
         )
         
         page = await context.new_page()
         await page.goto("https://bot.sannysoft.com", timeout=60000)
         print("Page Title:", await page.title())
+
+        # Human interaction: Non-linear Bézier trajectory & Gaussian typing
+        mouse = HumanMouse(page)
+        await mouse.click((200, 300), steps=30, jitter=True, overshoot=True)
+        await HumanKeyboard.type_text(page, "Automated data verification", selector="input[type='text']")
+
+        # Solve Cloudflare Turnstile if present
+        if await TurnstileEvaluator.detect_challenge(page):
+            await TurnstileEvaluator.solve_turnstile(page, human_mouse=mouse)
+
         await browser.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+#### 🎛️ Next-Gen Feature Toggle & Parameter Matrix
+
+| Module | Class / Function | Config Parameter | Type / Default | Description |
+| :--- | :--- | :--- | :---: | :--- |
+| **`stealth`** | `setup_stealth_context` | `enable_canvas_noise` | `bool = True` | Injects 1-bit LSB noise into Canvas 2D to randomize canvas fingerprint hashes without visual distortion. |
+| **`stealth`** | `setup_stealth_context` | `enable_audio_noise` | `bool = True` | Injects \((Math.random() - 0.5) \cdot 10^{-7}\) noise into `AudioBuffer` and `AnalyserNode`. |
+| **`stealth`** | `setup_stealth_context` | `enable_webgl_mask` | `bool = True` | Spoofs WebGL unmasked vendor and renderer to standard ANGLE/Intel. |
+| **`stealth`** | `setup_stealth_context` | `canvas_noise_seed` | `int? = None` | Optional seed for deterministic Canvas noise testing. |
+| **`physics`** | `HumanMouse.click` | `jitter`, `overshoot` | `bool = True` | Simulates human hand muscle tremor (sub-pixel jitter) and target overshooting/correction. |
+| **`physics`** | `HumanKeyboard.type_text` | `mean_delay`, `std_dev`| `0.12s, 0.035s`| Generates Gaussian-distributed typing intervals between keystrokes. |
+| **`mobile`** | `CellularIpRotator` | `mode` | `'auto'` | Selects `termux_native` (device-internal) or `pc_adb_bridge` (PC USB/Wi-Fi ADB tethering). |
+| **`mobile`** | `CellularIpRotator` | `verify_ip_change` | `bool = True` | Polls multiple public IP endpoints to guarantee a fresh residential IP after toggle. |
+| **`waf`** | `TurnstileEvaluator` | `solve_turnstile` | `timeout=12.0s`| Detects Turnstile iframe and clicks verification checkbox with natural Bézier mouse physics. |
+
+---
+
+### 📱 Dual-Mode Cellular IP Rotator (`termux_playwright.mobile`)
+Rotate your mobile carrier (LTE/5G) residential IP within 2~3 seconds via Android airplane mode toggling:
+
+```python
+import asyncio
+from termux_playwright import CellularIpRotator, RotationMode
+
+async def rotate_ip_demo():
+    # Auto-detects whether running inside Termux or on PC via ADB bridge
+    rotator = CellularIpRotator(mode=RotationMode.AUTO)
+    
+    current_ip = await rotator.get_public_ip()
+    print(f"Current Public IP: {current_ip}")
+    
+    result = await rotator.rotate_ip(verify_ip_change=True)
+    print(f"Rotation Result: Success={result['success']}, New IP={result['new_ip']}, Time={result['elapsed_seconds']}s")
+
+asyncio.run(rotate_ip_demo())
+```
+
+---
+
+### ☕ Node.js / TypeScript Next-Gen API:
+```javascript
+const {
+    launch,
+    setupStealthContext,
+    HumanMouse,
+    HumanKeyboard,
+    CellularIpRotator,
+    TurnstileEvaluator
+} = require('termux-playwright');
+
+async function main() {
+    const browser = await launch(null, { headless: true, stealth: true });
+    const context = await setupStealthContext(browser, {
+        enableCanvasNoise: true,
+        enableAudioNoise: true,
+        enableWebglMask: true
+    });
+    const page = await context.newPage();
+    await page.goto('https://bot.sannysoft.com');
+
+    const mouse = new HumanMouse(page);
+    await mouse.click([200, 300], { steps: 25, jitter: true });
+    await HumanKeyboard.typeText(page, 'Search query', { selector: 'input[name="q"]' });
+
+    await browser.close();
+}
+main();
 ```
 
 ---
@@ -425,22 +513,47 @@ termux-playwright/
 ├── examples/                 # Ready-to-run crawling demos
 │   ├── basic_crawler.py      # Basic asynchronous scraping demo
 │   └── advanced_crawler.py   # 24/7 unattended crawler with WakeLock
-├── termux_playwright/        # Core library package
+├── lib/                      # Node.js / JavaScript Dual Engine
+│   ├── index.js              # Node.js public exports
+│   ├── index.d.ts            # Full TypeScript definitions
+│   ├── browser.js            # Node Chromium launcher
+│   ├── stealth.js            # Canvas 2D LSB & Audio noise engine
+│   ├── physics.js            # Cubic Bézier & Gaussian typing
+│   ├── mobile.js             # Dual-Mode Cellular IP rotator
+│   ├── waf.js                # Cloudflare Turnstile auto-solver
+│   ├── reaper.js             # Node process reaper & WakeLock
+│   └── platform.js           # Node platform & storage checks
+├── termux_playwright/        # Python Dual Engine package
 │   ├── __init__.py
 │   ├── browser.py            # Android-hardened browser launcher & V8 args
+│   ├── stealth.py            # Canvas 2D LSB & Audio noise engine
+│   ├── physics.py            # Cubic Bézier & Gaussian typing
+│   ├── mobile.py             # Dual-Mode Cellular IP rotator
+│   ├── waf.py                # Cloudflare Turnstile auto-solver
 │   ├── exceptions.py         # Typed exception hierarchy
 │   ├── installer.py          # PyPI wheel bypass and dependency engine
 │   ├── patcher.py            # Atomic JS coreBundle platform patcher
 │   ├── platform.py           # Architecture and storage inspection
 │   └── reaper.py             # Session-scoped process reaper & WakeLock
-├── tests/                    # Comprehensive unit and integration test suite
+├── tests/                    # Python pytest test suite (100 tests)
 │   ├── test_browser.py
 │   ├── test_installer.py
+│   ├── test_nextgen_mobile.py
+│   ├── test_nextgen_physics.py
+│   ├── test_nextgen_stealth.py
+│   ├── test_nextgen_waf.py
 │   ├── test_patcher.py
 │   ├── test_platform.py
 │   └── test_reaper.py
+├── tests_js/                 # Node.js test suite (26 tests)
+│   ├── test_core.test.js
+│   ├── test_nextgen_mobile.test.js
+│   ├── test_nextgen_physics.test.js
+│   ├── test_nextgen_stealth.test.js
+│   └── test_nextgen_waf.test.js
 ├── CHANGELOG.md              # Version release history
 ├── LICENSE                   # MIT License
+├── package.json              # npm package definition
 ├── pyproject.toml            # Build configuration
 ├── README.md                 # Project documentation
 └── setup.py                  # Setuptools distribution definition

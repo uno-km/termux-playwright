@@ -1,6 +1,6 @@
 {
   "name": "termux-playwright",
-  "version": "1.70.0",
+  "version": "1.80.0",
   "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

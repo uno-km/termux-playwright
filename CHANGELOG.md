@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.80.0] - 2026-08-24
+
+### Added
+- **Sub-pixel Canvas 2D LSB Noise Engine (`stealth`)**: Injected 1-bit XOR micro-noise on 10x10 top-left pixels to randomize Canvas 2D hashes per session without visual distortion.
+- **AudioContext Frequency Deviation Injector (`stealth`)**: Injected \((Math.random() - 0.5) \cdot 10^{-7}\) noise into `AudioBuffer` and `AnalyserNode` frequency buffers to defeat audio fingerprinting.
+- **Bézier & Fitts's Law Interaction Model (`physics`)**: Implemented `CubicBezierTrajectory`, `HumanMouse`, and `HumanKeyboard` simulating non-linear hand curves, target overshoot, muscle tremor jitter, and Gaussian typing intervals ($\mu=120\text{ms}, \sigma=35\text{ms}$).
+- **Dual-Mode Cellular IP Rotator (`mobile`)**: Implemented `CellularIpRotator` with Termux Native and PC ADB Bridge modes for 2~3 second LTE/5G IP rotation via airplane mode toggle with multi-endpoint public IP verification.
+- **WAF & Cloudflare Turnstile Solver (`waf`)**: Auto-detection of Cloudflare Turnstile, Managed Challenge, hCaptcha, and reCAPTCHA with automated Bézier mouse solve orchestration.
+- **0-Point Baseline Test Suite**: 126 automated unit and integration tests (100 Python + 26 Node.js) with 100% pass rate.
+
 ## [1.70.0] - 2026-08-23
 
 ### Added

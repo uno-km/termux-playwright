@@ -11,11 +11,11 @@ if os.path.exists("README.md"):
 
 setup(
     name="termux-playwright",
-    version="1.70.0",
+    version="1.80.0",
     description="Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux (Dual-Engine Python & Node.js)",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="uno-km (쌩초보코딩단)",
+    author="uno-km (AMEVA Foundation)",
     author_email="hosequelbo@gmail.com",
     url="https://github.com/uno-km/termux-playwright",
     project_urls={

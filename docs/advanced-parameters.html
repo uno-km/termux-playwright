@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quickstart & Execution Recipes | Termux-Playwright</title>
+  <title>Advanced Parameters & Tuning | Termux-Playwright</title>
   <meta name="description" content="Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="assets/style.css">
@@ -31,13 +31,13 @@
     <ul>
       <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
       <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
-      <li><a href="quickstart.html" class="active" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+      <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
     </ul>
     <h3 data-i18n="common.nav.reference">Official Reference</h3>
     <ul>
       <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
       <li><a href="benchmarks.html" data-i18n="common.nav.benchmarks">Benchmarks & Profiling</a></li>
-      <li><a href="advanced-parameters.html" data-i18n="common.nav.advancedParams">Advanced Parameters</a></li>
+      <li><a href="advanced-parameters.html" class="active" data-i18n="common.nav.advancedParams">Advanced Parameters</a></li>
       <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive</a></li>
     </ul>
     <h3 data-i18n="common.nav.ecosystem">AMEVA Ecosystem</h3>
@@ -64,24 +64,10 @@
   </nav>
 
     <main class="content">
-      <h2>Quickstart & Execution Recipes</h2>
-      <p class="subtitle">Standard usage patterns and rapid prototyping code</p>
-      <h3>Basic Execution Recipe</h3>
-         <pre><code>from termux_playwright import chromium
-
-async def main():
-    browser = await chromium.launch(headless=True)
-    page = await browser.new_page()
-    await page.goto("https://uno-km.github.io/uno-km/")
-    title = await page.title()
-    print(f"Page Title: {title}")
-    await browser.close()
-
-import asyncio
-asyncio.run(main())
-</code></pre>
-         <h3>Production Asynchronous Batching</h3>
-         <p>Utilize weakref pooling and zero-copy streaming buffers for continuous pipelines.</p>
+      <h2>Advanced Parameters & Tuning</h2>
+      <p class="subtitle">Kernel-level tuning, buffer pool sizing, and thread configuration</p>
+      <h3>Memory Buffer Pool Configuration</h3>
+         <p>Adjust max memory threshold and swap behaviors for ultra-constrained edge nodes.</p>
     </main>
   </div>
 

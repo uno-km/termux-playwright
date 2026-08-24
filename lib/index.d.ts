@@ -1,5 +1,5 @@
 /**
- * TypeScript Type Definitions for termux-playwright
+ * TypeScript Type Definitions for termux-playwright (Next-Gen)
  */
 
 import type { Browser, BrowserContext, Page, LaunchOptions, BrowserContextOptions } from 'playwright-core';
@@ -26,6 +26,14 @@ export interface TermuxLaunchOptions extends LaunchOptions {
 export interface StealthContextOptions extends BrowserContextOptions {
     extraHeaders?: Record<string, string>;
     cookies?: any[];
+    enableCanvasNoise?: boolean;
+    enableAudioNoise?: boolean;
+    enableWebglMask?: boolean;
+    enableWebdriverMask?: boolean;
+    enableChromeMock?: boolean;
+    enablePermissionsMock?: boolean;
+    enablePluginsMock?: boolean;
+    canvasNoiseSeed?: number | null;
 }
 
 export interface BlockResourceOptions {
@@ -33,6 +41,51 @@ export interface BlockResourceOptions {
     media?: boolean;
     fonts?: boolean;
     stylesheets?: boolean;
+}
+
+export interface Point {
+    x: number;
+    y: number;
+}
+
+export interface TrajectoryOptions {
+    steps?: number;
+    jitter?: boolean;
+    overshoot?: boolean;
+    deviation?: number;
+}
+
+export interface MouseMoveOptions {
+    steps?: number;
+    jitter?: boolean;
+    overshoot?: boolean;
+    minStepDelay?: number;
+    maxStepDelay?: number;
+}
+
+export interface KeyboardTypeOptions {
+    selector?: string;
+    meanDelay?: number;
+    stdDev?: number;
+    minDelay?: number;
+    maxDelay?: number;
+}
+
+export interface MobileRotationOptions {
+    mode?: 'auto' | 'termux_native' | 'pc_adb_bridge';
+    deviceId?: string | null;
+    toggleWaitSeconds?: number;
+    settleWaitSeconds?: number;
+    timeout?: number;
+    ipEndpoints?: string[];
+}
+
+export interface RotationResult {
+    success: boolean;
+    old_ip: string | null;
+    new_ip: string | null;
+    elapsed_seconds: number;
+    mode: string;
 }
 
 export function isTermux(): boolean;
@@ -63,6 +116,66 @@ export class TermuxWakeLock {
 }
 
 export const STEALTH_INIT_SCRIPT: string;
+export function generateStealthScript(options?: StealthContextOptions): string;
+
+export class CanvasNoiseInjector {
+    static inject(pageOrContext: Page | BrowserContext, seed?: number | null): Promise<void>;
+}
+
+export class AudioNoiseInjector {
+    static inject(pageOrContext: Page | BrowserContext): Promise<void>;
+}
+
+export class StealthEngine {
+    static buildScript(options?: StealthContextOptions): string;
+}
+
+export class CubicBezierTrajectory {
+    static calculateBezierPoint(p0: Point, p1: Point, p2: Point, p3: Point, t: float): Point;
+    static fittsEasing(t: number): number;
+    static generateTrajectory(start: Point | number[], target: Point | number[], options?: TrajectoryOptions): Point[];
+}
+
+export class HumanMouse {
+    constructor(pageOrMouse: any, currentX?: number, currentY?: number);
+    moveTo(x: number, y: number, options?: MouseMoveOptions): Promise<void>;
+    moveAndRecord(startX: number, startY: number, targetX: number, targetY: number, options?: TrajectoryOptions): Promise<Point[]>;
+    click(target: string | Point | number[], options?: MouseMoveOptions): Promise<void>;
+}
+
+export class HumanKeyboard {
+    static getGaussianDelay(mean?: number, stdDev?: number, minD?: number, maxD?: number): number;
+    static typeText(pageOrKeyboard: any, text: string, options?: KeyboardTypeOptions): Promise<void>;
+}
+
+export const RotationMode: {
+    readonly AUTO: 'auto';
+    readonly TERMUX_NATIVE: 'termux_native';
+    readonly PC_ADB_BRIDGE: 'pc_adb_bridge';
+};
+
+export const DEFAULT_IP_ENDPOINTS: string[];
+
+export class CellularIpRotator {
+    constructor(options?: MobileRotationOptions);
+    getPublicIp(timeoutMs?: number): Promise<string | null>;
+    rotateIp(options?: { verifyIpChange?: boolean }): Promise<RotationResult>;
+}
+
+export const WafChallengeType: {
+    readonly CLOUDFLARE_TURNSTILE: 'cloudflare_turnstile';
+    readonly CLOUDFLARE_MANAGED: 'cloudflare_managed';
+    readonly HCAPTCHA: 'hcaptcha';
+    readonly RECAPTCHA: 'recaptcha';
+    readonly NONE: 'none';
+};
+
+export const CLOUDFLARE_SELECTORS: string[];
+
+export class TurnstileEvaluator {
+    static detectChallenge(page: Page): Promise<string>;
+    static solveTurnstile(page: Page, options?: { humanMouse?: HumanMouse; timeoutMs?: number }): Promise<boolean>;
+}
 
 export function setupStealthContext(
     browser: Browser,

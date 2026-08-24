@@ -1,165 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>if(location.pathname.match(/\/(lib|sdk)\/[^\/]+$/)){location.replace(location.pathname+'/'+location.search+location.hash);}</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Version Archive &amp; Release Notes | Termux-Playwright</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="style.css">
-    <script src="i18n.js"></script>
-    <script src="i18n-translations.js"></script>
-    <link rel="stylesheet" href="/shared/style.css">
-    <script src="/shared/common.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Version Archive & Changelog | Termux-Playwright</title>
+  <meta name="description" content="Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/i18n.js" defer></script>
+  <script src="assets/i18n-translations.js" defer></script>
 </head>
 <body>
-    <header>
-        <a href="index.html" class="header-brand">
-            <img src="favicon.svg" alt="Logo">
-            <h1 data-i18n="common.brand">Termux-Playwright</h1>
-        </a>
-        <div class="header-controls">
-            <span class="release-tag" data-i18n="common.releaseTag">v1.70.0 (Dual Engine)</span>
-            <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
-            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
-            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
-        </div>
-    </header>
-
-    <div class="container">
-        <nav class="sidebar">
-            <h3 data-i18n="common.nav.overview">Overview</h3>
-            <ul>
-                <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
-                <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
-                <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
-                <li><a href="nodejs.html" data-i18n="common.nav.nodejs">Node.js & Memory Guide</a></li>
-                <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
-                <li><a href="versions.html" class="active" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
-                <li><a href="phantom-process.html" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
-                <li><a href="test-report.html" data-i18n="common.nav.testReport">Real-Device Audit Report</a></li>
-                <li><a href="blog-post.html" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
-            </ul>
-            <h3 data-i18n="common.nav.ecosystem">AMEVA Ecosystem</h3>
-            <ul>
-                <li><a href="/sdk/sentinel/">AMEVA Sentinel (Security SDK)</a></li>
-                <li><a href="/lib/forge/">AMEVA-Forge (WebGPU Autograd)</a></li>
-                <li><a href="/lib/playwright/">Termux-Playwright (Automation)</a></li>
-                <li><a href="/lib/stt/">Termux-STT (Voice STT)</a></li>
-                <li><a href="/lib/diffusion/">Termux-Diffusion (Image AI)</a></li>
-                <li><a href="/lib/train/">Termux-Train (LoRA Engine)</a></li>
-                <li><a href="/app/workstation/">AMEVA Workstation (Web App)</a></li>
-                <li><a href="/foundation/">AMEVA Foundation</a></li>
-                <li><a href="/index.html">Founder Digital CV</a></li>
-            </ul>
-
-            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
-            <ul>
-                <li><a href="llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
-                <li><a href="llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
-            </ul>
-        </nav>
-
-        <main class="content">
-            <h2>Version Archive &amp; Historical Release Notes</h2>
-            <p>Chronological breakdown of architecture milestones, security hardening, and engine evolutions.</p>
-
-            <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchVersionTab('v1.70.0')">v1.70.0 (Latest)</button>
-                <button class="tab-btn" onclick="switchVersionTab('v1.61.3')">v1.61.3</button>
-                <button class="tab-btn" onclick="switchVersionTab('v1.61.2')">v1.61.2</button>
-                <button class="tab-btn" onclick="switchVersionTab('v1.61.1')">v1.61.1</button>
-                <button class="tab-btn" onclick="switchVersionTab('v1.61.0')">v1.61.0</button>
-                <button class="tab-btn" onclick="switchVersionTab('v1.60.0')">v1.60.0</button>
-            </div>
-
-            <div id="v1.70.0" class="tab-pane active">
-                <div class="card">
-                    <h3>v1.70.0 — Physical Real-Device E2E Validation & Dual-Engine Milestone Release</h3>
-                    <p class="release-date">Release Date: 2026-08-23 | PyPI & npm Synchronized</p>
-                    <ul>
-                        <li><strong>Physical Real-Device E2E Validation (Galaxy S20):</strong> 100.0/100.0 Grade A+ baseline certification across Python and Node.js engines on Android 13 Termux (aarch64).</li>
-                        <li><strong>HTML5 Canvas WebGL Context Proxy:</strong> Injected realistic UNMASKED_VENDOR and UNMASKED_RENDERER spoofing (55/55 bot detection pass on <code>bot.sannysoft.com</code>).</li>
-                        <li><strong>Automated Bionic coreBundle Patcher:</strong> Dynamic byte-level patcher for seamless Playwright driver execution without glibc errors.</li>
-                        <li><strong>Triple-Registry Auto Publishing:</strong> Automated simultaneous release to PyPI, public npm, and GitHub Packages.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div id="v1.61.3" class="tab-pane">
-                <div class="card">
-                    <h3>v1.61.3 — Dual-Engine (Python & Node.js) Synchronization Release</h3>
-                    <p class="release-date">Release Date: 2026-08-19 | PyPI & npm Synchronized</p>
-                    <ul>
-                        <li><strong>Official npm Package Release:</strong> Published official Node.js / TypeScript package at <a href="https://www.npmjs.com/package/termux-playwright" target="_blank">npm: termux-playwright</a>.</li>
-                        <li><strong>1-Line Auto-Installer:</strong> Added <code>npx termux-playwright install</code> to provision Chromium and Bionic dependencies automatically.</li>
-                        <li><strong>Mobile Engineering Pro-Tips:</strong> Added documentation for <code>venv --system-site-packages</code>, <code>pnpm</code> hardlink optimization, and PM2 mobile daemons.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div id="v1.61.2" class="tab-pane">
-                <div class="card">
-                    <h3>v1.61.2 — Resilient Phantom & RAM Disk Cache Release</h3>
-                    <p class="release-date">Release Date: 2026-08-19</p>
-                    <ul>
-                        <li><strong>Android 14 Single-Process Architecture:</strong> Added <code>single_process=True</code> / <code>singleProcess: true</code>.</li>
-                        <li><strong>RAM-Disk Cache Injection:</strong> Injected <code>--disk-cache-dir=/dev/shm</code> to eliminate eMMC mobile flash memory wear.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div id="v1.61.1" class="tab-pane">
-                <div class="card">
-                    <h3>v1.61.1 — Doctor Shield &amp; Dynamic Cache Release</h3>
-                    <p class="release-date">Release Date: 2026-08-19</p>
-                    <ul>
-                        <li><strong>Doctor Self-Diagnosis Suite:</strong> Integrated 7-tier pre-flight diagnostic checks.</li>
-                        <li><strong>Dynamic Stat-Driven Invalidation:</strong> 0ns cached Chromium version with auto-invalidation on <code>pkg upgrade</code>.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div id="v1.61.0" class="tab-pane">
-                <div class="card">
-                    <h3>v1.61.0 — Fortress Overhaul &amp; Stealth Evasion</h3>
-                    <p class="release-date">Release Date: 2026-08-18</p>
-                    <ul>
-                        <li><strong>Persistent Disk Session Ledger:</strong> Added <code>$TMPDIR/.tp_ledger/</code> atomic file ledger.</li>
-                        <li><strong>Prototype-Safe Stealth:</strong> Eliminated <code>navigator.webdriver</code> from prototype chain.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div id="v1.60.0" class="tab-pane">
-                <div class="card">
-                    <h3>v1.60.0 — Genesis Spark</h3>
-                    <p class="release-date">Release Date: 2026-08-17</p>
-                    <ul>
-                        <li>Initial release of native Playwright orchestration on Android Termux.</li>
-                    </ul>
-                </div>
-            </div>
-        </main>
+  <header>
+    <a href="index.html" class="header-brand">
+      <img src="favicon.svg" alt="Termux-Playwright Logo">
+      <h1 data-i18n="common.brand">Termux-Playwright</h1>
+    </a>
+    <div class="header-controls">
+      <span class="release-tag" data-i18n="common.releaseTag">v1.2.0 (Active Stable)</span>
+      <div class="lang-selector-wrapper"></div>
+      <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (pip)</a>
+      <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn npm-btn" data-i18n="common.npmBtn">npm (Node.js)</a>
+      <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub</a>
     </div>
+  </header>
 
-    <footer>
-        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
-    </footer>
+  <div class="container">
+  <nav class="sidebar">
+    <h3 data-i18n="common.nav.overview">Overview</h3>
+    <ul>
+      <li><a href="index.html" data-i18n="common.nav.home">Home / Architecture</a></li>
+      <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
+      <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+    </ul>
+    <h3 data-i18n="common.nav.reference">Official Reference</h3>
+    <ul>
+      <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
+      <li><a href="benchmarks.html" data-i18n="common.nav.benchmarks">Benchmarks & Profiling</a></li>
+      <li><a href="advanced-parameters.html" data-i18n="common.nav.advancedParams">Advanced Parameters</a></li>
+      <li><a href="versions.html" class="active" data-i18n="common.nav.versions">Version Archive</a></li>
+    </ul>
+    <h3 data-i18n="common.nav.ecosystem">AMEVA Ecosystem</h3>
+    <ul>
+      <li><a href="/lib/mcp/">AMEVA-MCP-Hub (Polyglot WASM)</a></li>
+      <li><a href="/lib/sentinel/">AMEVA Sentinel (Security SDK)</a></li>
+      <li><a href="/lib/forge/">AMEVA-Forge (WebGPU Autograd)</a></li>
+      <li><a href="/lib/bitnet/">Termux-BitNet (1.58-bit LLM)</a></li>
+      <li><a href="/lib/playwright/" class="active">Termux-Playwright (Automation)</a></li>
+      <li><a href="/lib/diffusion/">Termux-Diffusion (Image AI)</a></li>
+      <li><a href="/lib/stt/">Termux-STT (Voice STT)</a></li>
+      <li><a href="/lib/train/">Termux-Train (LoRA Engine)</a></li>
+      <li><a href="https://ameva-workstation-web-core.vercel.app/" target="_blank">AMEVA Workstation (Web App)</a></li>
+      <li><a href="/foundation/">AMEVA Foundation</a></li>
+      <li><a href="/">Founder Digital CV</a></li>
+    </ul>
+    <h3 data-i18n="common.nav.aiSpecs">AI Agent Protocols</h3>
+    <ul>
+      <li><a href="llms.txt" target="_blank">llms.txt (AI Fast Context)</a></li>
+      <li><a href="llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+      <li><a href="robots.txt" target="_blank">robots.txt (AI Crawlers)</a></li>
+      <li><a href="sitemap.xml" target="_blank">sitemap.xml (Sitemap)</a></li>
+    </ul>
+  </nav>
 
-<script>
-function switchVersionTab(versionId) {
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    
-    const targetPane = document.getElementById(versionId);
-    if (targetPane) targetPane.classList.add('active');
-    
-    if (event && event.target) {
-        event.target.classList.add('active');
-    }
-}
-</script>
+    <main class="content">
+      <h2>Version Archive & Changelog</h2>
+      <p class="subtitle">Changelog history and immutable releases</p>
+      <h3>v1.2.0 - Active Stable (Current)</h3>
+         <ul>
+           <li>Standardized on Tomcat/Apache Classic Engineering Design System.</li>
+           <li>Integrated 6-language client-side i18n DOM translation engine.</li>
+           <li>Implemented AI Agent feed generation (llms.txt, llms-full.txt).</li>
+         </ul>
+    </main>
+  </div>
+
+  <footer>
+    <span data-i18n="common.footerText">&copy; 2026 AMEVA Open-Source Foundation. Released under the Apache-2.0 License.</span>
+  </footer>
 </body>
 </html>

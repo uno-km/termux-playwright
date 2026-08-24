@@ -1,263 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>if(location.pathname.match(/\/(lib|sdk)\/[^\/]+$/)){location.replace(location.pathname+'/'+location.search+location.hash);}</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termux-Playwright | Production Browser Automation & Scraping on Android</title>
-    <meta name="description" content="Official Termux-Playwright: Production-grade Chromium browser automation on Android Termux without root or PRoot. Supports Python (PyPI) and Node.js (npm).">
-    <meta name="keywords" content="termux playwright, android web scraping, termux python crawler, termux nodejs automation, playwright android without root, cloudflare turnstile bypass termux, android 14 phantom process killer, termux-playwright npm">
-    <meta name="author" content="uno-km">
-    
-    <!-- Open Graph & Social SEO -->
-    <meta property="og:title" content="Termux-Playwright: Dual-Engine Browser Automation on Android">
-    <meta property="og:description" content="Run genuine Chromium automation on mobile ARM64 hardware without root or PRoot. Python & Node.js dual-engine support.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://uno-km.github.io/termux-playwright-demo/">
-    
-    <!-- 1. SoftwareApplication Schema -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Termux-Playwright",
-      "operatingSystem": "Android Termux (ARM64, aarch64)",
-      "applicationCategory": "DeveloperApplication",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "softwareVersion": "1.61.3",
-      "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux without root or PRoot.",
-      "url": "https://uno-km.github.io/termux-playwright-demo/",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5.0",
-        "reviewCount": "128",
-        "bestRating": "5",
-        "worstRating": "1"
-      },
-      "sameAs": [
-        "https://github.com/uno-km/termux-playwright-demo",
-        "https://pypi.org/project/termux-playwright/",
-        "https://www.npmjs.com/package/termux-playwright"
-      ]
-    }
-    </script>
-
-    <!-- 2. FAQPage Schema for Google AI Overviews & Rich Snippets -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How do I run Playwright on Android Termux with Python & Node.js?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For Python, run 'pip install termux-playwright && termux-playwright-install'. For Node.js, run 'npm install termux-playwright && npx termux-playwright install'. Both automate native Termux Chromium without PRoot or root."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Does Termux-Playwright support both Python and Node.js / JavaScript?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes! Termux-Playwright is a 100% dual-engine library published on PyPI (Python) and npm (Node.js/TypeScript) with identical feature parity, anti-bot stealth, and session memory leak protection."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How to bypass Cloudflare Turnstile and DataDome on Android Termux?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Use setup_stealth_context() in Python or setupStealthContext() in Node.js. It removes navigator.webdriver directly from Object.getPrototypeOf(navigator) and mocks native C++ permissions."
-          }
-        }
-      ]
-    }
-    </script>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="style.css">
-    <script src="i18n.js"></script>
-    <script src="i18n-translations.js"></script>
-    <link rel="stylesheet" href="/shared/style.css">
-    <script src="/shared/common.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Termux-Playwright | Official Documentation</title>
+  <meta name="description" content="Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/i18n.js" defer></script>
+  <script src="assets/i18n-translations.js" defer></script>
 </head>
 <body>
-    <header>
-        <a href="index.html" class="header-brand">
-            <img src="favicon.svg" alt="Logo">
-            <h1 data-i18n="common.brand">Termux-Playwright</h1>
-        </a>
-        <div class="header-controls">
-            <span class="release-tag" data-i18n="common.releaseTag">v1.61.3 (Dual Engine)</span>
-            <div class="lang-selector-wrapper"></div>
-            <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (Python)</a>
-            <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn" style="background:#cb3837;color:#fff;">npm (Node.js)</a>
-            <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub Repository</a>
+  <header>
+    <a href="index.html" class="header-brand">
+      <img src="favicon.svg" alt="Termux-Playwright Logo">
+      <h1 data-i18n="common.brand">Termux-Playwright</h1>
+    </a>
+    <div class="header-controls">
+      <span class="release-tag" data-i18n="common.releaseTag">v1.2.0 (Active Stable)</span>
+      <div class="lang-selector-wrapper"></div>
+      <a href="https://pypi.org/project/termux-playwright/" target="_blank" class="header-btn" data-i18n="common.pypiBtn">PyPI (pip)</a>
+      <a href="https://www.npmjs.com/package/termux-playwright" target="_blank" class="header-btn npm-btn" data-i18n="common.npmBtn">npm (Node.js)</a>
+      <a href="https://github.com/uno-km/termux-playwright-demo" target="_blank" class="header-btn primary" data-i18n="common.githubBtn">GitHub</a>
+    </div>
+  </header>
+
+  <div class="container">
+  <nav class="sidebar">
+    <h3 data-i18n="common.nav.overview">Overview</h3>
+    <ul>
+      <li><a href="index.html" class="active" data-i18n="common.nav.home">Home / Architecture</a></li>
+      <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
+      <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
+    </ul>
+    <h3 data-i18n="common.nav.reference">Official Reference</h3>
+    <ul>
+      <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
+      <li><a href="benchmarks.html" data-i18n="common.nav.benchmarks">Benchmarks & Profiling</a></li>
+      <li><a href="advanced-parameters.html" data-i18n="common.nav.advancedParams">Advanced Parameters</a></li>
+      <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive</a></li>
+    </ul>
+    <h3 data-i18n="common.nav.ecosystem">AMEVA Ecosystem</h3>
+    <ul>
+      <li><a href="/lib/mcp/">AMEVA-MCP-Hub (Polyglot WASM)</a></li>
+      <li><a href="/lib/sentinel/">AMEVA Sentinel (Security SDK)</a></li>
+      <li><a href="/lib/forge/">AMEVA-Forge (WebGPU Autograd)</a></li>
+      <li><a href="/lib/bitnet/">Termux-BitNet (1.58-bit LLM)</a></li>
+      <li><a href="/lib/playwright/" class="active">Termux-Playwright (Automation)</a></li>
+      <li><a href="/lib/diffusion/">Termux-Diffusion (Image AI)</a></li>
+      <li><a href="/lib/stt/">Termux-STT (Voice STT)</a></li>
+      <li><a href="/lib/train/">Termux-Train (LoRA Engine)</a></li>
+      <li><a href="https://ameva-workstation-web-core.vercel.app/" target="_blank">AMEVA Workstation (Web App)</a></li>
+      <li><a href="/foundation/">AMEVA Foundation</a></li>
+      <li><a href="/">Founder Digital CV</a></li>
+    </ul>
+    <h3 data-i18n="common.nav.aiSpecs">AI Agent Protocols</h3>
+    <ul>
+      <li><a href="llms.txt" target="_blank">llms.txt (AI Fast Context)</a></li>
+      <li><a href="llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
+      <li><a href="robots.txt" target="_blank">robots.txt (AI Crawlers)</a></li>
+      <li><a href="sitemap.xml" target="_blank">sitemap.xml (Sitemap)</a></li>
+    </ul>
+  </nav>
+
+    <main class="content">
+      <!-- Section 1: Main Title & Subtitle -->
+      <h2 data-i18n="home.title">Termux-Playwright</h2>
+      <p class="subtitle" data-i18n="home.subtitle">Non-Root Chromium Browser Automation & CDP Engine for Android Termux</p>
+
+      <!-- Section 2: Badges Bar -->
+      <div class="badges-bar">
+        <a href="https://pypi.org/project/termux-playwright/" target="_blank"><img src="https://img.shields.io/pypi/v/termux-playwright.svg?color=004499" alt="PyPI Version"></a>
+        <a href="https://pypistats.org/packages/termux-playwright" target="_blank"><img src="https://img.shields.io/pypi/dm/termux-playwright.svg?color=2563eb&label=PyPI%20Downloads" alt="PyPI Downloads"></a>
+        <a href="https://www.npmjs.com/package/termux-playwright" target="_blank"><img src="https://img.shields.io/npm/v/termux-playwright.svg?color=cb3837" alt="npm Version"></a>
+        <a href="https://www.npmjs.com/package/termux-playwright" target="_blank"><img src="https://img.shields.io/npm/dm/termux-playwright.svg?color=2563eb&label=npm%20Downloads" alt="npm Downloads"></a>
+        <img src="https://img.shields.io/badge/license-Apache-2.0-success.svg" alt="License">
+        <img src="https://img.shields.io/badge/tests-100%25_PASS-success.svg" alt="Tests">
+        <img src="https://img.shields.io/badge/platform-Android_ARM64_/_Termux_Bionic-blueviolet.svg" alt="Platform">
+      </div>
+
+      <!-- Section 3: 1-Line Quick Installation Alert -->
+      <div class="alert alert-tip">
+        <span class="alert-title" data-i18n="home.quickInstallTitle">1-Line Quick Installation</span>
+        <p data-i18n="home.quickInstallDesc">Install the official package directly into your runtime:</p>
+        <pre><code>pip install termux-playwright
+# or: npm install termux-playwright</code></pre>
+      </div>
+
+      <!-- Section 4: Engineering Challenge & Architectural Breakthrough -->
+      <h3 data-i18n="home.challengeTitle">The Engineering Challenge</h3>
+      <p data-i18n="home.challengeText">Official browser automation drivers fail on Android Termux due to missing X11/Wayland servers, glibc vs bionic ABI incompatibility, and sandboxing constraints.</p>
+
+      <h3 data-i18n="home.breakthroughTitle">The Architectural Breakthrough</h3>
+      <p data-i18n="home.breakthroughText">Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers.</p>
+
+      <!-- Section 5: Key Capabilities Grid -->
+      <h3 data-i18n="home.featuresTitle">Key Capabilities &amp; Built-in Hardening</h3>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4 data-i18n="home.features.0.title">Direct CDP Control Channel</h4>
+          <p data-i18n="home.features.0.desc">Connects directly via Chrome DevTools Protocol without heavy WebDriver server binaries.</p>
         </div>
-    </header>
+        <div class="feature-card">
+          <h4 data-i18n="home.features.1.title">Non-Root Mobile Execution</h4>
+          <p data-i18n="home.features.1.desc">Fully operational inside standard Termux without root privileges or custom ROMs.</p>
+        </div>
+        <div class="feature-card">
+          <h4 data-i18n="home.features.2.title">Full Python & JavaScript APIs</h4>
+          <p data-i18n="home.features.2.desc">Offers familiar Playwright-compatible async page navigation, selectors, and evaluation.</p>
+        </div>
+      </div>
 
-    <div class="container">
-        <nav class="sidebar">
-            <h3 data-i18n="common.nav.overview">Overview</h3>
-            <ul>
-                <li><a href="index.html" class="active" data-i18n="common.nav.home">Home / Architecture</a></li>
-                <li><a href="installation.html" data-i18n="common.nav.installation">Installation Guide</a></li>
-                <li><a href="quickstart.html" data-i18n="common.nav.quickstart">Quickstart & Recipes</a></li>
-                <li><a href="nodejs.html" data-i18n="common.nav.nodejs">Node.js & Memory Guide</a></li>
-                <li><a href="api-reference.html" data-i18n="common.nav.apiReference">API Reference</a></li>
-                <li><a href="versions.html" data-i18n="common.nav.versions">Version Archive & Notes</a></li>
-                <li><a href="phantom-process.html" data-i18n="common.nav.phantomProcess">Android 14+ Phantom Killer</a></li>
-                <li><a href="test-report.html" data-i18n="common.nav.testReport">Real-Device Audit Report</a></li>
-                <li><a href="blog-post.html" data-i18n="common.nav.koreanBlog">Engineering Deep-Dive (KO)</a></li>
-            </ul>
-                        <h3 data-i18n="common.nav.ecosystem">AMEVA Ecosystem</h3>
-            <ul>
-                <li><a href="/sdk/sentinel/">AMEVA Sentinel (Security SDK)</a></li>
-                <li><a href="/lib/forge/">AMEVA-Forge (WebGPU Autograd)</a></li>
-                <li><a href="/lib/playwright/">Termux-Playwright (Automation)</a></li>
-                <li><a href="/lib/stt/">Termux-STT (Voice STT)</a></li>
-                <li><a href="/lib/diffusion/">Termux-Diffusion (Image AI)</a></li>
-                <li><a href="/lib/train/">Termux-Train (LoRA Engine)</a></li>
-                <li><a href="/app/workstation/">AMEVA Workstation (Web App)</a></li>
-                <li><a href="/foundation/">AMEVA Foundation</a></li>
-                <li><a href="/index.html">Founder Digital CV</a></li>
-            </ul>
+      <!-- Section 6: Compute & Module Matrix -->
+      <h3 data-i18n="home.matrixTitle">Supported Compute Kernels &amp; Operations</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th data-i18n="home.matrixCol1">Subsystem Category</th>
+            <th data-i18n="home.matrixCol2">Operations &amp; Kernels</th>
+            <th data-i18n="home.matrixCol3">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Automation Driver</strong></td>
+            <td>CDP WebSocket Session, Headless Chromium, Bionic Port</td>
+            <td><span class="status-badge active">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Page Capabilities</strong></td>
+            <td>DOM Evaluation, Screenshots, Network Request Interception</td>
+            <td><span class="status-badge active">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Platform Runtimes</strong></td>
+            <td>Python asyncio, Node.js async/await, Termux CLI</td>
+            <td><span class="status-badge active">Production</span></td>
+          </tr>
+        </tbody>
+      </table>
 
-            <h3 data-i18n="common.nav.advanced">AI Specifications</h3>
-            <ul>
-                <li><a href="llms.txt" target="_blank">llms.txt (AI Matrix)</a></li>
-                <li><a href="llms-full.txt" target="_blank">llms-full.txt (Full Spec)</a></li>
-            </ul>
-        </nav>
-
-        <main class="content">
-            <h2 data-i18n="home.title">Production-Grade Playwright Automation on Android Termux</h2>
-            <p data-i18n="home.subtitle">Dual-engine (Python & Node.js) Chromium browser automation on ARM64 mobile hardware without root, PRoot, or X11 virtualization.</p>
-
-            <div class="badges-bar">
-                <a href="https://pypi.org/project/termux-playwright/" target="_blank"><img src="https://img.shields.io/pypi/v/termux-playwright.svg?color=blue" alt="PyPI Version"></a>
-                <a href="https://www.npmjs.com/package/termux-playwright" target="_blank"><img src="https://img.shields.io/npm/v/termux-playwright.svg?color=red" alt="npm Version"></a>
-                <a href="https://pepy.tech/projects/termux-playwright" target="_blank"><img src="https://img.shields.io/pepy/dt/termux-playwright?color=orange" alt="Total Downloads"></a>
-                <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python Version">
-                <img src="https://img.shields.io/badge/node-16+-brightgreen.svg" alt="Node Version">
-                <img src="https://img.shields.io/badge/platform-Android%20Termux%20(aarch64)-green.svg" alt="Platform">
-                <img src="https://img.shields.io/badge/tests-98%20passed%20%7C%20100%25-success" alt="Tests">
-            </div>
-
-            <div class="alert alert-tip">
-                <span class="alert-title" data-i18n="home.quickInstallTitle">1-Line Quick Installation (Choose Language)</span>
-                <p data-i18n="home.quickInstallDesc">Select your runtime and run the 1-line installation command in Termux:</p>
-                <div style="margin-top: 12px;">
-                    <h4 style="margin: 8px 0 4px 0; color: #0055cc;">🐍 Python Edition (PyPI):</h4>
-                    <pre><code>pip install termux-playwright && termux-playwright-install</code></pre>
-                    <h4 style="margin: 14px 0 4px 0; color: #cb3837;">☕ Node.js / TypeScript Edition (npm):</h4>
-                    <pre><code>npm install termux-playwright && npx termux-playwright install</code></pre>
-                </div>
-            </div>
-
-            <h3 data-i18n="home.whyTitle">The Problem: Why Upstream Playwright Fails on Android</h3>
-            <p data-i18n="home.whyText">Upstream Playwright is hardcoded to strictly support desktop Linux glibc, macOS, and Windows. When invoked on Android Termux, it fails due to incompatible pre-compiled binaries, Bionic libc syscall differences, dynamic shared memory (/dev/shm) crashes, and Android kernel process reaping.</p>
-
-            <h3 data-i18n="home.solTitle">The Architectural Solution</h3>
-            <p data-i18n="home.solText">Termux-Playwright provides native Bionic binary orchestration, targeted session process isolation (ProcessReaper), persistent disk ledger recovery (.tp_ledger), prototype-safe anti-bot stealth, and flash memory wear protection.</p>
-
-            <h3 data-i18n="home.capTitle">Key Capabilities &amp; Built-in Hardening</h3>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h4>Zero-Root Native Execution</h4>
-                    <p data-i18n="home.cap1">Orchestrates Termux-compiled Chromium and Node.js without PRoot overhead.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>Persistent Disk Ledger</h4>
-                    <p data-i18n="home.cap2">Guarantees 100% orphan process reaping across hard kernel crashes (SIGKILL / LMK).</p>
-                </div>
-                <div class="feature-card">
-                    <h4>Prototype-Safe Stealth</h4>
-                    <p data-i18n="home.cap3">Deletes navigator.webdriver from prototype to bypass Cloudflare Turnstile &amp; DataDome.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>eMMC Hardware Protection</h4>
-                    <p data-i18n="home.cap4">Injects RAM-based caching to prevent mobile flash wear.</p>
-                </div>
-                <div class="feature-card">
-                    <h4>Virtualenv Diagnostic Repair</h4>
-                    <p data-i18n="home.cap5">Pre-flight diagnostics and auto-repair guidance for venv environments.</p>
-                </div>
-            </div>
-
-            <h3>Dual-Engine Production Code Recipes</h3>
-            
-            <div style="margin-top: 16px;">
-                <h4 style="color: #0055cc; margin-bottom: 6px;">🐍 Python Canonical Recipe (`asyncio`):</h4>
-                <pre><code>import asyncio
-from termux_playwright import async_playwright_termux, launch, setup_stealth_context
+      <!-- Section 7: Canonical Usage Example -->
+      <h3 data-i18n="home.codeExampleTitle">Canonical Usage Example</h3>
+      <div class="code-tab-group">
+        <div class="code-tabs-header">
+          <button class="code-tab-btn active" type="button">Python (pip)</button>
+          <button class="code-tab-btn" type="button">Node.js (npm)</button>
+        </div>
+        <div class="code-tab-content" style="display:block;">
+          <pre><code>from termux_playwright import chromium
 
 async def main():
-    async with async_playwright_termux() as p:
-        # Launch hardened Chromium with anti-bot stealth
-        browser = await launch(p, headless=True, stealth=True)
-        context = await setup_stealth_context(browser)
-        page = await context.new_page()
-        
-        await page.goto("https://news.ycombinator.com", timeout=45000)
-        print(f"Title: {await page.title()}")
-        await browser.close()
+    browser = await chromium.launch(headless=True)
+    page = await browser.new_page()
+    await page.goto("https://uno-km.github.io/uno-km/")
+    title = await page.title()
+    print(f"Page Title: {title}")
+    await browser.close()
 
-if __name__ == "__main__":
-    asyncio.run(main())</code></pre>
+import asyncio
+asyncio.run(main())
+</code></pre>
+        </div>
+        <div class="code-tab-content" style="display:none;">
+          <pre><code>import { chromium } from "termux-playwright";
 
-                <h4 style="color: #cb3837; margin: 20px 0 6px 0;">☕ Node.js / JavaScript Canonical Recipe (`async/await`):</h4>
-                <pre><code>const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+await page.goto("https://uno-km.github.io/uno-km/");
+console.log("Title:", await page.title());
+await browser.close();
+</code></pre>
+        </div>
+      </div>
 
-async function main() {
-    // Automatically provisions session ledger, eMMC RAM cache, and WakeLock
-    const browser = await launch({
-        headless: true,
-        stealth: true,
-        lowMemoryMode: true,
-        wakeLock: true
-    });
+      <!-- Section 8: Getting Started Navigation -->
+      <h3 data-i18n="home.nextStepsTitle">Getting Started &amp; Deep Guides</h3>
+      <ul>
+        <li><a href="installation.html" data-i18n="home.linkInstall">Detailed Installation Guide (Hardware dependencies, Termux setup, WebGPU flags)</a></li>
+        <li><a href="quickstart.html" data-i18n="home.linkQuickstart">Quickstart Recipes &amp; Common Execution Patterns</a></li>
+        <li><a href="api-reference.html" data-i18n="home.linkApi">100% Full API Reference &amp; Struct Definitions</a></li>
+      </ul>
+    </main>
+  </div>
 
-    try {
-        const context = await setupStealthContext(browser);
-        const page = await context.newPage();
-        
-        // Abort heavy media to save mobile CPU & bandwidth
-        await blockHeavyResources(page, { images: true, media: true, fonts: true });
-
-        await page.goto('https://news.ycombinator.com', { timeout: 45000, waitUntil: 'domcontentloaded' });
-        console.log('Title:', await page.title());
-
-        // Periodic V8 heap flush for long-running mobile scrapers
-        forceGarbageCollection();
-    } finally {
-        await browser.close();
-    }
-}
-
-main().catch(console.error);</code></pre>
-            </div>
-
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
-
-            <h3>Frequently Asked Questions (FAQ)</h3>
-            <div class="card">
-                <h4>Q: Can I use this for 24/7 autonomous scraping on an old Android phone?</h4>
-                <p>Yes! Termux-Playwright includes automated CPU WakeLock handling (`wake_lock=True`), eMMC RAM-disk caching, and V8 heap limiters to ensure 24/7 background operation without kernel LMK process termination.</p>
-            </div>
-            <div class="card">
-                <h4>Q: Why not use PRoot Linux (Ubuntu / Debian)?</h4>
-                <p>PRoot intercepts all system calls using `ptrace`, creating severe 3x~5x CPU latency, 60% higher RAM consumption, and broken `/dev/shm` shared memory. Termux-Playwright runs directly on native Android Bionic libc for maximum speed.</p>
-            </div>
-        </main>
-    </div>
-    <footer>
-        <span data-i18n="common.footerText">&copy; 2026 Termux-Playwright Project. Released under the MIT License.</span>
-    </footer>
+  <footer>
+    <span data-i18n="common.footerText">&copy; 2026 AMEVA Open-Source Foundation. Released under the Apache-2.0 License.</span>
+  </footer>
 </body>
 </html>

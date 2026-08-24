@@ -28,6 +28,7 @@ from .platform import (
 from .reaper import ProcessReaper, TermuxWakeLock
 from .patcher import is_core_bundle_patched, apply_core_bundle_patch
 from .exceptions import BinaryNotFoundError, StorageExhaustionError, PatchingError
+from .stealth import generate_stealth_script
 
 logger = logging.getLogger(__name__)
 
@@ -866,6 +867,14 @@ async def setup_stealth_context(
     viewport: Optional[Dict[str, int]] = None,
     locale: str = "en-US",
     timezone_id: str = "America/New_York",
+    enable_canvas_noise: bool = True,
+    enable_audio_noise: bool = True,
+    enable_webgl_mask: bool = True,
+    enable_webdriver_mask: bool = True,
+    enable_chrome_mock: bool = True,
+    enable_permissions_mock: bool = True,
+    enable_plugins_mock: bool = True,
+    canvas_noise_seed: Optional[int] = None,
     **context_kwargs,
 ) -> Any:
     """Create and configure a hardened stealth BrowserContext/Page to bypass Cloudflare/DataDome/Akamai.
@@ -880,6 +889,14 @@ async def setup_stealth_context(
         viewport: Viewport dimension dict, e.g. {'width': 1280, 'height': 720}.
         locale: Browser locale. Default 'en-US'.
         timezone_id: Timezone string. Default 'America/New_York'.
+        enable_canvas_noise: Toggle Sub-pixel Canvas 2D LSB noise injection (default True).
+        enable_audio_noise: Toggle AudioContext frequency deviation noise injection (default True).
+        enable_webgl_mask: Toggle WebGL UNMASKED_VENDOR/RENDERER spoofing (default True).
+        enable_webdriver_mask: Toggle navigator.webdriver prototype deletion (default True).
+        enable_chrome_mock: Toggle window.chrome runtime/app mock (default True).
+        enable_permissions_mock: Toggle Notification permissions query mock (default True).
+        enable_plugins_mock: Toggle standard Chrome PDF plugins mock (default True).
+        canvas_noise_seed: Optional integer seed for deterministic noise testing.
     
     Returns:
         Configured BrowserContext with stealth evasion scripts injected.
@@ -920,7 +937,17 @@ async def setup_stealth_context(
         await ctx.add_cookies(cookies)
 
     if hasattr(ctx, "add_init_script"):
-        await ctx.add_init_script(STEALTH_INIT_SCRIPT)
+        script = generate_stealth_script(
+            enable_canvas_noise=enable_canvas_noise,
+            enable_audio_noise=enable_audio_noise,
+            enable_webgl_mask=enable_webgl_mask,
+            enable_webdriver_mask=enable_webdriver_mask,
+            enable_chrome_mock=enable_chrome_mock,
+            enable_permissions_mock=enable_permissions_mock,
+            enable_plugins_mock=enable_plugins_mock,
+            canvas_noise_seed=canvas_noise_seed,
+        )
+        await ctx.add_init_script(script)
 
     return ctx
 
@@ -932,6 +959,14 @@ def setup_stealth_context_sync(
     viewport: Optional[Dict[str, int]] = None,
     locale: str = "en-US",
     timezone_id: str = "America/New_York",
+    enable_canvas_noise: bool = True,
+    enable_audio_noise: bool = True,
+    enable_webgl_mask: bool = True,
+    enable_webdriver_mask: bool = True,
+    enable_chrome_mock: bool = True,
+    enable_permissions_mock: bool = True,
+    enable_plugins_mock: bool = True,
+    canvas_noise_seed: Optional[int] = None,
     **context_kwargs,
 ) -> Any:
     """Synchronously create and configure a hardened stealth BrowserContext to bypass bot detection."""
@@ -971,6 +1006,16 @@ def setup_stealth_context_sync(
         ctx.add_cookies(cookies)
 
     if hasattr(ctx, "add_init_script"):
-        ctx.add_init_script(STEALTH_INIT_SCRIPT)
+        script = generate_stealth_script(
+            enable_canvas_noise=enable_canvas_noise,
+            enable_audio_noise=enable_audio_noise,
+            enable_webgl_mask=enable_webgl_mask,
+            enable_webdriver_mask=enable_webdriver_mask,
+            enable_chrome_mock=enable_chrome_mock,
+            enable_permissions_mock=enable_permissions_mock,
+            enable_plugins_mock=enable_plugins_mock,
+            canvas_noise_seed=canvas_noise_seed,
+        )
+        ctx.add_init_script(script)
 
     return ctx

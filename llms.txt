@@ -90,14 +90,46 @@ async def run_stealth_crawler():
         # launch with stealth=True (removes AutomationControlled and infobars)
         browser = await launch(p, headless=True, stealth=True, single_process=True)
         
-        # Inject navigator.webdriver evasion and synchronize actual Chromium version
+        # Inject Canvas 2D LSB noise, AudioContext noise, and navigator.webdriver evasion
         context = await setup_stealth_context(
             browser,
+            enable_canvas_noise=True,
+            enable_audio_noise=True,
+            enable_webgl_mask=True,
             extra_headers={"Accept-Language": "en-US,en;q=0.9"},
             cookies=[{"name": "session_id", "value": "secret", "domain": "example.com", "path": "/"}],
         )
         page = await context.new_page()
-### 6. Node.js / TypeScript Async Pattern (`npm install termux-playwright`)
+        await page.goto("https://example.com")
+        await browser.close()
+```
+
+### 6. Physics & Human Interaction (Bézier Mouse & Gaussian Typing)
+```python
+from termux_playwright import HumanMouse, HumanKeyboard, TurnstileEvaluator
+
+# Human-like mouse movement with Fitts's Law easing, overshoot, and jitter
+mouse = HumanMouse(page)
+await mouse.click("button#submit", steps=30, jitter=True, overshoot=True)
+
+# Human typing with Gaussian delay distribution (mean=120ms, std_dev=35ms)
+await HumanKeyboard.type_text(page, "Search keyword", selector="input#search")
+
+# Auto-detect and solve Cloudflare Turnstile
+if await TurnstileEvaluator.detect_challenge(page):
+    await TurnstileEvaluator.solve_turnstile(page, human_mouse=mouse)
+```
+
+### 7. Dual-Mode Cellular IP Rotator (LTE/5G IP Refresh)
+```python
+from termux_playwright import CellularIpRotator, RotationMode
+
+rotator = CellularIpRotator(mode=RotationMode.AUTO)
+result = await rotator.rotate_ip(verify_ip_change=True)
+print(f"New Public IP: {result['new_ip']} (took {result['elapsed_seconds']}s)")
+```
+
+### 8. Node.js / TypeScript Async Pattern (`npm install termux-playwright`)
 ```javascript
 const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
 

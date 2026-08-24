@@ -1,0 +1,68 @@
+# docs/doc.config.yaml
+name: "Termux-Playwright"
+package_name_pypi: "termux-playwright"
+package_name_npm: "termux-playwright"
+version: "v1.2.0"
+release_name: "Active Stable"
+license: "Apache-2.0"
+platform: "Android ARM64 / Termux Bionic"
+github_repo_url: "https://github.com/uno-km/termux-playwright-demo"
+
+tagline_en: "Non-Root Chromium Browser Automation & CDP Engine for Android Termux"
+tagline_ko: "안드로이드 Termux 환경을 위한 비루팅 크로미움 브라우저 자동화 및 CDP 컨트롤러"
+
+quick_install_cmd: "pip install termux-playwright\n# or: npm install termux-playwright"
+
+why_challenge_en: "Official browser automation drivers fail on Android Termux due to missing X11/Wayland servers, glibc vs bionic ABI incompatibility, and sandboxing constraints."
+why_challenge_ko: "공식 브라우저 자동화 도구들은 glibc/bionic ABI 불일치와 X11 디스플레이 서버 부재로 인해 안드로이드 모바일 환경에서 구동되지 않습니다."
+
+description_en: "Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers."
+description_ko: "안드로이드 Bionic libc 상에서 구동되는 정품 크로미움 브라우저를 CDP 웹소켓 프로토콜로 직접 제어하여 모바일 상에서 무인 웹 크롤링 및 자동화 파이프라인을 구동합니다."
+
+features:
+  - title_en: "Direct CDP Control Channel"
+    title_ko: "직접 CDP 웹소켓 제어 채널"
+    desc_en: "Connects directly via Chrome DevTools Protocol without heavy WebDriver server binaries."
+    desc_ko: "무거운 WebDriver 프록시 없이 크로미움 CDP 소켓에 직결되어 초고속 DOM 탐색 및 제어를 수행합니다."
+  - title_en: "Non-Root Mobile Execution"
+    title_ko: "루팅 없는 순정 단말기 실행"
+    desc_en: "Fully operational inside standard Termux without root privileges or custom ROMs."
+    desc_ko: "단말기 루팅이나 커스텀 롬 플래싱 없이 일반 Termux 앱 환경에서 완벽히 구동됩니다."
+  - title_en: "Full Python & JavaScript APIs"
+    title_ko: "완전한 Python 및 JavaScript API"
+    desc_en: "Offers familiar Playwright-compatible async page navigation, selectors, and evaluation."
+    desc_ko: "Playwright 표준과 친숙한 비동기 페이지 탐색, 셀렉터 클릭, 스크립트 실행 API를 제공합니다."
+
+matrix_table:
+  - category: "Automation Driver"
+    operations: "CDP WebSocket Session, Headless Chromium, Bionic Port"
+    status: "Production"
+  - category: "Page Capabilities"
+    operations: "DOM Evaluation, Screenshots, Network Request Interception"
+    status: "Production"
+  - category: "Platform Runtimes"
+    operations: "Python asyncio, Node.js async/await, Termux CLI"
+    status: "Production"
+
+code_example_py: |
+  from termux_playwright import chromium
+
+  async def main():
+      browser = await chromium.launch(headless=True)
+      page = await browser.new_page()
+      await page.goto("https://uno-km.github.io/uno-km/")
+      title = await page.title()
+      print(f"Page Title: {title}")
+      await browser.close()
+
+  import asyncio
+  asyncio.run(main())
+
+code_example_js: |
+  import { chromium } from "termux-playwright";
+
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.goto("https://uno-km.github.io/uno-km/");
+  console.log("Title:", await page.title());
+  await browser.close();

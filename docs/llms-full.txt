@@ -1,223 +1,34 @@
-# termux-playwright (Full Comprehensive AI Coding Agent Reference Specification)
-> The authoritative, production-grade Playwright integration, runtime optimizer, and anti-bot stealth toolkit for Android Termux.
+# Termux-Playwright Full Technical Specification (v1.2.0)
+Official Documentation & Deep Architecture Reference for Autonomous AI Agents.
 
-## Core Package Metadata
-- Package Name: `termux-playwright`
-- Current Version: `1.61.2`
-- Supported Platforms: Android Termux (aarch64, arm64, x86_64), Linux, macOS, Windows (development fallback)
-- Python Versions: 3.8, 3.9, 3.10, 3.11, 3.12+
-- Upstream Dependencies: `pyee>=8.1.0,<=13.0.0`, `typing-extensions>=4.0.0,<5.0.0`, `playwright>=1.40.0`, `python-greenlet` (system package)
+## 1. System Overview
+Non-Root Chromium Browser Automation & CDP Engine for Android Termux
+Controls genuine Chromium processes via direct Chrome DevTools Protocol (CDP) WebSocket sessions on Android Bionic libc without root or graphical servers.
 
----
+## 2. Package & Installation
+- PyPI: termux-playwright
+- Command: pip install termux-playwright
+# or: npm install termux-playwright
+- Repository: https://github.com/uno-km/termux-playwright-demo
 
-## Complete Public API Reference
+## 3. Core Capabilities
+- **Direct CDP Control Channel**: Connects directly via Chrome DevTools Protocol without heavy WebDriver server binaries.
+- **Non-Root Mobile Execution**: Fully operational inside standard Termux without root privileges or custom ROMs.
+- **Full Python & JavaScript APIs**: Offers familiar Playwright-compatible async page navigation, selectors, and evaluation.
 
-### 1. Context Managers
-#### `async_playwright_termux()`
-Async context manager that pre-configures environment variables, checks native greenlet availability, launches Playwright, and guarantees worker-thread offloaded process cleanup on block exit.
-- Example:
+## 4. Canonical Implementation
 ```python
-async with async_playwright_termux() as p:
-    browser = await launch(p)
-```
-
-#### `sync_playwright_termux()`
-Synchronous context manager providing environment pre-configuration and automatic process reaping upon block exit.
-- Example:
-```python
-with sync_playwright_termux() as p:
-    browser = launch_sync(p)
-```
-
-### 2. Browser Launchers
-#### `async def launch(playwright_instance, low_memory_mode=False, jitless=None, ignore_certificate_errors=False, standalone_mode=False, wake_lock=False, stealth=False, single_process=False, **kwargs) -> Browser`
-Launches a hardened Chromium instance on Android Termux with automatic binary path discovery, RAM disk cache injection, and session zombie tracking.
-- `playwright_instance` (Playwright): Active Playwright instance.
-- `low_memory_mode` (bool, default=False): Caps V8 heap at 128MB and restricts renderers to 1. Recommended for devices with <= 2GB RAM.
-- `jitless` (Optional[bool], default=None): Disables V8 JIT compiler (`--js-flags=--jitless`). Defaults to True on Android 10+ (SDK >= 29).
-- `ignore_certificate_errors` (bool, default=False): Disables SSL certificate validation for legacy root certificates.
-- `standalone_mode` (bool, default=False): Allocates an isolated, ephemeral user-data-dir in `/tmp/tp_solo_<token>` and purges it completely upon browser close.
-- `wake_lock` (bool, default=False): Automatically acquires and releases Termux CPU WakeLock for session duration.
-- `stealth` (bool, default=False): Injects anti-bot evasion flags (`--disable-blink-features=AutomationControlled`, infobar suppression).
-- `single_process` (bool, default=False): Collapses Chromium into a single process to bypass Android 14+ Phantom Process Killer (32-process limit).
-- `**kwargs`: Forwarded directly to `playwright.chromium.launch()`.
-
-#### `def launch_sync(playwright_instance, low_memory_mode=False, jitless=None, ignore_certificate_errors=False, standalone_mode=False, wake_lock=False, stealth=False, single_process=False, **kwargs) -> Browser`
-Synchronous equivalent of `launch()`.
-
-### 3. Anti-Bot & Evasion
-#### `async def setup_stealth_context(browser, viewport=None, user_agent=None, locale='en-US', timezone_id='America/New_York', extra_headers=None, cookies=None) -> BrowserContext`
-Creates an evasive BrowserContext that eliminates bot signals against Cloudflare Turnstile, DataDome, and Kasada:
-- Deletes `webdriver` from `Navigator.prototype` (ensuring `navigator.hasOwnProperty('webdriver') === false`).
-- Spoofs realistic `window.chrome.app` and `window.chrome.runtime` structures.
-- Mocks native `navigator.permissions.query` with `[native code]` toString() spoofing.
-- Synchronizes dynamic `Sec-Ch-Ua` and `User-Agent` major versions with installed Chromium binary via `get_installed_chromium_version()`.
-
-#### `def setup_stealth_context_sync(browser, ...)`
-Synchronous equivalent of `setup_stealth_context()`.
-
-### 4. Performance & Resource Optimization
-#### `async def block_heavy_resources(page_or_context, images=True, media=True, fonts=True, stylesheets=False, custom_patterns=None) -> None`
-Attaches Playwright network routes to abort heavy static assets, drastically cutting bandwidth and CPU consumption on mobile processors.
-
-#### `def block_heavy_resources_sync(page_or_context, ...)`
-Synchronous equivalent of `block_heavy_resources()`.
-
-### 5. Process Lifecycle & System Tools
-#### `ProcessReaper.reap_session_zombies(session_token: str) -> int`
-Discovers and terminates all Chromium child/grandchild processes associated with a session token.
-
-#### `ProcessReaper.reap_untracked_ledger_orphans() -> int`
-Scans `$TMPDIR/.tp_ledger/` for session files left behind by hard crashes (e.g. SIGKILL / LMK) and terminates lingering orphan processes.
-
-#### `TermuxWakeLock(fail_silently: bool = True)`
-Manages Android CPU WakeLock via Termux:API (`termux-wake-lock` / `termux-wake-unlock`).
-
----
-
-## AI Agent Decision Matrix
-
-| Scraping Scenario | Optimal `launch()` Flags & Helpers | Engineering Rationale |
-| :--- | :--- | :--- |
-| **Standard 24/7 Web Crawling** | `launch(p, headless=True)` | Multi-process Chromium; full multi-core performance and individual tab crash isolation. |
-| **Android 14+ without ADB Unlock** | `launch(p, headless=True, single_process=True)` | Collapses all tabs into 1 process to bypass Android 14's 32-process Phantom Killer. |
-| **Anti-Bot / Cloudflare Evasion** | `launch(p, headless=True, stealth=True)` + `setup_stealth_context()` | Injects anti-bot evasion scripts, masks `navigator.webdriver`, and syncs real Chromium version. |
-| **High-Priority Solo Jobs / Banking** | `launch(p, headless=True, standalone_mode=True, wake_lock=True)` | Clean-room ephemeral profile auto-purged on exit + anti-throttling flags and max CPU priority. |
-| **Low-End Android Phones (<= 2GB RAM)** | `launch(p, headless=True, low_memory_mode=True)` + `block_heavy_resources()` | Caps V8 heap at 128MB, limits renderers to 1, and drops images/fonts to prevent LMK kills. |
-
----
-
-## Critical Rules & Prohibitions for LLMs
-
-1. NEVER call `playwright.chromium.launch()` directly on Termux without `termux_playwright.launch()`. Standard Playwright looks in `~/.cache/ms-playwright` and crashes on Android Bionic.
-2. ALWAYS use `async_playwright_termux()` or `sync_playwright_termux()` context managers instead of standard `async_playwright()`. It ensures child process tracking and automatic session zombie reaping.
-3. When creating a Python virtual environment (`venv`) on Termux, ALWAYS pass `--system-site-packages` (e.g. `python -m venv --system-site-packages venv`) so Python inherits system-compiled C-extensions (`python-greenlet`).
-4. For exclusive, critical high-priority scraping with zero previous cache/profile interference, pass `standalone_mode=True, wake_lock=True` to `launch()`.
-5. For Android 14+ devices where ADB Phantom Killer cannot be unlocked, pass `single_process=True` to `launch()`.
-6. To bypass Cloudflare/DataDome, pass `stealth=True` to `launch()` and configure pages via `setup_stealth_context()`.
-7. To customize browser flags, pass `args=["--flag=val"]` to `launch()`. Key-value flags cleanly override defaults.
-8. If running on low-end Android devices (1GB-2GB RAM), pass `low_memory_mode=True` to `launch()`.
-9. When crawling heavy JavaScript/SPA websites on Android Termux, set `timeout=60000` and `wait_until="domcontentloaded"` to avoid timeout errors under `--jitless`.
-10. To speed up scraping on mobile CPUs, block heavy static assets via `await block_heavy_resources(page)`.
-11. To prevent battery drain when using standalone scripts, always close browsers via `await browser.close()` or context managers.
-
----
-
-## Canonical Implementation Patterns
-
-### Pattern 1: Stealth Cloudflare Evasion Crawler
-```python
-import asyncio
-from termux_playwright import async_playwright_termux, launch, setup_stealth_context
+from termux_playwright import chromium
 
 async def main():
-    async with async_playwright_termux() as p:
-        browser = await launch(p, headless=True, stealth=True)
-        context = await setup_stealth_context(
-            browser,
-            locale="en-US",
-            timezone_id="America/New_York",
-            extra_headers={"Accept-Language": "en-US,en;q=0.9"}
-        )
-        page = await context.new_page()
-        await page.goto("https://bot.sannysoft.com", timeout=60000)
-        print(f"Page Title: {await page.title()}")
-        await browser.close()
+    browser = await chromium.launch(headless=True)
+    page = await browser.new_page()
+    await page.goto("https://uno-km.github.io/uno-km/")
+    title = await page.title()
+    print(f"Page Title: {title}")
+    await browser.close()
 
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Pattern 2: 24/7 Low-Memory Resilient Autonomous Worker
-```python
 import asyncio
-from termux_playwright import async_playwright_termux, launch, block_heavy_resources
+asyncio.run(main())
 
-async def run_worker():
-    while True:
-        try:
-            async with async_playwright_termux() as p:
-                browser = await launch(p, headless=True, low_memory_mode=True, wake_lock=True)
-                page = await browser.new_page()
-                await block_heavy_resources(page, images=True, media=True, fonts=True)
-                
-                await page.goto("https://news.ycombinator.com", timeout=45000, wait_until="domcontentloaded")
-                print(f"Harvested Title: {await page.title()}")
-                
-                await browser.close()
-        except Exception as e:
-            print(f"Crawler cycle error (recovering): {e}")
-        await asyncio.sleep(60)
-
-if __name__ == "__main__":
-    asyncio.run(run_worker())
-```
-
----
-
-## Node.js & TypeScript API Reference (`npm install termux-playwright`)
-
-### Node.js Export Signatures
-```typescript
-import type { Browser, BrowserContext, Page, LaunchOptions, BrowserContextOptions } from 'playwright-core';
-
-export interface TermuxLaunchOptions extends LaunchOptions {
-    lowMemoryMode?: boolean;
-    jitless?: boolean;
-    ignoreCertificateErrors?: boolean;
-    standaloneMode?: boolean;
-    wakeLock?: boolean;
-    stealth?: boolean;
-    singleProcess?: boolean;
-    sessionToken?: string;
-}
-
-export function launch(playwrightInstance?: any, options?: TermuxLaunchOptions): Promise<Browser>;
-export function setupStealthContext(browser: Browser, options?: BrowserContextOptions): Promise<BrowserContext>;
-export function blockHeavyResources(pageOrContext: Page | BrowserContext, options?: { images?: boolean; media?: boolean; fonts?: boolean; stylesheets?: boolean }): Promise<void>;
-export function forceGarbageCollection(): boolean;
-export function isTermux(): boolean;
-export function getInstalledChromiumVersion(): string;
-export class ProcessReaper {
-    static reapUntrackedLedgerOrphans(): number;
-    static reapSessionZombies(sessionToken: string): number;
-    static killAllTracked(): void;
-}
-export class TermuxWakeLock {
-    acquire(): boolean;
-    release(): boolean;
-}
-```
-
-### Pattern 3: Node.js / TypeScript Stealth & Memory-Managed Worker
-```javascript
-const { launch, setupStealthContext, blockHeavyResources, forceGarbageCollection } = require('termux-playwright');
-
-async function runWorker() {
-    const browser = await launch({
-        headless: true,
-        stealth: true,
-        lowMemoryMode: true,
-        wakeLock: true
-    });
-
-    try {
-        const context = await setupStealthContext(browser, {
-            locale: 'en-US',
-            timezoneId: 'America/New_York'
-        });
-        const page = await context.newPage();
-        await blockHeavyResources(page, { images: true, media: true, fonts: true });
-
-        await page.goto('https://news.ycombinator.com', { timeout: 45000, waitUntil: 'domcontentloaded' });
-        console.log('Title:', await page.title());
-
-        // Flush V8 heap when running long scraping cycles
-        forceGarbageCollection();
-    } finally {
-        await browser.close();
-    }
-}
-
-runWorker().catch(console.error);
 ```

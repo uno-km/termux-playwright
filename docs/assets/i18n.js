@@ -1,6 +1,8 @@
 /**
- * AMEVA Ecosystem - Multilingual (i18n) Core Engine
- * Zero-dependency, client-side internationalization manager with auto-detection.
+ * AMEVA Ecosystem - Multilingual (i18n) Core Engine (SSOT)
+ * Version: 1.0.0
+ * Zero-dependency, client-side internationalization manager with auto-detection,
+ * multi-tab code switcher, and 1-click code copying.
  */
 
 (function(global) {
@@ -12,7 +14,7 @@
     'ja': { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
     'zh': { code: 'zh', name: 'Chinese', nativeName: '简体中文', flag: '🇨🇳' },
     'es': { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-    'hi': { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' }
+    'de': { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' }
   };
 
   const DEFAULT_LANG = 'en';
@@ -39,7 +41,7 @@
     }
 
     registerTranslations(dict) {
-      this.translations = dict;
+      this.translations = dict || {};
       if (this.initialized) {
         this.applyLanguage(this.currentLang);
       }
@@ -92,7 +94,7 @@
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         const val = this._lookup(dict, key);
-        if (val !== undefined) {
+        if (val !== undefined && val !== null) {
           el.textContent = val;
         }
       });
@@ -100,7 +102,7 @@
       document.querySelectorAll('[data-i18n-html]').forEach(el => {
         const key = el.getAttribute('data-i18n-html');
         const val = this._lookup(dict, key);
-        if (val !== undefined) {
+        if (val !== undefined && val !== null) {
           el.innerHTML = val;
         }
       });
@@ -108,19 +110,36 @@
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         const val = this._lookup(dict, key);
-        if (val !== undefined) {
+        if (val !== undefined && val !== null) {
           el.setAttribute('placeholder', val);
+        }
+      });
+
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        const val = this._lookup(dict, key);
+        if (val !== undefined && val !== null) {
+          el.setAttribute('title', val);
         }
       });
     }
 
     _lookup(dict, keyPath) {
-      return keyPath.split('.').reduce((acc, part) => (acc && acc[part] !== undefined) ? acc[part] : undefined, dict);
+      if (!dict || !keyPath) return undefined;
+      const keys = keyPath.split('.');
+      let current = dict;
+      for (const k of keys) {
+        if (current === undefined || current === null) return undefined;
+        current = current[k];
+      }
+      return current;
     }
 
     _setupLanguageSelectors() {
-      const containers = document.querySelectorAll('.lang-selector-wrapper');
-      containers.forEach(container => {
+      const wrappers = document.querySelectorAll('.lang-selector-wrapper');
+      wrappers.forEach(wrapper => {
+        if (wrapper.querySelector('select')) return; // already has one
+
         const select = document.createElement('select');
         select.className = 'lang-select';
         select.setAttribute('aria-label', 'Select Language');
@@ -128,8 +147,10 @@
         Object.values(SUPPORTED_LANGUAGES).forEach(lang => {
           const opt = document.createElement('option');
           opt.value = lang.code;
-          opt.textContent = `${lang.nativeName} (${lang.name})`;
-          if (lang.code === this.currentLang) opt.selected = true;
+          opt.textContent = `${lang.flag} ${lang.nativeName}`;
+          if (lang.code === this.currentLang) {
+            opt.selected = true;
+          }
           select.appendChild(opt);
         });
 
@@ -137,60 +158,68 @@
           this.setLanguage(e.target.value);
         });
 
-        container.innerHTML = '';
-        container.appendChild(select);
+        wrapper.appendChild(select);
       });
     }
 
     _setupCodeCopyButtons() {
       document.querySelectorAll('pre').forEach(pre => {
-        if (pre.parentElement.classList.contains('code-wrapper')) return;
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'code-wrapper';
-        pre.parentNode.insertBefore(wrapper, pre);
-        wrapper.appendChild(pre);
+        if (pre.querySelector('.copy-code-btn')) return;
 
         const btn = document.createElement('button');
-        btn.className = 'copy-btn';
+        btn.className = 'copy-code-btn';
         btn.textContent = 'Copy';
-        btn.setAttribute('aria-label', 'Copy code to clipboard');
+        btn.setAttribute('type', 'button');
+        btn.setAttribute('aria-label', 'Copy code snippet');
 
-        btn.addEventListener('click', async () => {
-          const code = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
-          try {
-            await navigator.clipboard.writeText(code);
-            btn.textContent = 'Copied! ✓';
-            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
-          } catch (err) {
-            btn.textContent = 'Failed';
-          }
+        btn.addEventListener('click', () => {
+          const code = pre.querySelector('code') || pre;
+          const text = code.innerText.replace(/^Copy\n/, '').trim();
+          navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.backgroundColor = '#16a34a';
+            btn.style.color = '#ffffff';
+            setTimeout(() => {
+              btn.textContent = orig;
+              btn.style.backgroundColor = '';
+              btn.style.color = '';
+            }, 2000);
+          });
         });
 
-        wrapper.appendChild(btn);
+        pre.appendChild(btn);
       });
     }
 
     _setupTabs() {
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const parent = btn.closest('.tabs-container');
-          if (!parent) return;
-          const target = btn.getAttribute('data-tab');
+      document.querySelectorAll('.code-tab-group').forEach(group => {
+        const buttons = group.querySelectorAll('.code-tab-btn');
+        const contents = group.querySelectorAll('.code-tab-content');
 
-          parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        buttons.forEach((btn, index) => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            contents.forEach(c => c.style.display = 'none');
 
-          btn.classList.add('active');
-          const targetContent = parent.querySelector(`.tab-content[data-tab-content="${target}"]`);
-          if (targetContent) targetContent.classList.add('active');
+            btn.classList.add('active');
+            if (contents[index]) {
+              contents[index].style.display = 'block';
+            }
+          });
         });
       });
     }
   }
 
-  global.I18n = new I18nManager();
-  document.addEventListener('DOMContentLoaded', () => {
-    global.I18n.init();
-  });
-})(window);
+  const instance = new I18nManager();
+  global.i18nManager = instance;
+  global.I18n = instance;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => instance.init());
+  } else {
+    instance.init();
+  }
+
+})(typeof window !== 'undefined' ? window : this);
