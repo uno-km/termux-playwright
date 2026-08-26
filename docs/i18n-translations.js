@@ -11,7 +11,7 @@
         'en': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.3 (Dual Engine)',
+                'releaseTag': 'v1.80.1 (Dual Engine)',
                 'pypiBtn': 'PyPI (Python)',
                 'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub Repository',
@@ -167,7 +167,7 @@
         'ko': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.3 (Dual Engine)',
+                'releaseTag': 'v1.80.1 (Dual Engine)',
                 'pypiBtn': 'PyPI (Python)',
                 'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub 저장소',
@@ -271,7 +271,7 @@
         'hi': {
             'common': {
                 'brand': 'Termux-Playwright',
-                'releaseTag': 'v1.61.3 (Dual Engine)',
+                'releaseTag': 'v1.80.1 (Dual Engine)',
                 'pypiBtn': 'PyPI (Python)',
                 'npmBtn': 'npm (Node.js)',
                 'githubBtn': 'GitHub रिपॉजिटरी',

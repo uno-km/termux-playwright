@@ -4,7 +4,7 @@ if (window.i18nManager) {
   "en": {
     "common": {
       "brand": "Termux-Playwright",
-      "releaseTag": "v1.2.0 (Active Stable)",
+      "releaseTag": "v1.80.1 (Active Stable)",
       "pypiBtn": "PyPI (pip)",
       "npmBtn": "npm (Node.js)",
       "githubBtn": "GitHub",
@@ -61,7 +61,7 @@ if (window.i18nManager) {
   "ko": {
     "common": {
       "brand": "Termux-Playwright",
-      "releaseTag": "v1.2.0 (Active Stable)",
+      "releaseTag": "v1.80.1 (Active Stable)",
       "pypiBtn": "PyPI 패키지",
       "npmBtn": "npm 패키지",
       "githubBtn": "GitHub 저장소",
@@ -118,7 +118,7 @@ if (window.i18nManager) {
   "ja": {
     "common": {
       "brand": "Termux-Playwright",
-      "releaseTag": "v1.2.0 (Active Stable)",
+      "releaseTag": "v1.80.1 (Active Stable)",
       "pypiBtn": "PyPIパッケージ",
       "npmBtn": "npmパッケージ",
       "githubBtn": "GitHub",
@@ -161,7 +161,7 @@ if (window.i18nManager) {
   "zh": {
     "common": {
       "brand": "Termux-Playwright",
-      "releaseTag": "v1.2.0 (Active Stable)",
+      "releaseTag": "v1.80.1 (Active Stable)",
       "pypiBtn": "PyPI (pip)",
       "npmBtn": "npm (Node.js)",
       "githubBtn": "GitHub",
@@ -204,7 +204,7 @@ if (window.i18nManager) {
   "es": {
     "common": {
       "brand": "Termux-Playwright",
-      "releaseTag": "v1.2.0 (Active Stable)",
+      "releaseTag": "v1.80.1 (Active Stable)",
       "pypiBtn": "PyPI (pip)",
       "npmBtn": "npm (Node.js)",
       "githubBtn": "GitHub",
@@ -247,7 +247,7 @@ if (window.i18nManager) {
   "de": {
     "common": {
       "brand": "Termux-Playwright",
-      "releaseTag": "v1.2.0 (Active Stable)",
+      "releaseTag": "v1.80.1 (Active Stable)",
       "pypiBtn": "PyPI (pip)",
       "npmBtn": "npm (Node.js)",
       "githubBtn": "GitHub",
