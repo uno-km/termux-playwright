@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.80.1] - 2026-08-26
+
+### Fixed
+- **Two-Phase X11 Repository Bootstrap (`installer.py`, `bin/cli.js`)**: Resolved `Unable to locate package chromium` (Exit code 100) on fresh Termux setups by decoupling `x11-repo` installation and APT index synchronization (`pkg update -y`) from secondary browser package provisioning.
+- **Diagnostics Function Aliases (`installer.py`, `__init__.py`, `lib/index.js`)**: Exported `run_doctor_health_check`, `run_doctor`, and `check_health` aliases pointing to standard `doctor()` to eliminate `ImportError` across test suites and CI scripts.
+- **Process Environment Auto-Configuration Hook (`__init__.py`)**: Automatically populated `PLAYWRIGHT_CHROMIUM_PATH` and `PLAYWRIGHT_NODEJS_PATH` on module import (`configure_environment(strict=False)`) to protect vanilla Playwright consumers from missing cache errors.
+
 ## [1.80.0] - 2026-08-24
 
 ### Added
