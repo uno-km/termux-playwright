@@ -508,6 +508,11 @@ def doctor() -> bool:
     print(f"Overall Status: {'[HEALTHY]' if all_healthy else '[UNHEALTHY - ACTION REQUIRED]'}\n")
     return all_healthy
 
+# Diagnostic function aliases for seamless backwards and cross-framework compatibility
+run_doctor_health_check = doctor
+run_doctor = doctor
+check_health = doctor
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() in ("doctor", "--doctor", "-d"):
         healthy = doctor()

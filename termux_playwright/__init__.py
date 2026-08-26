@@ -75,6 +75,9 @@ from .patcher import (
 )
 from .installer import (
     doctor,
+    run_doctor_health_check,
+    run_doctor,
+    check_health,
     run_installation_pipeline,
     fetch_pypi_wheel_info,
 )
@@ -143,6 +146,9 @@ __all__ = [
     "cli_patch_core_bundle",
     # Installer & Diagnostics
     "doctor",
+    "run_doctor_health_check",
+    "run_doctor",
+    "check_health",
     "run_installation_pipeline",
     "fetch_pypi_wheel_info",
     "__version__",
