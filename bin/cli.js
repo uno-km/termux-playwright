@@ -77,7 +77,7 @@ function runInstall() {
     if (isTermux()) {
         console.log('[1/2] Automatically provisioning chromium & system tools via pkg...');
         try {
-            execSync('pkg update -y && pkg install -y x11-repo && pkg install -y chromium nodejs-lts termux-api procps', { stdio: 'inherit' });
+            execSync('pkg update -y && pkg install -y x11-repo && pkg update -y && pkg install -y chromium nodejs-lts termux-api procps', { stdio: 'inherit' });
         } catch (e) {
             console.warn('[Termux-Playwright] Warning: Failed to run pkg update/install automatically.');
         }

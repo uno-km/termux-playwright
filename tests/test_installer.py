@@ -109,10 +109,12 @@ def test_install_system_dependencies_success(monkeypatch):
 
     monkeypatch.setattr("subprocess.run", mock_run)
     
-    # 1. Default: lean packages (chromium, nodejs, python-greenlet) - NO 1.2GB clang
+    # 1. Default: Phase 1 (x11-repo + update) + Phase 2 (chromium, nodejs, python-greenlet, procps, termux-api)
     install_system_dependencies()
-    assert len(executed_cmds) == 1
-    pkg_cmd = executed_cmds[0]
+    assert len(executed_cmds) == 3
+    assert "x11-repo" in executed_cmds[0]
+    assert "update" in executed_cmds[1]
+    pkg_cmd = executed_cmds[2]
     assert "chromium" in pkg_cmd
     assert "nodejs" in pkg_cmd
     assert "python-greenlet" in pkg_cmd
@@ -121,9 +123,10 @@ def test_install_system_dependencies_success(monkeypatch):
     assert "clang" not in pkg_cmd
 
     # 2. With build tools: includes clang, make
+    executed_cmds.clear()
     install_system_dependencies(include_build_tools=True)
-    assert len(executed_cmds) == 2
-    pkg_cmd_with_build = executed_cmds[1]
+    assert len(executed_cmds) == 3
+    pkg_cmd_with_build = executed_cmds[2]
     assert "clang" in pkg_cmd_with_build
     assert "make" in pkg_cmd_with_build
 

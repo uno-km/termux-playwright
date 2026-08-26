@@ -130,7 +130,9 @@ def _format_error_report(phase: str, reason: str, details: Optional[str] = None,
 def install_system_dependencies(include_build_tools: bool = False) -> None:
     """Install native Termux Chromium, Node.js, and pre-compiled Python C-extensions via pkg with retry.
     
-    Uses Termux repository's native python-greenlet to avoid pulling in 1.2GB Clang/LLVM build toolchain.
+    Implements Two-Phase Repository Provisioning:
+    1. First bootstraps 'x11-repo' and synchronizes package indexes so that 'chromium' becomes resolvable.
+    2. Then provisions native Chromium, Node.js, and python-greenlet without pulling in 1.2GB Clang/LLVM.
     
     Args:
         include_build_tools: If True, also installs clang and make (~1.2GB toolchain).
@@ -148,17 +150,34 @@ def install_system_dependencies(include_build_tools: bool = False) -> None:
         )
         raise InstallationError(msg)
 
-    packages = list(REQUIRED_TERMUX_SYSTEM_PACKAGES)
+    # -------------------------------------------------------------------------
+    # Phase 1: Bootstrap X11 Repository & Synchronize APT Package Index
+    # -------------------------------------------------------------------------
+    print("[*] [Phase 1/2] Bootstrapping 'x11-repo' and synchronizing Termux package index...")
+    x11_cmd = [pkg_bin, "install", "-y", "x11-repo"]
+    try:
+        subprocess.run(x11_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+        # Update package lists so APT discovers chromium inside the x11 repository
+        update_cmd = [pkg_bin, "update", "-y"]
+        subprocess.run(update_cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+    except Exception as e:
+        logger.warning("Phase 1 x11-repo bootstrap encountered warning (will proceed to main install): %s", e)
+
+    # -------------------------------------------------------------------------
+    # Phase 2: Provision Native System Packages (Chromium, Node.js, Greenlet, etc.)
+    # -------------------------------------------------------------------------
+    packages = [pkg for pkg in REQUIRED_TERMUX_SYSTEM_PACKAGES if pkg != "x11-repo"]
     if include_build_tools:
         packages.extend(OPTIONAL_TERMUX_BUILD_PACKAGES)
 
     cmd = [pkg_bin, "install", "-y"] + packages
-    print(f"[*] Executing system package installation: {' '.join(cmd)}")
+    print(f"[*] [Phase 2/2] Executing system package installation: {' '.join(cmd)}")
     
     for attempt in range(1, MAX_NETWORK_RETRIES + 1):
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
             if res.returncode == 0:
+                print("[+] System package installation succeeded.")
                 return
 
             # Tier 2: Attempt apt-get --fix-missing recovery if available
@@ -186,7 +205,7 @@ def install_system_dependencies(include_build_tools: bool = False) -> None:
                     remedies=[
                         "Switch package mirror: Run 'termux-change-repo' and pick a fast mirror",
                         "Update repository index: Run 'pkg update -y'",
-                        f"Attempt manual install: pkg install -y {' '.join(packages)}",
+                        f"Attempt manual install: pkg install -y x11-repo && pkg update -y && pkg install -y {' '.join(packages)}",
                         "Ensure your device has active internet access."
                     ]
                 )
@@ -203,6 +222,7 @@ def install_system_dependencies(include_build_tools: bool = False) -> None:
                         "Run 'termux-change-repo' to select a faster geographic mirror."
                     ]
                 )
+                raise InstallationError(msg) from e
                 raise InstallationError(msg) from e
 
 def install_playwright_wheel(version: Optional[str] = None) -> None:
