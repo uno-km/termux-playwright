@@ -6,7 +6,7 @@ version: "v1.80.1"
 release_name: "Active Stable"
 license: "Apache-2.0"
 platform: "Android ARM64 / Termux Bionic"
-github_repo_url: "https://github.com/uno-km/termux-playwright-demo"
+github_repo_url: "https://github.com/uno-km/termux-playwright"
 
 tagline_en: "Non-Root Chromium Browser Automation & CDP Engine for Android Termux"
 tagline_ko: "안드로이드 Termux 환경을 위한 비루팅 크로미움 브라우저 자동화 및 CDP 컨트롤러"

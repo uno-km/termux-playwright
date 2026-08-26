@@ -174,7 +174,7 @@ if __name__ == "__main__":
 ## 7. 공식 오픈소스 리소스 및 링크
 
 * **공식 PyPI 패키지:** [https://pypi.org/project/termux-playwright/](https://pypi.org/project/termux-playwright/)
-* **GitHub 소스코드 저장소:** [https://github.com/uno-km/termux-playwright-demo](https://github.com/uno-km/termux-playwright-demo)
+* **GitHub 소스코드 저장소:** [https://github.com/uno-km/termux-playwright](https://github.com/uno-km/termux-playwright)
 * **공식 문서 웹사이트:** [https://uno-km.github.io/termux-playwright-demo/](https://uno-km.github.io/termux-playwright-demo/)
 * **AI Coding Agent 스펙 (`llms.txt`):** [https://uno-km.github.io/termux-playwright-demo/llms.txt](https://uno-km.github.io/termux-playwright-demo/llms.txt)
 * **AI Full API Reference (`llms-full.txt`):** [https://uno-km.github.io/termux-playwright-demo/llms-full.txt](https://uno-km.github.io/termux-playwright-demo/llms-full.txt)
