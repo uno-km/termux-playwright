@@ -582,3 +582,85 @@ footer {
     margin-top: 6px;
   }
 }
+
+/* ── Version Archive & Changelog Cards ───────────────────────────────────── */
+.version-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.version-card.current-version {
+  border-left: 4px solid var(--accent-green);
+  background-color: #fcfdfd;
+}
+
+.version-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.version-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.version-meta {
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.version-card h4 {
+  font-size: 0.98rem;
+  color: var(--text-main);
+  margin: 12px 0 6px 0;
+}
+
+.version-card ul {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+
+.version-card li {
+  margin-bottom: 6px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-success {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.badge-primary {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+}
+
+.badge-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
