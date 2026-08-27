@@ -421,7 +421,7 @@ class ProcessReaper:
 
     @staticmethod
     def _scan_proc_for_session(target_flags: Set[bytes], proc_root: str = "/proc") -> Set[int]:
-        """Zero-allocation single-pass scanner over /proc entries.
+        """Zero-allocation single-pass scanner over /proc entries with strict UID & identity boundary.
         
         Reads only the first 2KB chunk per process cmdline where --termux-session-id
         is guaranteed to be placed. Runs at pure C-iterator speed with os.scandir.
@@ -430,6 +430,8 @@ class ProcessReaper:
         if sys.platform == "win32" or not os.path.exists(proc_root):
             return found
         current_pid = os.getpid()
+        current_uid = os.getuid() if hasattr(os, "getuid") else None
+
         try:
             with os.scandir(proc_root) as entries:
                 for entry in entries:
@@ -439,11 +441,20 @@ class ProcessReaper:
                     pid = int(name)
                     if pid == current_pid:
                         continue
+
+                    # Strict UID boundary check (Reject processes owned by different users)
+                    if current_uid is not None:
+                        try:
+                            if os.stat(entry.path).st_uid != current_uid:
+                                continue
+                        except (OSError, PermissionError):
+                            continue
+
                     try:
                         cmdline_path = os.path.join(entry.path, "cmdline")
                         with open(cmdline_path, "rb") as f:
-                            content = f.read(2048)
-                            if any(flag in content for flag in target_flags):
+                            cmd_bytes = f.read(2048)
+                            if any(flag in cmd_bytes for flag in target_flags):
                                 found.add(pid)
                     except (OSError, PermissionError, ValueError):
                         continue
