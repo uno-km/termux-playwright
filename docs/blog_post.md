@@ -173,6 +173,6 @@ if __name__ == "__main__":
 
 * **PyPI Package:** [https://pypi.org/project/termux-playwright/](https://pypi.org/project/termux-playwright/)
 * **GitHub Repository:** [https://github.com/uno-km/termux-playwright](https://github.com/uno-km/termux-playwright)
-* **Documentation Portal:** [https://uno-km.github.io/termux-playwright-demo/](https://uno-km.github.io/termux-playwright-demo/)
-* **AI Coding Agent Feed (`llms.txt`):** [https://uno-km.github.io/termux-playwright-demo/llms.txt](https://uno-km.github.io/termux-playwright-demo/llms.txt)
-* **AI Full API Reference (`llms-full.txt`):** [https://uno-km.github.io/termux-playwright-demo/llms-full.txt](https://uno-km.github.io/termux-playwright-demo/llms-full.txt)
+* **Documentation Portal:** [https://uno-km.github.io/termux-playwright/](https://uno-km.github.io/termux-playwright/)
+* **AI Coding Agent Feed (`llms.txt`):** [https://uno-km.github.io/termux-playwright/llms.txt](https://uno-km.github.io/termux-playwright/llms.txt)
+* **AI Full API Reference (`llms-full.txt`):** [https://uno-km.github.io/termux-playwright/llms-full.txt](https://uno-km.github.io/termux-playwright/llms-full.txt)

@@ -786,62 +786,62 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://uno-km.github.io/termux-playwright-demo/sitemap.xml
+Sitemap: https://uno-km.github.io/termux-playwright/sitemap.xml
 \"\"\"
 
 # 9. sitemap.xml
 sitemap_xml = \"\"\"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/</loc>
+        <loc>https://uno-km.github.io/termux-playwright/</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/installation.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/installation.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/quickstart.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/quickstart.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/nodejs.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/nodejs.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/api-reference.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/api-reference.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/versions.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/versions.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/phantom-process.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/phantom-process.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/llms.txt</loc>
+        <loc>https://uno-km.github.io/termux-playwright/llms.txt</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/llms-full.txt</loc>
+        <loc>https://uno-km.github.io/termux-playwright/llms-full.txt</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>

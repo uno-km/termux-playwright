@@ -70,7 +70,7 @@ index_html = f"""<!DOCTYPE html>
     <meta property="og:title" content="Termux-Playwright: Dual-Engine Browser Automation on Android">
     <meta property="og:description" content="Run genuine Chromium automation on mobile ARM64 hardware without root or PRoot. Python & Node.js dual-engine support.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://uno-km.github.io/termux-playwright-demo/">
+    <meta property="og:url" content="https://uno-km.github.io/termux-playwright/">
     
     <!-- 1. SoftwareApplication Schema -->
     <script type="application/ld+json">
@@ -87,7 +87,7 @@ index_html = f"""<!DOCTYPE html>
       }},
       "softwareVersion": "1.61.3",
       "description": "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux without root or PRoot.",
-      "url": "https://uno-km.github.io/termux-playwright-demo/",
+      "url": "https://uno-km.github.io/termux-playwright/",
       "aggregateRating": {{
         "@type": "AggregateRating",
         "ratingValue": "5.0",
@@ -880,62 +880,62 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://uno-km.github.io/termux-playwright-demo/sitemap.xml
+Sitemap: https://uno-km.github.io/termux-playwright/sitemap.xml
 """
 
 # 9. sitemap.xml
 sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/</loc>
+        <loc>https://uno-km.github.io/termux-playwright/</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/installation.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/installation.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/quickstart.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/quickstart.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/nodejs.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/nodejs.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/api-reference.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/api-reference.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/versions.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/versions.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/phantom-process.html</loc>
+        <loc>https://uno-km.github.io/termux-playwright/phantom-process.html</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/llms.txt</loc>
+        <loc>https://uno-km.github.io/termux-playwright/llms.txt</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://uno-km.github.io/termux-playwright-demo/llms-full.txt</loc>
+        <loc>https://uno-km.github.io/termux-playwright/llms-full.txt</loc>
         <lastmod>2026-08-19</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
