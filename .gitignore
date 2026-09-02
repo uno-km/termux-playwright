@@ -106,3 +106,7 @@ temp/
 *.log
 .cache/
 .turbo/
+
+state.json
+*.tmp
+
