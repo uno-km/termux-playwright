@@ -136,8 +136,8 @@ class ProcessReaper:
         ledger_dir = os.path.join(tmp_dir, ".tp_ledger")
         try:
             os.makedirs(ledger_dir, exist_ok=True)
-        except OSError:
-            pass
+        except OSError as mk_err:
+            logger.debug("Failed creating ledger_dir %s: %s", ledger_dir, mk_err)
         return ledger_dir
 
     @classmethod
@@ -195,8 +195,8 @@ class ProcessReaper:
                                         val = line.split("=", 1)[1].strip()
                                         if val.isdigit():
                                             owning_pid = int(val)
-                        except Exception:
-                            pass
+                        except (OSError, UnicodeDecodeError, ValueError) as read_err:
+                            logger.debug("Failed reading session file %s: %s", entry.path, read_err)
 
                         is_owner_alive = False
                         if owning_pid and owning_pid > 0 and owning_pid != os.getpid():
@@ -210,8 +210,8 @@ class ProcessReaper:
                             cls.reap_session_zombies(token)
                             try:
                                 os.remove(entry.path)
-                            except OSError:
-                                pass
+                            except OSError as rm_err:
+                                logger.debug("Failed removing stale session file %s: %s", entry.path, rm_err)
                             reaped_count += 1
                             logger.info("Auto-recovered and reaped dead session '%s' from previous crash.", token)
         except Exception as e:
@@ -458,8 +458,8 @@ class ProcessReaper:
                                 found.add(pid)
                     except (OSError, PermissionError, ValueError):
                         continue
-        except (OSError, PermissionError):
-            pass
+        except (OSError, PermissionError) as scan_err:
+            logger.debug("Failed scanning /proc directory: %s", scan_err)
         return found
 
     @classmethod
@@ -477,8 +477,8 @@ class ProcessReaper:
             if pid != current_pid and pid > 0:
                 try:
                     os.kill(pid, SIGKILL_SIGNAL)
-                except (ProcessLookupError, PermissionError, OSError):
-                    pass
+                except (ProcessLookupError, PermissionError, OSError) as kill_err:
+                    logger.debug("Emergency kill failed for pid %s: %s", pid, kill_err)
 
         # 2. O(1) Short-circuit if no active sessions
         sessions = tuple(cls._tracked_sessions)
@@ -494,8 +494,8 @@ class ProcessReaper:
         for target_pid in proc_pids:
             try:
                 os.kill(target_pid, SIGKILL_SIGNAL)
-            except (ProcessLookupError, PermissionError, OSError):
-                pass
+            except (ProcessLookupError, PermissionError, OSError) as kill_err:
+                logger.debug("Session target kill failed for pid %s: %s", target_pid, kill_err)
 
         # 4. Fallback for test harnesses mocking glob.glob
         if not proc_pids:
@@ -509,12 +509,12 @@ class ProcessReaper:
                                 if pid_str.isdigit() and int(pid_str) != os.getpid():
                                     try:
                                         os.kill(int(pid_str), SIGKILL_SIGNAL)
-                                    except (ProcessLookupError, PermissionError, OSError):
-                                        pass
+                                    except (ProcessLookupError, PermissionError, OSError) as kill_err:
+                                        logger.debug("Fallback kill failed for pid %s: %s", pid_str, kill_err)
                     except (OSError, PermissionError, ValueError):
                         continue
-            except Exception:
-                pass
+            except (OSError, PermissionError) as glob_err:
+                logger.debug("Glob scan of /proc failed: %s", glob_err)
 
     @classmethod
     def _install_hooks_if_needed(cls) -> None:

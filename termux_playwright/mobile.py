@@ -105,8 +105,8 @@ class CellularIpRotator:
             except asyncio.TimeoutError:
                 try:
                     proc.kill()
-                except Exception:
-                    pass
+                except (ProcessLookupError, OSError) as kill_err:
+                    logger.debug("Failed to kill timed out process %s: %s", getattr(proc, "pid", None), kill_err)
                 return False
         except Exception as e:
             logger.debug(f"CellularIpRotator async command failed: {e}")
