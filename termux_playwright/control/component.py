@@ -65,22 +65,35 @@ class PlaywrightControl(ComponentControl):
         state_data = self._state_file.read()
         stale = self._state_file.is_stale(threshold_ms=30_000)
 
-        chromium_path, chromium_ok = self._check_chromium()
-        worker_pids = self._get_worker_pids()
+        chromium_info = self._check_chromium()
+        worker_inspections = self._inspect_workers()
+        worker_pids = [w["pid"] for w in worker_inspections if w.get("alive") is True]
+        unverified_workers = [w for w in worker_inspections if w.get("verified") is False]
         instances = self._inst_reg.list_all()
 
+        chromium_ok = chromium_info.get("executable") is True
         ready = chromium_ok
-        degraded = stale or not chromium_ok
+        degraded = stale or not chromium_ok or bool(unverified_workers)
+
+        proc_dict: dict[str, Any] = {
+            "running": bool(worker_pids),
+            "pid": worker_pids[0] if worker_pids else None,
+            "verified": len(unverified_workers) == 0,
+        }
+        if unverified_workers:
+            proc_dict["unverified_workers"] = unverified_workers
 
         return {
             "protocol": "ameva-component-status/1",
             "component_id": self.COMPONENT_ID, "component_type": self.COMPONENT_TYPE,
             "version": self._get_version(), "ready": ready, "degraded": degraded,
             **ts,
-            "chromium": {"path": chromium_path, "executable": chromium_ok},
+            "process": proc_dict,
+            "chromium": chromium_info,
             "capabilities": list(self.CAPABILITIES),
             "browser_workers": len(worker_pids),
             "worker_pids": worker_pids,
+            "worker_inspections": worker_inspections,
             "instances": [{"instance_id": i.instance_id, "state": i.state.value,
                            "active_jobs": i.active_jobs} for i in instances],
             "errors": [state_data.get("last_error")] if state_data and state_data.get("last_error") else [],
@@ -88,44 +101,86 @@ class PlaywrightControl(ComponentControl):
                            "updated_at": state_data.get("updated_at") if state_data else None},
         }
 
-    def _check_chromium(self) -> tuple[str | None, bool]:
+    def _check_chromium(self) -> dict[str, Any]:
         """Chromium 바이너리 존재 + 실행 권한 확인 — 실행 금지."""
         try:
             from termux_playwright.platform import find_chromium_binary
             path = find_chromium_binary()
-            if path and os.access(str(path), os.X_OK):
-                return str(path), True
-            return str(path) if path else None, False
+            if path:
+                try:
+                    can_exec = os.access(str(path), os.X_OK)
+                    return {"path": str(path), "executable": can_exec, "verified": True}
+                except PermissionError as perm_err:
+                    return {
+                        "path": str(path),
+                        "executable": None,
+                        "verified": False,
+                        "inspection_error": {
+                            "code": "CHROMIUM_INSPECTION_PERMISSION_DENIED",
+                            "message": str(perm_err),
+                        },
+                    }
+            return {"path": None, "executable": False, "verified": True, "reason": "binary_not_found"}
         except (ImportError, OSError) as _check_err:
             import logging
             logging.getLogger(__name__).debug(
                 "playwright: chromium binary check failed: %s", _check_err
             )
-            return None, False
+            return {
+                "path": None,
+                "executable": None,
+                "verified": False,
+                "inspection_error": {
+                    "code": "CHROMIUM_CHECK_ERROR",
+                    "message": str(_check_err),
+                },
+            }
 
-    def _get_worker_pids(self) -> list[int]:
-        """실제 실행 중인 Browser Worker PID 목록. os.kill(pid, 0)으로 확인."""
+    def _inspect_workers(self) -> list[dict[str, Any]]:
+        """실제 실행 중인 Browser Worker PID 상세 검사. PermissionError를 죽음으로 위장하지 않음."""
         import logging
         _log = logging.getLogger(__name__)
+        results: list[dict[str, Any]] = []
         try:
             from termux_playwright.reaper import ProcessReaper
             reaper = ProcessReaper()
-            pids = []
             for pid in (reaper.get_pids() if hasattr(reaper, "get_pids") else []):
                 try:
                     os.kill(pid, 0)
-                    pids.append(pid)
+                    results.append({"pid": pid, "alive": True, "verified": True})
                 except ProcessLookupError:
-                    pass  # 프로세스 없음 — 이미 종료된 Worker
-                except PermissionError:
-                    # 살아있을 수 있으나 확인 불가 — 목록에서 제외하고 로그 기록
-                    _log.debug("playwright: Worker PID %d PermissionError during liveness check.", pid)
+                    results.append({"pid": pid, "alive": False, "verified": True, "reason": "process_lookup_failed"})
+                except PermissionError as perm_err:
+                    _log.warning("playwright: Worker PID %d PermissionError during liveness check: %s", pid, perm_err)
+                    results.append({
+                        "pid": pid,
+                        "alive": None,
+                        "verified": False,
+                        "inspection_error": {
+                            "code": "PROCESS_INSPECTION_PERMISSION_DENIED",
+                            "message": str(perm_err),
+                        },
+                    })
                 except OSError as _os_err:
                     _log.warning("playwright: Worker PID %d OSError: %s", pid, _os_err)
-            return pids
+                    results.append({
+                        "pid": pid,
+                        "alive": None,
+                        "verified": False,
+                        "inspection_error": {
+                            "code": "PROCESS_INSPECTION_OS_ERROR",
+                            "message": str(_os_err),
+                        },
+                    })
+            return results
         except (ImportError, OSError) as _reaper_err:
             _log.warning("playwright: ProcessReaper unavailable: %s", _reaper_err)
             return []
+
+    def _get_worker_pids(self) -> list[int]:
+        """실제 실행 중인 verified Worker PID 목록 반환."""
+        inspections = self._inspect_workers()
+        return [w["pid"] for w in inspections if w.get("alive") is True]
 
     def doctor_full(self) -> dict:
         """기존 installer.run_doctor() 전체 실행 — 실제 Chromium 실행 포함."""
