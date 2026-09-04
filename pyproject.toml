@@ -1,3 +1,41 @@
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "termux-playwright"
+version = "1.80.1"
+description = "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux (Dual-Engine Python & Node.js)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "uno-km (AMEVA Foundation)", email = "hosequelbo@gmail.com" }]
+keywords = ["playwright", "termux", "android", "chromium", "automation", "web-scraping"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Android",
+]
+
+[project.urls]
+Homepage = "https://github.com/uno-km/termux-playwright"
+Documentation = "https://uno-km.github.io/termux-playwright/"
+Repository = "https://github.com/uno-km/termux-playwright"
+"Bug Tracker" = "https://github.com/uno-km/termux-playwright/issues"
+
+[project.scripts]
+termux-playwright = "termux_playwright.cli_protocol:main"
+
+[project.entry-points."ameva.components"]
+termux-playwright = "termux_playwright.adapter:create_adapter"
+
+[tool.setuptools.packages.find]
+include = ["termux_playwright*"]
