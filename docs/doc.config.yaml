@@ -2,7 +2,7 @@
 name: "Termux-Playwright"
 package_name_pypi: "termux-playwright"
 package_name_npm: "termux-playwright"
-version: "v1.80.1"
+version: "v1.80.4"
 release_name: "Active Stable"
 license: "Apache-2.0"
 platform: "Android ARM64 / Termux Bionic"
