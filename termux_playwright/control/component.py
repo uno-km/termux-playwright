@@ -96,11 +96,17 @@ class PlaywrightControl(ComponentControl):
             if path and os.access(str(path), os.X_OK):
                 return str(path), True
             return str(path) if path else None, False
-        except Exception:
+        except (ImportError, OSError) as _check_err:
+            import logging
+            logging.getLogger(__name__).debug(
+                "playwright: chromium binary check failed: %s", _check_err
+            )
             return None, False
 
     def _get_worker_pids(self) -> list[int]:
         """실제 실행 중인 Browser Worker PID 목록. os.kill(pid, 0)으로 확인."""
+        import logging
+        _log = logging.getLogger(__name__)
         try:
             from termux_playwright.reaper import ProcessReaper
             reaper = ProcessReaper()
@@ -109,10 +115,16 @@ class PlaywrightControl(ComponentControl):
                 try:
                     os.kill(pid, 0)
                     pids.append(pid)
-                except Exception:
-                    pass
+                except ProcessLookupError:
+                    pass  # 프로세스 없음 — 이미 종료된 Worker
+                except PermissionError:
+                    # 살아있을 수 있으나 확인 불가 — 목록에서 제외하고 로그 기록
+                    _log.debug("playwright: Worker PID %d PermissionError during liveness check.", pid)
+                except OSError as _os_err:
+                    _log.warning("playwright: Worker PID %d OSError: %s", pid, _os_err)
             return pids
-        except Exception:
+        except (ImportError, OSError) as _reaper_err:
+            _log.warning("playwright: ProcessReaper unavailable: %s", _reaper_err)
             return []
 
     def doctor_full(self) -> dict:

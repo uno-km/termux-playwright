@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, AsyncIterator
 
 from ameva_component.adapter_base import BaseOrchestratorAdapter
+from ameva_component.exceptions import OperationNotSupported
 from termux_playwright.control.component import PlaywrightControl
 
 
@@ -49,9 +50,12 @@ class PlaywrightOrchestratorAdapter(BaseOrchestratorAdapter):
 
     async def infer(self, request: dict[str, Any]) -> AsyncIterator[dict[str, Any]]:
         """termux-playwright는 브라우저 자동화 패키지입니다.
-        LLM Streaming inference는 OPERATION_NOT_SUPPORTED.
+        LLM Streaming inference는 미지원 — OperationNotSupported를 발생시킵니다.
+
+        P0-2: yield 방식은 상위 소비자가 Frame을 정상으로 처리할 위험이 있어 raise로 변경.
         """
-        yield self._not_supported("infer")
+        raise OperationNotSupported(operation="infer", component_id=self.COMPONENT_ID)
+        yield  # type: ignore[misc]
 
 
 def create_adapter() -> PlaywrightOrchestratorAdapter:
