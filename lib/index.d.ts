@@ -21,6 +21,10 @@ export interface TermuxLaunchOptions extends LaunchOptions {
     singleProcess?: boolean;
     /** Explicit custom session token string. */
     sessionToken?: string;
+    /** If true, bypasses Android VPN / dnsproxyd via in-process loopback CONNECT proxy and direct UDP DNS. */
+    bypassTunnel?: boolean;
+    /** Upstream public DNS IPv4 address used with bypassTunnel (default: '8.8.8.8'). */
+    dnsServer?: string;
 }
 
 export interface StealthContextOptions extends BrowserContextOptions {
@@ -195,3 +199,32 @@ export function blockHeavyResources(
 ): Promise<void>;
 
 export function forceGarbageCollection(): boolean;
+
+export function queryDnsA(domain: string, dnsServer?: string, port?: number, timeout?: number): Promise<string | null>;
+
+export class TunnelProxy {
+    constructor(dnsServer?: string);
+    readonly dnsServer: string;
+    readonly port: number;
+    start(): Promise<number>;
+    close(): void;
+}
+
+export class BrowserBuilder {
+    constructor();
+    headless(enabled?: boolean): this;
+    lowMemory(enabled?: boolean): this;
+    jitless(enabled?: boolean): this;
+    ignoreCertificateErrors(enabled?: boolean): this;
+    standaloneMode(enabled?: boolean): this;
+    wakeLock(enabled?: boolean): this;
+    stealth(enabled?: boolean): this;
+    singleProcess(enabled?: boolean): this;
+    bypassTunnel(enabled?: boolean, dnsServer?: string): this;
+    isTunnelBypass(enabled?: boolean, dnsServer?: string): this;
+    withDns(dnsServer: string): this;
+    withArgs(...args: string[]): this;
+    withOptions(options?: Partial<TermuxLaunchOptions>): this;
+    launch(playwrightInstance?: any): Promise<Browser>;
+}
+

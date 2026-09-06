@@ -96,25 +96,100 @@ function runReap() {
 
 function runHelp() {
     console.log(`
-Usage: termux-playwright <command>
+Usage: termux-playwright <command> [options]
 
 Commands:
-  install    Auto-provision Chromium & system dependencies and run diagnostics
-  doctor     Run 6-tier system diagnostics and health report
-  reap       Scan and terminate orphaned Chromium zombie processes
-  help       Show this help message
+  crawl <url>   Navigate to URL, scrape target elements, with optional tunnel bypass
+                Options:
+                  --bypass-tunnel, --tunnel-bypass   Bypass VPN/dnsproxyd via direct UDP socket DNS
+                  --dns <server>                     Public DNS server IPv4 (default: 8.8.8.8)
+                  -s, --selector <sel>               CSS selector to extract text/input value
+                  --timeout <ms>                     Navigation timeout in ms (default: 30000)
+  install       Auto-provision Chromium & system dependencies and run diagnostics
+  doctor        Run 6-tier system diagnostics and health report
+  reap          Scan and terminate orphaned Chromium zombie processes
+  help          Show this help message
 
 Examples:
-  npx termux-playwright install
+  npx termux-playwright crawl https://example.com --bypass-tunnel
+  npx termux-playwright crawl https://uno-km.vercel.app/lib/diffusion/create --bypass-tunnel -s "#promptInput"
   npx termux-playwright doctor
   npx termux-playwright reap
 `);
+}
+
+async function runCrawl(crawlArgs) {
+    const url = crawlArgs.find(a => !a.startsWith('-'));
+    if (!url) {
+        console.error('Error: crawl command requires a URL argument. e.g. termux-playwright crawl https://example.com');
+        process.exit(1);
+    }
+
+    const bypassTunnel = crawlArgs.includes('--bypass-tunnel') || crawlArgs.includes('--tunnel-bypass');
+    let dnsServer = '8.8.8.8';
+    const dnsIdx = crawlArgs.findIndex(a => a === '--dns' || a === '--dns-server');
+    if (dnsIdx !== -1 && crawlArgs[dnsIdx + 1]) {
+        dnsServer = crawlArgs[dnsIdx + 1];
+    }
+
+    let selector = null;
+    const selIdx = crawlArgs.findIndex(a => a === '-s' || a === '--selector');
+    if (selIdx !== -1 && crawlArgs[selIdx + 1]) {
+        selector = crawlArgs[selIdx + 1];
+    }
+
+    let timeout = 30000;
+    const toIdx = crawlArgs.findIndex(a => a === '--timeout');
+    if (toIdx !== -1 && crawlArgs[toIdx + 1]) {
+        timeout = parseInt(crawlArgs[toIdx + 1], 10) || 30000;
+    }
+
+    console.log(`[*] termux-playwright crawl (Node.js): ${url}`);
+    if (bypassTunnel) {
+        console.log(`[*] Bypass-Tunnel: ACTIVE (DNS: ${dnsServer})`);
+    } else {
+        console.log('[*] Bypass-Tunnel: INACTIVE (using standard system routing)');
+    }
+
+    const { launch } = require('../lib/browser');
+    try {
+        const browser = await launch(null, {
+            headless: true,
+            bypassTunnel,
+            dnsServer
+        });
+        const page = await browser.newPage();
+        const resp = await page.goto(url, { timeout, waitUntil: 'domcontentloaded' });
+        console.log(`[+] Navigation completed. HTTP Status: ${resp ? resp.status() : 'unknown'}`);
+
+        if (selector) {
+            const el = await page.waitForSelector(selector, { timeout: Math.min(timeout, 10000) });
+            if (el) {
+                const val = await el.inputValue().catch(() => null);
+                const txt = await el.textContent().catch(() => null);
+                console.log(`[+] Extracted (${selector}):\n${val || txt || ''}`);
+            } else {
+                console.log(`[-] Selector '${selector}' not found.`);
+            }
+        } else {
+            const title = await page.title();
+            console.log(`[+] Page Title: ${title}`);
+        }
+        await browser.close();
+    } catch (err) {
+        console.error(`[-] Crawl failed: ${err.message}`);
+        process.exit(1);
+    }
 }
 
 const args = process.argv.slice(2);
 const command = args[0] || 'doctor';
 
 switch (command) {
+    case 'crawl':
+    case '--crawl':
+        runCrawl(args.slice(1));
+        break;
     case 'install':
     case '--install':
     case '-i':

@@ -29,6 +29,7 @@ from .reaper import ProcessReaper, TermuxWakeLock
 from .patcher import is_core_bundle_patched, apply_core_bundle_patch
 from .exceptions import BinaryNotFoundError, StorageExhaustionError, PatchingError
 from .stealth import generate_stealth_script
+from .tunnel import AsyncTunnelProxy, SyncTunnelProxy, query_dns_a
 
 logger = logging.getLogger(__name__)
 
@@ -269,6 +270,7 @@ def build_chromium_args(
     standalone_mode: bool = False,
     stealth: bool = False,
     single_process: bool = False,
+    tunnel_port: Optional[int] = None,
 ) -> List[str]:
     """Construct full list of hardened Chromium arguments for Android environment.
     
@@ -284,12 +286,16 @@ def build_chromium_args(
         standalone_mode: Enable exclusive solo stage with anti-throttling flags and max CPU priority.
         stealth: Inject anti-bot detection mitigation flags (AutomationControlled removal, infobar disabling).
         single_process: Run all tabs in a single process to bypass Android 14 Phantom Process Killer limit (32).
+        tunnel_port: Local loopback port for the in-process bypass-tunnel CONNECT proxy.
     """
     raw_args: List[str] = []
     
     # Place session token at the very beginning to avoid Toybox ps 80-column line truncation
     if session_token:
         raw_args.append(f"--termux-session-id={session_token}")
+
+    if tunnel_port:
+        raw_args.append(f"--proxy-server=http://127.0.0.1:{tunnel_port}")
 
     raw_args.extend(CORE_ANDROID_CHROMIUM_ARGS)
 
@@ -503,6 +509,8 @@ async def launch(
     wake_lock: bool = False,
     stealth: bool = False,
     single_process: Optional[bool] = None,
+    bypass_tunnel: bool = False,
+    dns_server: str = "8.8.8.8",
     **kwargs,
 ) -> Any:
     """Launch Chromium browser asynchronously with Termux-hardened configuration and session tracking.
@@ -516,6 +524,11 @@ async def launch(
         standalone_mode: Enable exclusive solo fortress mode with clean-room ephemeral profile,
             anti-throttling flags, and maximum CPU priority. Ephemeral profile is wiped on exit.
         wake_lock: Automatically acquire and manage Termux CPU WakeLock for the session duration.
+        stealth: Enable anti-bot and stealth flags.
+        single_process: Run browser in single-process mode.
+        bypass_tunnel: If True, bypasses VPN/dnsproxyd by starting a local in-process CONNECT proxy
+            that resolves domains via direct raw UDP DNS queries (RFC 1035).
+        dns_server: Upstream public DNS IPv4 address used when bypass_tunnel is enabled (default: '8.8.8.8').
         **kwargs: Additional parameters passed to playwright.chromium.launch().
         
     Returns:
@@ -568,6 +581,22 @@ async def launch(
     # 5. Standalone Fortress Profile Isolation & WakeLock Handling
     ephemeral_profile_dir: Optional[str] = None
     user_args = list(kwargs.pop("args", []))
+
+    # 5.1 In-Process Direct Socket DNS Bypass-Tunnel Setup
+    effective_bypass_tunnel = (
+        bypass_tunnel
+        or kwargs.pop("is_tunnel_bypass", False)
+        or kwargs.pop("tunnel_bypass", False)
+    )
+    effective_dns_server = kwargs.pop("dns", dns_server)
+    tunnel_proxy: Optional[AsyncTunnelProxy] = None
+    tunnel_port: Optional[int] = None
+
+    if effective_bypass_tunnel:
+        tunnel_proxy = AsyncTunnelProxy(dns_server=effective_dns_server)
+        tunnel_port = await tunnel_proxy.start()
+        user_args.append(f"--proxy-server=http://127.0.0.1:{tunnel_port}")
+
     if standalone_mode:
         _purge_stale_ephemeral_profiles()
         has_custom_profile = any(a.startswith("--user-data-dir=") for a in user_args)
@@ -618,6 +647,11 @@ async def launch(
                     logger.warning("Failed to reap zombie processes for session '%s': %s", session_token, reap_err)
                 finally:
                     ProcessReaper.unregister_session_token(session_token)
+                    if tunnel_proxy:
+                        try:
+                            tunnel_proxy.stop_sync()
+                        except Exception as p_err:
+                            logger.warning("Failed to stop tunnel proxy: %s", p_err)
                     if acquired_wakelock:
                         try:
                             acquired_wakelock.release()
@@ -648,6 +682,11 @@ async def launch(
         except Exception as reap_err:
             logger.warning("Failed to reap zombies during launch failure cleanup: %s", reap_err)
         ProcessReaper.unregister_session_token(session_token)
+        if tunnel_proxy:
+            try:
+                await tunnel_proxy.stop()
+            except Exception as p_err:
+                logger.warning("Failed to stop tunnel proxy during launch cleanup: %s", p_err)
         if acquired_wakelock:
             try:
                 acquired_wakelock.release()
@@ -669,6 +708,8 @@ def launch_sync(
     wake_lock: bool = False,
     stealth: bool = False,
     single_process: Optional[bool] = None,
+    bypass_tunnel: bool = False,
+    dns_server: str = "8.8.8.8",
     **kwargs,
 ) -> Any:
     """Launch Chromium browser synchronously with Termux-hardened configuration and session tracking.
@@ -682,6 +723,11 @@ def launch_sync(
         standalone_mode: Enable exclusive solo fortress mode with clean-room ephemeral profile,
             anti-throttling flags, and maximum CPU priority. Ephemeral profile is wiped on exit.
         wake_lock: Automatically acquire and manage Termux CPU WakeLock for the session duration.
+        stealth: Enable anti-bot and stealth flags.
+        single_process: Run browser in single-process mode.
+        bypass_tunnel: If True, bypasses VPN/dnsproxyd by starting a local in-process CONNECT proxy
+            that resolves domains via direct raw UDP DNS queries (RFC 1035).
+        dns_server: Upstream public DNS IPv4 address used when bypass_tunnel is enabled (default: '8.8.8.8').
         **kwargs: Additional parameters passed to playwright.chromium.launch().
         
     Returns:
@@ -730,6 +776,22 @@ def launch_sync(
 
     ephemeral_profile_dir: Optional[str] = None
     user_args = list(kwargs.pop("args", []))
+
+    # In-Process Direct Socket DNS Bypass-Tunnel Setup (Sync)
+    effective_bypass_tunnel = (
+        bypass_tunnel
+        or kwargs.pop("is_tunnel_bypass", False)
+        or kwargs.pop("tunnel_bypass", False)
+    )
+    effective_dns_server = kwargs.pop("dns", dns_server)
+    sync_tunnel_proxy: Optional[SyncTunnelProxy] = None
+    tunnel_port: Optional[int] = None
+
+    if effective_bypass_tunnel:
+        sync_tunnel_proxy = SyncTunnelProxy(dns_server=effective_dns_server)
+        tunnel_port = sync_tunnel_proxy.start()
+        user_args.append(f"--proxy-server=http://127.0.0.1:{tunnel_port}")
+
     if standalone_mode:
         _purge_stale_ephemeral_profiles()
         has_custom_profile = any(a.startswith("--user-data-dir=") for a in user_args)
@@ -777,6 +839,11 @@ def launch_sync(
                 logger.warning("Failed to reap zombie processes for session '%s': %s", session_token, reap_err)
             finally:
                 ProcessReaper.unregister_session_token(session_token)
+                if sync_tunnel_proxy:
+                    try:
+                        sync_tunnel_proxy.stop()
+                    except Exception as p_err:
+                        logger.warning("Failed to stop sync tunnel proxy: %s", p_err)
                 if acquired_wakelock:
                     try:
                         acquired_wakelock.release()
@@ -797,6 +864,11 @@ def launch_sync(
         except Exception as reap_err:
             logger.warning("Failed to reap zombies during launch failure cleanup: %s", reap_err)
         ProcessReaper.unregister_session_token(session_token)
+        if sync_tunnel_proxy:
+            try:
+                sync_tunnel_proxy.stop()
+            except Exception as p_err:
+                logger.warning("Failed to stop sync tunnel proxy during launch cleanup: %s", p_err)
         if acquired_wakelock:
             try:
                 acquired_wakelock.release()
@@ -1033,3 +1105,117 @@ def setup_stealth_context_sync(
         ctx.add_init_script(script)
 
     return ctx
+
+
+class BrowserBuilder:
+    """Fluent configuration builder for Termux-hardened Playwright browser instances."""
+
+    def __init__(self):
+        self._headless: bool = True
+        self._low_memory_mode: bool = False
+        self._jitless: Optional[bool] = None
+        self._ignore_certificate_errors: bool = False
+        self._standalone_mode: bool = False
+        self._wake_lock: bool = False
+        self._stealth: bool = False
+        self._single_process: Optional[bool] = None
+        self._bypass_tunnel: bool = False
+        self._dns_server: str = "8.8.8.8"
+        self._extra_args: List[str] = []
+        self._kwargs: Dict[str, Any] = {}
+
+    def headless(self, enabled: bool = True) -> "BrowserBuilder":
+        self._headless = enabled
+        return self
+
+    def low_memory(self, enabled: bool = True) -> "BrowserBuilder":
+        self._low_memory_mode = enabled
+        return self
+
+    def jitless(self, enabled: bool = True) -> "BrowserBuilder":
+        self._jitless = enabled
+        return self
+
+    def ignore_certificate_errors(self, enabled: bool = True) -> "BrowserBuilder":
+        self._ignore_certificate_errors = enabled
+        return self
+
+    def standalone_mode(self, enabled: bool = True) -> "BrowserBuilder":
+        self._standalone_mode = enabled
+        return self
+
+    def wake_lock(self, enabled: bool = True) -> "BrowserBuilder":
+        self._wake_lock = enabled
+        return self
+
+    def stealth(self, enabled: bool = True) -> "BrowserBuilder":
+        self._stealth = enabled
+        return self
+
+    def single_process(self, enabled: bool = True) -> "BrowserBuilder":
+        self._single_process = enabled
+        return self
+
+    def bypass_tunnel(self, enabled: bool = True, dns: str = "8.8.8.8") -> "BrowserBuilder":
+        """Configure direct UDP DNS bypass-tunnel mechanism."""
+        self._bypass_tunnel = enabled
+        if dns:
+            self._dns_server = dns
+        return self
+
+    def is_tunnel_bypass(self, enabled: bool = True, dns: str = "8.8.8.8") -> "BrowserBuilder":
+        """Alias for bypass_tunnel."""
+        return self.bypass_tunnel(enabled, dns)
+
+    def with_dns(self, dns_server: str) -> "BrowserBuilder":
+        self._dns_server = dns_server
+        return self
+
+    def with_args(self, *args: str) -> "BrowserBuilder":
+        self._extra_args.extend(args)
+        return self
+
+    def with_options(self, **kwargs) -> "BrowserBuilder":
+        self._kwargs.update(kwargs)
+        return self
+
+    async def launch(self, playwright_instance: Any = None) -> Any:
+        args = list(self._extra_args)
+        if "args" in self._kwargs:
+            args.extend(self._kwargs.pop("args"))
+        return await launch(
+            playwright_instance=playwright_instance,
+            headless=self._headless,
+            low_memory_mode=self._low_memory_mode,
+            jitless=self._jitless,
+            ignore_certificate_errors=self._ignore_certificate_errors,
+            standalone_mode=self._standalone_mode,
+            wake_lock=self._wake_lock,
+            stealth=self._stealth,
+            single_process=self._single_process,
+            bypass_tunnel=self._bypass_tunnel,
+            dns_server=self._dns_server,
+            args=args,
+            **self._kwargs
+        )
+
+    def launch_sync(self, playwright_instance: Any = None) -> Any:
+        args = list(self._extra_args)
+        if "args" in self._kwargs:
+            args.extend(self._kwargs.pop("args"))
+        return launch_sync(
+            playwright_instance=playwright_instance,
+            headless=self._headless,
+            low_memory_mode=self._low_memory_mode,
+            jitless=self._jitless,
+            ignore_certificate_errors=self._ignore_certificate_errors,
+            standalone_mode=self._standalone_mode,
+            wake_lock=self._wake_lock,
+            stealth=self._stealth,
+            single_process=self._single_process,
+            bypass_tunnel=self._bypass_tunnel,
+            dns_server=self._dns_server,
+            args=args,
+            **self._kwargs
+        )
+

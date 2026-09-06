@@ -36,9 +36,16 @@ from .browser import (
     block_heavy_resources_sync,
     setup_stealth_context,
     setup_stealth_context_sync,
+    BrowserBuilder,
     CORE_ANDROID_CHROMIUM_ARGS,
     LOW_MEMORY_CHROMIUM_ARGS,
     STEALTH_CHROMIUM_ARGS,
+)
+from .tunnel import (
+    query_dns_a,
+    is_ip_address,
+    AsyncTunnelProxy,
+    SyncTunnelProxy,
 )
 from .stealth import (
     generate_stealth_script,
@@ -82,7 +89,7 @@ from .installer import (
     fetch_pypi_wheel_info,
 )
 
-__version__ = "1.80.1"
+__version__ = "1.81.0"
 
 __all__ = [
     # Exceptions
@@ -102,7 +109,7 @@ __all__ = [
     "check_preflight_storage",
     "get_android_sdk_version",
     "get_installed_chromium_version",
-    # Browser
+    # Browser & Tunnel
     "launch",
     "launch_sync",
     "build_chromium_args",
@@ -114,6 +121,11 @@ __all__ = [
     "block_heavy_resources_sync",
     "setup_stealth_context",
     "setup_stealth_context_sync",
+    "BrowserBuilder",
+    "query_dns_a",
+    "is_ip_address",
+    "AsyncTunnelProxy",
+    "SyncTunnelProxy",
     "CORE_ANDROID_CHROMIUM_ARGS",
     "LOW_MEMORY_CHROMIUM_ARGS",
     "STEALTH_CHROMIUM_ARGS",
