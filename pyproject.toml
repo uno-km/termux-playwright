@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "termux-playwright"
-version = "1.81.0"
+version = "1.81.1"
 description = "Production-grade Playwright & Chromium browser automation and stealth runtime optimizer for Android Termux (Dual-Engine Python & Node.js)"
 readme = "README.md"
 requires-python = ">=3.8"
