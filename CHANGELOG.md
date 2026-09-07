@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.81.2] - 2026-09-07
+
+### Changed
+- **Documentation & Asset Clean-up**: Purged duplicate HTML documentation files (`blog_post.html`) and synchronized active web navigation endpoints.
+- **Security & Report Archival**: Moved legacy historical audit records to isolated AMEVA Foundation research archive.
+- **CI/CD Standardization**: Unified release automation pipeline onto zero-redundancy ecosystem release workflow (`release.yml`).
+
+## [1.81.1] - 2026-09-06
+
+### Changed
+- **Unified Release Synchronization**: Synchronized dual-engine Python and Node.js package manifests across PyPI and NPM.
+
 ## [1.81.0] - 2026-09-06
 
 ### Added
