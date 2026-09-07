@@ -571,9 +571,8 @@ If Playwright is updated in the future (e.g. `pip install --upgrade playwright`)
 
 ```
 termux-playwright/
-├── docs/                     # Technical documentation & audit reports
+├── docs/                     # Technical documentation & guides
 │   ├── blog_post.md          # Complete Korean engineering writeup
-│   ├── INDEPENDENT_AUDIT_REPORT.md  # Comprehensive security audit report
 │   └── PHANTOM_PROCESS_KILLER_GUIDE.md  # Step-by-step Phantom Killer ADB guide
 ├── examples/                 # Ready-to-run crawling demos
 │   ├── basic_crawler.py      # Basic asynchronous scraping demo
