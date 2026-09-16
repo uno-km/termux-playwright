@@ -38,36 +38,16 @@ MINIMUM_REQUIRED_STORAGE_MB: int = int(os.environ.get("TERMUX_PLAYWRIGHT_MIN_STO
 ANDROID_10_SDK_VERSION: int = 29
 
 def is_termux() -> bool:
-    """Check if current execution is happening inside Android Termux or compatible environment.
-    
-    Verifies process identity via environment variables, running python executable path,
-    and actual filesystem access rights, preventing false-positive hijacking in other Android Python apps
-    (such as Pydroid 3, QPython, Chaquopy).
-    """
-    # Tier 1: Explicit Termux environment variables
+    """Authoritative detection for Android Termux environment."""
+    if os.environ.get("TERMUX_VERSION") or os.environ.get("TERMUX_APP_PID") or os.environ.get("TERMUX_MAIN_PACKAGE"):
+        return True
     prefix = os.environ.get("PREFIX", "")
     if prefix and any(sig in prefix for sig in KNOWN_TERMUX_PREFIXES):
         return True
-    if "TERMUX_VERSION" in os.environ:
-        return True
-    if "TERMUX_APP_PID" in os.environ or "TERMUX_MAIN_PACKAGE" in os.environ:
-        return True
-
-    # Tier 2: Running interpreter / sys.prefix lineage
-    exec_path = sys.executable or ""
-    sys_prefix = getattr(sys, "prefix", "") or ""
-    if any(sig in exec_path for sig in KNOWN_TERMUX_PREFIXES) or any(sig in sys_prefix for sig in KNOWN_TERMUX_PREFIXES):
-        return True
-
-    # Tier 3: Verify real access rights on Termux prefix directory (never blindly trust os.path.exists)
     for pkg in KNOWN_TERMUX_PREFIXES:
-        candidate_prefix = f"/data/data/{pkg}/files/usr"
-        if os.path.isdir(candidate_prefix) and os.access(candidate_prefix, os.R_OK | os.X_OK):
-            # Also ensure we are running on Android before claiming Termux
-            if hasattr(sys, "getandroidapilevel") or "ANDROID_ROOT" in os.environ or os.path.exists("/system/bin/getprop"):
-                if os.access(os.path.join(candidate_prefix, "bin"), os.R_OK | os.X_OK):
-                    return True
-
+        cand = f"/data/data/{pkg}/files/usr"
+        if os.path.isdir(cand) and os.access(cand, os.R_OK | os.X_OK):
+            return True
     return False
 
 def get_termux_prefix() -> str:

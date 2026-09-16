@@ -635,9 +635,10 @@ class TermuxWakeLock:
     Strict by default: Raises ProcessLifecycleError if Termux API tools are missing.
     """
 
-    def __init__(self, fail_silently: bool = False):
+    def __init__(self, fail_silently: bool = False, enabled: bool = True):
         self._acquired = False
         self._fail_silently = fail_silently
+        self.enabled = enabled
         self._lock_bin = shutil.which("termux-wake-lock")
         self._unlock_bin = shutil.which("termux-wake-unlock")
 
@@ -650,6 +651,8 @@ class TermuxWakeLock:
 
     def acquire(self) -> bool:
         """Acquire CPU WakeLock via Termux API."""
+        if not self.enabled:
+            return False
         if not self._lock_bin:
             if not self._fail_silently:
                 raise ProcessLifecycleError(
